@@ -1,0 +1,111 @@
+spring:
+  application:
+    name: mcsv-gateway
+  profiles:
+    active: dev
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  main:
+    web-application-type: reactive
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      httpclient:
+        websocket:
+          max-frame-payload-length: 65536
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: '*'
+            allowedHeaders:
+              - Content-Type
+              - Authorization
+              - Connection
+              - Upgrade
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+      routes:
+        - id: mcsv-auth
+          uri: lb://mcsv-auth
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /$\{segment}
+        - id: mcsv-user
+          uri: lb://mcsv-user
+          predicates:
+            - Path=/user/**
+          filters:
+            - RewritePath=/user/(?<segment>.*), /$\{segment}
+
+server:
+  port: 9090
+
+# Zipkin's - telemetries
+management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests:  true
+  health:
+    ratelimiters:
+      enabled: ${ENABLE_TELEMETRICS:false}
+  endpoints:
+    jmx:
+      exposure:
+        exclude: '*'
+    web:
+      exposure:
+        include: '*'
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: ${ENABLE_TELEMETRICS:false}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: 'Gateway Server microservice'
+    description: 'microservices for gateway in microservices'
+    version: '1.0.0'
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server:port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+      register-with-eureka: true
+
+logging:
+  level:
+    org.springframework.cloud: trace
+    org.springframework.web: trace
+    org.springframework.gateway: trace
+    com.tresit.mmc: debug
+    com.tresit.gateway: debug
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  packagesToScan: com.cmr.mcsv_gateway

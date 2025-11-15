@@ -1,0 +1,63 @@
+spring:
+    jpa:
+        generate-ddl: ${GENERATE-DDL:false}
+        show-sql: ${SHOW-SQL:false}
+        database-platform: ${DATABASE-PLATFORM}
+        hibernate:
+            ddl-auto: ${DDL_AUTO:update}
+    datasource:
+        url: ${JDBC_URL}
+        username: ${DB_USER_NAME}
+        password: ${DB_PASSWORD}
+        driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
+        hikari:
+            maximum-pool-size: ${MAXIMUM-POOL-SIZE:3}
+            minimum-idle: ${MINIMUM-IDLE:10}
+            idleTimeout: ${IDLE-TIMEOUT:600000}
+
+eureka:
+    instance:
+        instance-id: ${spring.application.name}:${server.port}
+        prefer-ip-address: true
+        lease-renewal-interval-in-seconds: 10
+    client:
+        service-url:
+            defaultZone: ${EUREKA_SERVER}
+
+# Zipkin's - telemetries
+management:
+    health:
+        ratelimiters:
+            enabled: ${ENABLE_TELEMETRICS:false}
+    endpoints:
+        jmx:
+            exposure:
+                exclude: '*'
+        web:
+            exposure:
+                include: '*'
+    tracing:
+        sampling:
+            probability: 1.0
+        enabled: ${ENABLE_TELEMETRICS:false}
+    zipkin:
+        tracing:
+            endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+    info:
+        env:
+            enabled: true
+
+securityDefinitions:
+    JWT:
+        type: apiKey
+        in: header
+        name: access_token
+
+correos:
+    dominios:
+        - 3it.cl
+
+jwt:
+    secret: ${SECRET_KEY}
+    expireAt: 480
+    emailToken: ${EMAIL_TOKEN}

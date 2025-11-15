@@ -1,0 +1,40 @@
+# Definición de servicios que se ejecutarán
+services:
+  # Configuración del servicio de base de datos
+  mcsv_db:
+    # Nombre del contenedor
+    container_name: mcsv_db
+    # Imagen de PostgreSQL a utilizar
+    image: postgres:16
+    # Política de reinicio
+    restart: always
+    # Mapeo de volúmenes para datos persistentes
+    volumes:
+      - micrm-data:/var/lib/postgresql/data
+    # Variables de entorno para configurar PostgreSQL
+    environment:
+      # Nombre de la base de datos
+      POSTGRES_DB: ${POSTGRES_DB}
+      # Usuario de la base de datos
+      POSTGRES_USER: ${POSTGRES_USER}
+      # Contraseña del usuario
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Mapeo de puertos (host:contenedor)
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    # Redes a las que se conectará el servicio
+    networks:
+      - micrm_network
+
+# Definición de volúmenes persistentes
+volumes:
+  # Volumen para almacenar datos de MySQL
+  micrm-data:
+    name: micrm-data # Nombre del volumen
+
+# Definición de redes
+networks:
+  # Red para la comunicación interna entre servicios de backend
+  micrm_network:
+    name: micrm_network # Nombre de la red
+    driver: bridge # Utiliza el controlador "bridge" por defecto

@@ -1,0 +1,42 @@
+{"properties": [
+  {
+    "name": "spring.cloud.config.server.search-locations",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.cloud.config.server.search-locations'"
+  },
+  {
+    "name": "management.health.ratelimiters.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'management.health.ratelimiters.enabled'"
+  },
+  {
+    "name": "securityDefinitions.JWT.type",
+    "type": "java.lang.String",
+    "description": "A description for 'securityDefinitions.JWT.type'"
+  },
+  {
+    "name": "securityDefinitions.JWT.in",
+    "type": "java.lang.String",
+    "description": "A description for 'securityDefinitions.JWT.in'"
+  },
+  {
+    "name": "securityDefinitions.JWT.name",
+    "type": "java.lang.String",
+    "description": "A description for 'securityDefinitions.JWT.name'"
+  },
+  {
+    "name": "jwt.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.secret'"
+  },
+  {
+    "name": "jwt.expireAt",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.expireAt'"
+  },
+  {
+    "name": "jwt.emailToken",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.emailToken'"
+  }
+]}

@@ -1,0 +1,43 @@
+server:
+    port: 9092
+
+spring:
+    profiles:
+        active: native
+    application:
+        name: mcsv-auth
+
+    config:
+        import: "configserver:"
+
+    cloud:
+        config:
+            uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+info:
+    app:
+        name: Authorizer Server microservice
+        description: microservices for Authorization
+        version: 1.0.0
+
+# Documentation
+openapi:
+    service:
+        title: authorizer-service doc #title that you will want to display in the swagger ui
+        version: 1.0.0
+        url: ${URLAPI:http://localhost:9090}/api/auth #api gateway url
+
+springdoc:
+    api-docs:
+        path: /api/api-docs/auth #these urls will use to load the swagger ui of this service by the api gateway
+    swagger-ui:
+        path: /api/auth/swagger-ui.html
+
+url:
+    recuperar-password: ${URL_FRONT:localhost:4200}
+
+azure:
+    tenant-id: AZURE_TENANT_ID
+    client-id: YOUR_CLIENT_ID
+    jwks-uri: https://login.microsoftonline.com/${azure.tenant-id}/discovery/v2.0/keys
+    issuer: https://login.microsoftonline.com/${azure.tenant-id}/v2.0

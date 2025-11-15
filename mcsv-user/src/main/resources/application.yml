@@ -1,0 +1,32 @@
+server:
+    port: 9091
+
+spring:
+    application:
+        name: mcsv-user
+
+    config:
+        import: "configserver:"
+        
+    cloud:
+        config:
+            uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+info:
+  app:
+    name: user Microservicio Server
+    description: Microservicio para manejar user
+    version: 1.0.0
+
+# Configuración para Documentation swagger
+openapi:
+    service:
+        title: user-service doc #title that you will want to display in the swagger ui
+        version: 1.0.0
+        url: ${URLAPI:http://localhost:9090}/api/user # url api swagger
+
+springdoc:
+    api-docs:
+        path: /api/api-docs/user #these urls will be used to load the swagger ui of this service by the api gateway
+    swagger-ui:
+        path: /api-docs/swagger-ui.html
