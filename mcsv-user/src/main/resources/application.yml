@@ -7,7 +7,7 @@ spring:
 
     config:
         import: "configserver:"
-        
+
     cloud:
         config:
             uri: ${CONFIG_SERVER_URI:http://localhost:8888}
@@ -25,8 +25,13 @@ openapi:
         version: 1.0.0
         url: ${URLAPI:http://localhost:9090}/api/user # url api swagger
 
+# Configuración interna
+internal:
+  service:
+    key: ${INTERNAL_SERVICE_KEY:internal-microservice-key-2024}
+
 springdoc:
-    api-docs:
-        path: /api/api-docs/user #these urls will be used to load the swagger ui of this service by the api gateway
-    swagger-ui:
-        path: /api-docs/swagger-ui.html
+  api-docs:
+    path: /api/api-docs/user #these urls will be used to load the swagger ui of this service by the api gateway
+  swagger-ui:
+    path: /api-docs/swagger-ui.html
