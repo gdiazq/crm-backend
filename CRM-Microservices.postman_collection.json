@@ -1,0 +1,570 @@
+{
+	"info": {
+		"_postman_id": "crm-microservices-001",
+		"name": "CRM Microservices",
+		"description": "Colección completa de endpoints para mcsv-auth y mcsv-user",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth Service (9092)",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('accessToken', jsonData.accessToken);",
+									"    pm.environment.set('refreshToken', jsonData.refreshToken);",
+									"    pm.environment.set('userId', jsonData.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9092/api/auth/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('accessToken', jsonData.accessToken);",
+									"    pm.environment.set('refreshToken', jsonData.refreshToken);",
+									"    pm.environment.set('userId', jsonData.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"usernameOrEmail\": \"johndoe\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9092/api/auth/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('accessToken', jsonData.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9092/api/auth/refresh",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "refresh"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9092/api/auth/logout",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "logout"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9092/api/auth/forgot-password",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "forgot-password"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"reset-token-here\",\n  \"newPassword\": \"newPassword123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9092/api/auth/reset-password",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "reset-password"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:9092/api/auth/validate",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "9092",
+							"path": ["api", "auth", "validate"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Service (9091)",
+			"item": [
+				{
+					"name": "Users",
+					"item": [
+						{
+							"name": "Get All Users",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/users",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User By ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/users/{{userId}}",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "{{userId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User By Username",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/users/username/johndoe",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "username", "johndoe"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User By Email",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/users/email?email=john@example.com",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "email"],
+									"query": [
+										{
+											"key": "email",
+											"value": "john@example.com"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.environment.set('userId', jsonData.id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\",\n  \"roleIds\": [1]\n}"
+								},
+								"url": {
+									"raw": "http://localhost:9091/api/users",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update User",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john.updated@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe Updated\",\n  \"phoneNumber\": \"+0987654321\",\n  \"enabled\": true,\n  \"roleIds\": [1]\n}"
+								},
+								"url": {
+									"raw": "http://localhost:9091/api/users/{{userId}}",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "{{userId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete User",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/users/{{userId}}",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "{{userId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Check Username Exists",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9091/api/users/exists/username/johndoe",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "exists", "username", "johndoe"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Check Email Exists",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9091/api/users/exists/email?email=john@example.com",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "users", "exists", "email"],
+									"query": [
+										{
+											"key": "email",
+											"value": "john@example.com"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Roles",
+					"item": [
+						{
+							"name": "Get All Roles",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/roles",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "roles"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Role By ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/roles/1",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "roles", "1"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Role By Name",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/roles/name/ROLE_USER",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "roles", "name", "ROLE_USER"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Role",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/roles?name=ROLE_ADMIN&description=Administrador del sistema",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "roles"],
+									"query": [
+										{
+											"key": "name",
+											"value": "ROLE_ADMIN"
+										},
+										{
+											"key": "description",
+											"value": "Administrador del sistema"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Role",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:9091/api/roles/1",
+									"protocol": "http",
+									"host": ["localhost"],
+									"port": "9091",
+									"path": ["api", "roles", "1"]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrlAuth",
+			"value": "http://localhost:9092",
+			"type": "string"
+		},
+		{
+			"key": "baseUrlUser",
+			"value": "http://localhost:9091",
+			"type": "string"
+		}
+	]
+}
