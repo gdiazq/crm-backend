@@ -38,18 +38,18 @@ spring:
         - id: mcsv-auth
           uri: lb://mcsv-auth
           predicates:
-            - Path=/auth/**
-          filters:
-            - RewritePath=/auth/(?<segment>.*), /$\{segment}
+            - Path=/api/auth/**
         - id: mcsv-user
           uri: lb://mcsv-user
           predicates:
-            - Path=/user/**
-          filters:
-            - RewritePath=/user/(?<segment>.*), /$\{segment}
+            - Path=/api/users/**, /api/roles/**, /internal/**
 
 server:
   port: 9090
+
+jwt:
+  secret: ${SECRET_KEY:LR4kE6n+U8T0JzB9Gqf1l3P7t2W0yN9xY5sZ7mV3aK6dJ0hC8rT1qL2vO4bM5uF+}
+  expireAt: 480
 
 # Zipkin's - telemetries
 management:
