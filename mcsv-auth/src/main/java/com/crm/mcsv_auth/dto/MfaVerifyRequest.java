@@ -10,10 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RefreshTokenRequest {
+public class MfaVerifyRequest {
 
-    @NotBlank(message = "Refresh token is required")
-    private String refreshToken;
+    @NotBlank(message = "Username is required")
+    private String username;
 
-    private Boolean logoutAll;
+    @NotBlank(message = "Code is required")
+    private String code;
 }

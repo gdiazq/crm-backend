@@ -39,10 +39,22 @@ spring:
           uri: lb://mcsv-auth
           predicates:
             - Path=/api/auth/**
+          filters:
+            - StripPrefix=2
         - id: mcsv-user
           uri: lb://mcsv-user
           predicates:
-            - Path=/api/users/**, /api/roles/**, /internal/**
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=2
+            - AuthFilter
+        - id: mcsv-role
+          uri: lb://mcsv-user
+          predicates:
+            - Path=/api/role/**
+          filters:
+            - StripPrefix=2
+            - AuthFilter
 
 server:
   port: 9090

@@ -41,8 +41,3 @@ azure:
     client-id: YOUR_CLIENT_ID
     jwks-uri: https://login.microsoftonline.com/${azure.tenant-id}/discovery/v2.0/keys
     issuer: https://login.microsoftonline.com/${azure.tenant-id}/v2.0
-
-# Configuración interna
-internal:
-  service:
-    key: ${INTERNAL_SERVICE_KEY:internal-microservice-key-2024}

@@ -221,4 +221,16 @@ public class UserServiceImpl implements UserService {
 
         return isValid;
     }
+
+    @Override
+    @Transactional
+    public void updatePassword(Long userId, String newPassword) {
+        log.info("Updating password for user id: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

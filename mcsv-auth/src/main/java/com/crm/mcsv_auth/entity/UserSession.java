@@ -6,8 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,31 +16,34 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "user_sessions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RefreshToken {
+public class UserSession {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 500)
-    private String token;
-
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "username", nullable = false, length = 100)
-    private String username;
+    @Column(name = "ip_address", nullable = false, length = 45)
+    private String ipAddress;
 
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(name = "user_agent", length = 512)
+    private String userAgent;
+
+    @Column(name = "device_id", length = 128)
+    private String deviceId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "last_seen_at", nullable = false)
+    private LocalDateTime lastSeenAt;
 
     @Column(nullable = false)
     @Builder.Default
@@ -49,15 +52,14 @@ public class RefreshToken {
     @Column(name = "revoked_at")
     private LocalDateTime revokedAt;
 
-    @Transient
-    private String plainToken;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        lastSeenAt = createdAt;
     }
 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
+    @PreUpdate
+    protected void onUpdate() {
+        lastSeenAt = LocalDateTime.now();
     }
 }

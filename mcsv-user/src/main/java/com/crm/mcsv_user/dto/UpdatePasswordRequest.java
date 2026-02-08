@@ -1,6 +1,6 @@
-package com.crm.mcsv_auth.dto;
+package com.crm.mcsv_user.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -12,12 +12,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ResetPasswordRequest {
+public class UpdatePasswordRequest {
 
-    @NotBlank(message = "Token is required")
-    private String token;
+    @NotNull(message = "User id is required")
+    private Long userId;
 
-    @NotBlank(message = "New password is required")
     @Size(min = 10, max = 100, message = "Password must be between 10 and 100 characters")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{10,100}$",

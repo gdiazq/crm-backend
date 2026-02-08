@@ -30,4 +30,6 @@ public interface UserService {
     boolean existsByEmail(String email);
 
     boolean validateCredentials(String usernameOrEmail, String password);
+
+    void updatePassword(Long userId, String newPassword);
 }

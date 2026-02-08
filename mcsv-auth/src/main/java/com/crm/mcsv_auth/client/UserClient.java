@@ -8,37 +8,58 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "mcsv-user")
 public interface UserClient {
 
-    @GetMapping("/internal/auth/user/username/{username}")
+    @GetMapping("/detail/username/{username}")
     ResponseEntity<UserDTO> getUserByUsername(
-            @RequestHeader("X-Internal-Service-Key") String serviceKey,
             @PathVariable("username") String username);
 
-    @GetMapping("/internal/auth/user/email")
+    @GetMapping("/detail/email")
     ResponseEntity<UserDTO> getUserByEmail(
-            @RequestHeader("X-Internal-Service-Key") String serviceKey,
             @RequestParam("email") String email);
 
-    @GetMapping("/internal/users/{id}")
+    @GetMapping("/detail/{id}")
     ResponseEntity<UserDTO> getUserById(
-            @RequestHeader("X-Internal-Service-Key") String serviceKey,
             @PathVariable("id") Long id);
 
-    @PostMapping("/internal/users")
-    ResponseEntity<UserDTO> createUserInternal(
-            @RequestHeader("X-Internal-Service-Key") String serviceKey,
-            @RequestBody CreateUserInternalRequest request
-    );
+    @PostMapping("/sign-up")
+    ResponseEntity<UserDTO> signUpUser(@RequestBody CreateUserInternalRequest request);
 
-    @PostMapping("/internal/auth/validate-credentials")
+    @PostMapping("/validate-credentials")
     ResponseEntity<Boolean> validateCredentials(
-            @RequestHeader("X-Internal-Service-Key") String serviceKey,
             @RequestBody CredentialsRequest credentials);
+
+    @PostMapping("/update-password")
+    ResponseEntity<Void> updatePassword(@RequestBody UpdatePasswordRequest request);
+
+    class UpdatePasswordRequest {
+        private Long userId;
+        private String newPassword;
+
+        public UpdatePasswordRequest(Long userId, String newPassword) {
+            this.userId = userId;
+            this.newPassword = newPassword;
+        }
+
+        public Long getUserId() {
+            return userId;
+        }
+
+        public void setUserId(Long userId) {
+            this.userId = userId;
+        }
+
+        public String getNewPassword() {
+            return newPassword;
+        }
+
+        public void setNewPassword(String newPassword) {
+            this.newPassword = newPassword;
+        }
+    }
 
     // DTO para la solicitud de credenciales
     class CredentialsRequest {

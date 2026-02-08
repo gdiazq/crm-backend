@@ -2,14 +2,14 @@ spring:
     jpa:
         generate-ddl: ${GENERATE-DDL:false}
         show-sql: ${SHOW-SQL:false}
-        database-platform: ${DATABASE-PLATFORM}
+        database-platform: ${DATABASE-PLATFORM:org.hibernate.dialect.MySQLDialect}
         hibernate:
             ddl-auto: ${DDL_AUTO:update}
     datasource:
         url: ${JDBC_URL}
         username: ${DB_USER_NAME}
         password: ${DB_PASSWORD}
-        driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
+        driver-class-name: ${DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
         hikari:
             maximum-pool-size: ${MAXIMUM-POOL-SIZE:3}
             minimum-idle: ${MINIMUM-IDLE:10}
@@ -22,7 +22,7 @@ eureka:
         lease-renewal-interval-in-seconds: 10
     client:
         service-url:
-            defaultZone: ${EUREKA_SERVER}
+            defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
 
 # Zipkin's - telemetries
 management:

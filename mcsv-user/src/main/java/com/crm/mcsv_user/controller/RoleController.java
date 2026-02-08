@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/role")
 @RequiredArgsConstructor
 @Tag(name = "Role Management", description = "Endpoints for managing roles")
 public class RoleController {
 
     private final RoleService roleService;
 
-    @GetMapping
+    @GetMapping("/paged")
     @Operation(summary = "Get all roles", description = "Retrieve a list of all roles")
     public ResponseEntity<List<RoleDTO>> getAllRoles() {
         List<RoleDTO> roles = roleService.getAllRoles();
@@ -46,7 +46,7 @@ public class RoleController {
         return ResponseEntity.ok(role);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @Operation(summary = "Create role", description = "Create a new role")
     public ResponseEntity<RoleDTO> createRole(
             @RequestParam String name,

@@ -15,12 +15,13 @@ import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.exception.TokenException;
 import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
+import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthService;
+import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.TokenService;
 import com.crm.mcsv_auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,10 +43,9 @@ public class AuthServiceImpl implements AuthService {
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final UserSessionRepository userSessionRepository;
+    private final MfaService mfaService;
     private final JwtConfig jwtConfig;
-
-    @Value("${internal.service.key:internal-microservice-key-2024}")
-    private String internalServiceKey;
 
     @Override
     @Transactional
@@ -64,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         // Crear usuario en mcsv-user vía endpoint interno
-        ResponseEntity<UserDTO> response = userClient.createUserInternal(internalServiceKey, createUserRequest);
+        ResponseEntity<UserDTO> response = userClient.signUpUser(createUserRequest);
 
         if (response.getBody() == null) {
             throw new AuthenticationException("Failed to create user");
@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken.getToken())
+                .refreshToken(refreshToken.getPlainToken())
                 .tokenType("Bearer")
                 .expiresIn(jwtConfig.getExpireAt() * 60)
                 .user(AuthResponse.UserInfo.builder()
@@ -101,18 +101,31 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponse login(LoginRequest request) {
-        log.info("Login attempt for: {}", request.getUsernameOrEmail());
+    public AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId) {
+        log.info("Login attempt for: {}", request.getUsername());
 
         // Validar credenciales con el microservicio de usuarios
-        boolean isValidCredentials = validateCredentials(request.getUsernameOrEmail(), request.getPassword());
+        boolean isValidCredentials = validateCredentials(request.getUsername(), request.getPassword());
 
         if (!isValidCredentials) {
             throw new AuthenticationException("Invalid username or password");
         }
 
         // Obtener usuario del microservicio de usuarios (solo para obtener datos, no contraseña)
-        UserDTO user = getUserByUsernameOrEmail(request.getUsernameOrEmail());
+        UserDTO user = getUserByUsernameOrEmail(request.getUsername());
+
+        if (mfaService.isMfaEnabled(user.getId())) {
+            if (deviceId == null || deviceId.isBlank()) {
+                throw new AuthenticationException("Device ID required for MFA");
+            }
+            if (request.getTotpCode() == null || request.getTotpCode().isBlank()) {
+                throw new AuthenticationException("MFA code required");
+            }
+            boolean mfaValid = mfaService.verifyTotp(user.getId(), request.getTotpCode());
+            if (!mfaValid) {
+                throw new AuthenticationException("Invalid MFA code");
+            }
+        }
 
         // Validar usuario activo
         if (!user.getEnabled()) {
@@ -134,10 +147,17 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User logged in successfully: {}", user.getUsername());
 
+        userSessionRepository.save(com.crm.mcsv_auth.entity.UserSession.builder()
+                .userId(user.getId())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .deviceId(deviceId)
+                .build());
+
         // Construir respuesta
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken.getToken())
+                .refreshToken(refreshToken.getPlainToken())
                 .tokenType("Bearer")
                 .expiresIn(jwtConfig.getExpireAt() * 60)
                 .user(AuthResponse.UserInfo.builder()
@@ -170,11 +190,15 @@ public class AuthServiceImpl implements AuthService {
         // Generar nuevo access token
         String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
 
+        // Rotar refresh token
+        tokenService.revokeRefreshToken(request.getRefreshToken());
+        RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId(), user.getUsername());
+
         log.info("Token refreshed successfully for user: {}", user.getUsername());
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(refreshToken.getToken())
+                .refreshToken(newRefreshToken.getPlainToken())
                 .tokenType("Bearer")
                 .expiresIn(jwtConfig.getExpireAt() * 60)
                 .user(AuthResponse.UserInfo.builder()
@@ -190,10 +214,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void logout(String refreshToken) {
+    public void logout(String refreshToken, boolean logoutAll) {
         log.info("Logout request");
-        tokenService.revokeRefreshToken(refreshToken);
-        log.info("User logged out successfully");
+        RefreshToken token = tokenService.validateRefreshToken(refreshToken);
+        if (logoutAll) {
+            tokenService.revokeAllUserTokens(token.getUserId());
+            var sessions = userSessionRepository.findByUserId(token.getUserId());
+            LocalDateTime now = LocalDateTime.now();
+            sessions.forEach(session -> {
+                session.setRevoked(true);
+                session.setRevokedAt(now);
+            });
+            userSessionRepository.saveAll(sessions);
+            log.info("User logged out from all devices");
+        } else {
+            tokenService.revokeRefreshToken(refreshToken);
+            log.info("User logged out successfully");
+        }
     }
 
     @Override
@@ -248,8 +285,10 @@ public class AuthServiceImpl implements AuthService {
             throw new TokenException("Password reset token has expired");
         }
 
-        // TODO: Actualizar contraseña en el microservicio de usuarios
-        // Esto requeriría un endpoint en mcsv-user para actualizar contraseñas
+        // Actualizar contraseña en el microservicio de usuarios
+        userClient.updatePassword(
+                new UserClient.UpdatePasswordRequest(resetToken.getUserId(), request.getNewPassword())
+        );
 
         // Marcar token como usado
         resetToken.setUsed(true);
@@ -264,10 +303,46 @@ public class AuthServiceImpl implements AuthService {
         return jwtUtil.validateToken(token);
     }
 
+    @Override
+    public UserDTO getUserByUsername(String username) {
+        ResponseEntity<UserDTO> response = userClient.getUserByUsername(username);
+        if (response.getBody() == null) {
+            throw new AuthenticationException("User not found");
+        }
+        return response.getBody();
+    }
+
+    @Override
+    @Transactional
+    public void logoutDevice(Long userId, String deviceId) {
+        userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(userId, deviceId)
+                .ifPresent(session -> {
+                    session.setRevoked(true);
+                    session.setRevokedAt(LocalDateTime.now());
+                    userSessionRepository.save(session);
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.crm.mcsv_auth.dto.UserSessionDto> listActiveSessions(Long userId) {
+        return userSessionRepository.findByUserIdAndRevokedFalse(userId)
+                .stream()
+                .map(session -> com.crm.mcsv_auth.dto.UserSessionDto.builder()
+                        .id(session.getId())
+                        .ipAddress(session.getIpAddress())
+                        .userAgent(session.getUserAgent())
+                        .deviceId(session.getDeviceId())
+                        .createdAt(session.getCreatedAt())
+                        .lastSeenAt(session.getLastSeenAt())
+                        .build())
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     private UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {
         try {
             // Intentar obtener por username primero
-            ResponseEntity<UserDTO> response = userClient.getUserByUsername(internalServiceKey, usernameOrEmail);
+            ResponseEntity<UserDTO> response = userClient.getUserByUsername(usernameOrEmail);
             if (response.getBody() != null) {
                 return response.getBody();
             }
@@ -277,7 +352,7 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             // Si no se encuentra, intentar por email
-            ResponseEntity<UserDTO> response = userClient.getUserByEmail(internalServiceKey, usernameOrEmail);
+            ResponseEntity<UserDTO> response = userClient.getUserByEmail(usernameOrEmail);
             if (response.getBody() != null) {
                 return response.getBody();
             }
@@ -289,7 +364,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserDTO getUserByEmail(String email) {
-        ResponseEntity<UserDTO> response = userClient.getUserByEmail(internalServiceKey, email);
+        ResponseEntity<UserDTO> response = userClient.getUserByEmail(email);
         if (response.getBody() == null) {
             throw new AuthenticationException("User not found");
         }
@@ -297,7 +372,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserDTO getUserById(Long id) {
-        ResponseEntity<UserDTO> response = userClient.getUserById(internalServiceKey, id);
+        ResponseEntity<UserDTO> response = userClient.getUserById(id);
         if (response.getBody() == null) {
             throw new AuthenticationException("User not found");
         }
@@ -307,7 +382,6 @@ public class AuthServiceImpl implements AuthService {
     private boolean validateCredentials(String usernameOrEmail, String password) {
         try {
             ResponseEntity<Boolean> response = userClient.validateCredentials(
-                    internalServiceKey,
                     new UserClient.CredentialsRequest(usernameOrEmail, password)
             );
 

@@ -9,9 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.UUID;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +31,8 @@ public class TokenServiceImpl implements TokenService {
     public RefreshToken createRefreshToken(Long userId, String username) {
         log.info("Creating refresh token for user: {}", username);
 
-        String token = UUID.randomUUID().toString();
+        String plainToken = UUID.randomUUID().toString();
+        String token = hashToken(plainToken);
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(REFRESH_TOKEN_EXPIRY_DAYS);
 
         RefreshToken refreshToken = RefreshToken.builder()
@@ -38,7 +43,9 @@ public class TokenServiceImpl implements TokenService {
                 .revoked(false)
                 .build();
 
-        return refreshTokenRepository.save(refreshToken);
+        RefreshToken saved = refreshTokenRepository.save(refreshToken);
+        saved.setPlainToken(plainToken);
+        return saved;
     }
 
     @Override
@@ -46,7 +53,7 @@ public class TokenServiceImpl implements TokenService {
     public RefreshToken validateRefreshToken(String token) {
         log.info("Validating refresh token");
 
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(hashToken(token))
                 .orElseThrow(() -> new TokenException("Invalid refresh token"));
 
         if (refreshToken.getRevoked()) {
@@ -65,7 +72,7 @@ public class TokenServiceImpl implements TokenService {
     public void revokeRefreshToken(String token) {
         log.info("Revoking refresh token");
 
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(hashToken(token))
                 .orElseThrow(() -> new TokenException("Refresh token not found"));
 
         refreshToken.setRevoked(true);
@@ -96,5 +103,15 @@ public class TokenServiceImpl implements TokenService {
     public void deleteExpiredTokens() {
         log.info("Deleting expired refresh tokens");
         refreshTokenRepository.deleteByExpiresAtBeforeAndRevokedFalse(LocalDateTime.now());
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hashed);
+        } catch (NoSuchAlgorithmException e) {
+            throw new TokenException("Failed to hash refresh token");
+        }
     }
 }
