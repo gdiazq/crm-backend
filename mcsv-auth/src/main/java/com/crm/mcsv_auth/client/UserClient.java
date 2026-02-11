@@ -5,6 +5,7 @@ import com.crm.mcsv_auth.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +35,9 @@ public interface UserClient {
 
     @PostMapping("/update-password")
     ResponseEntity<Void> updatePassword(@RequestBody UpdatePasswordRequest request);
+
+    @PatchMapping("/{id}/verify-email")
+    ResponseEntity<Void> verifyEmail(@PathVariable("id") Long id);
 
     class UpdatePasswordRequest {
         private Long userId;

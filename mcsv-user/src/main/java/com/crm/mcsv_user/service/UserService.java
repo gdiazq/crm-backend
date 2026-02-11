@@ -32,4 +32,6 @@ public interface UserService {
     boolean validateCredentials(String usernameOrEmail, String password);
 
     void updatePassword(Long userId, String newPassword);
+
+    void verifyEmail(Long userId);
 }

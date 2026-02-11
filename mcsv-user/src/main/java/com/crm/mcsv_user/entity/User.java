@@ -50,7 +50,11 @@ public class User {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Column(nullable = false)
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false;
+
+    @Column(name = "status", nullable = false)
     @Builder.Default
     private Boolean enabled = true;
 

@@ -6,10 +6,13 @@ import com.crm.mcsv_auth.dto.LoginRequest;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
+import com.crm.mcsv_auth.dto.VerifyEmailRequest;
+
+import java.util.Map;
 
 public interface AuthService {
 
-    AuthResponse register(RegisterRequest request);
+    Map<String, String> register(RegisterRequest request);
 
     AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId);
 
@@ -28,4 +31,10 @@ public interface AuthService {
     void logoutDevice(Long userId, String deviceId);
 
     java.util.List<com.crm.mcsv_auth.dto.UserSessionDto> listActiveSessions(Long userId);
+
+    Map<String, String> verifyEmail(VerifyEmailRequest request);
+
+    void createPassword(ResetPasswordRequest request);
+
+    void resendVerificationCode(String email);
 }

@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +20,9 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private Boolean enabled;
+    private Boolean emailVerified;
+    @JsonAlias("enabled")
+    private Boolean status;
     private Set<RoleDTO> roles;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;

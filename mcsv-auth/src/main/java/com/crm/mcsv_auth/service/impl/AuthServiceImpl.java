@@ -1,19 +1,24 @@
 package com.crm.mcsv_auth.service.impl;
 
+import com.crm.mcsv_auth.client.EmailClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.JwtConfig;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
+import com.crm.mcsv_auth.dto.EmailRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
+import com.crm.mcsv_auth.dto.VerifyEmailRequest;
+import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.exception.TokenException;
+import com.crm.mcsv_auth.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthService;
@@ -27,8 +32,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -39,24 +46,29 @@ import java.util.stream.Collectors;
 public class AuthServiceImpl implements AuthService {
 
     private final UserClient userClient;
+    private final EmailClient emailClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final UserSessionRepository userSessionRepository;
     private final MfaService mfaService;
     private final JwtConfig jwtConfig;
 
+    private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     @Override
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public Map<String, String> register(RegisterRequest request) {
         log.info("Registration attempt for: {}", request.getUsername());
 
-        // Crear request para mcsv-user
+        // Crear request para mcsv-user (sin password del usuario, se usa placeholder)
         CreateUserInternalRequest createUserRequest = CreateUserInternalRequest.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(generatePlaceholderPassword())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
@@ -72,47 +84,30 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = response.getBody();
 
-        // Extraer roles
-        Set<String> roles = user.getRoles().stream()
-                .map(UserDTO.RoleDTO::getName)
-                .collect(Collectors.toSet());
+        // Generar código de verificación y enviar email
+        String code = generateVerificationCode();
+        saveVerificationCode(user.getId(), user.getEmail(), code);
+        sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
-        // Generar tokens
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
-        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), user.getUsername());
+        log.info("User registered successfully, verification email sent to: {}", user.getEmail());
 
-        log.info("User registered successfully: {}", user.getUsername());
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken.getPlainToken())
-                .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpireAt() * 60)
-                .user(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .roles(roles)
-                        .build())
-                .build();
+        return Map.of("message", "Registration successful. Please check your email for the verification code.");
     }
 
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId) {
-        log.info("Login attempt for: {}", request.getUsername());
+        log.info("Login attempt for: {}", request.getEmail());
 
         // Validar credenciales con el microservicio de usuarios
-        boolean isValidCredentials = validateCredentials(request.getUsername(), request.getPassword());
+        boolean isValidCredentials = validateCredentials(request.getEmail(), request.getPassword());
 
         if (!isValidCredentials) {
             throw new AuthenticationException("Invalid username or password");
         }
 
         // Obtener usuario del microservicio de usuarios (solo para obtener datos, no contraseña)
-        UserDTO user = getUserByUsernameOrEmail(request.getUsername());
+        UserDTO user = getUserByUsernameOrEmail(request.getEmail());
 
         if (mfaService.isMfaEnabled(user.getId())) {
             if (deviceId == null || deviceId.isBlank()) {
@@ -127,8 +122,13 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
+        // Validar email verificado
+        if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            throw new AuthenticationException("Email not verified. Please verify your email before logging in.");
+        }
+
         // Validar usuario activo
-        if (!user.getEnabled()) {
+        if (!Boolean.TRUE.equals(user.getStatus())) {
             throw new AuthenticationException("User account is disabled");
         }
 
@@ -271,31 +271,14 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         log.info("Reset password request");
+        consumePasswordToken(request);
+    }
 
-        // Buscar token
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
-                .orElseThrow(() -> new TokenException("Invalid password reset token"));
-
-        // Validar token
-        if (resetToken.getUsed()) {
-            throw new TokenException("Password reset token has already been used");
-        }
-
-        if (resetToken.isExpired()) {
-            throw new TokenException("Password reset token has expired");
-        }
-
-        // Actualizar contraseña en el microservicio de usuarios
-        userClient.updatePassword(
-                new UserClient.UpdatePasswordRequest(resetToken.getUserId(), request.getNewPassword())
-        );
-
-        // Marcar token como usado
-        resetToken.setUsed(true);
-        resetToken.setUsedAt(LocalDateTime.now());
-        passwordResetTokenRepository.save(resetToken);
-
-        log.info("Password reset successfully for user ID: {}", resetToken.getUserId());
+    @Override
+    @Transactional
+    public void createPassword(ResetPasswordRequest request) {
+        log.info("Create password request");
+        consumePasswordToken(request);
     }
 
     @Override
@@ -377,6 +360,129 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("User not found");
         }
         return response.getBody();
+    }
+
+    @Override
+    @Transactional
+    public Map<String, String> verifyEmail(VerifyEmailRequest request) {
+        log.info("Email verification attempt for: {}", request.getEmail());
+
+        EmailVerificationCode verificationCode = emailVerificationCodeRepository
+                .findByEmailAndCodeAndUsedFalse(request.getEmail(), request.getCode())
+                .orElseThrow(() -> new AuthenticationException("Invalid verification code"));
+
+        if (verificationCode.isExpired()) {
+            throw new AuthenticationException("Verification code has expired. Please request a new one.");
+        }
+
+        // Marcar código como usado
+        verificationCode.setUsed(true);
+        emailVerificationCodeRepository.save(verificationCode);
+
+        // Marcar email como verificado en mcsv-user
+        userClient.verifyEmail(verificationCode.getUserId());
+
+        // Generar token de un solo uso para crear contraseña
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken passwordToken = PasswordResetToken.builder()
+                .token(token)
+                .userId(verificationCode.getUserId())
+                .email(request.getEmail())
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .used(false)
+                .build();
+        passwordResetTokenRepository.save(passwordToken);
+
+        log.info("Email verified successfully for: {}", request.getEmail());
+
+        return Map.of(
+                "message", "Email verified successfully",
+                "token", token
+        );
+    }
+
+    @Override
+    @Transactional
+    public void resendVerificationCode(String email) {
+        log.info("Resend verification code request for: {}", email);
+
+        UserDTO user = getUserByEmail(email);
+
+        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+            throw new AuthenticationException("Email is already verified");
+        }
+
+        // Invalidar códigos anteriores
+        emailVerificationCodeRepository.deleteByEmailAndUsedFalse(email);
+
+        // Generar nuevo código y enviar
+        String code = generateVerificationCode();
+        saveVerificationCode(user.getId(), user.getEmail(), code);
+        sendVerificationEmail(user.getEmail(), user.getUsername(), code);
+
+        log.info("Verification code resent to: {}", email);
+    }
+
+    private String generateVerificationCode() {
+        int code = SECURE_RANDOM.nextInt(900000) + 100000;
+        return String.valueOf(code);
+    }
+
+    private void saveVerificationCode(Long userId, String email, String code) {
+        EmailVerificationCode verificationCode = EmailVerificationCode.builder()
+                .code(code)
+                .userId(userId)
+                .email(email)
+                .expiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
+                .used(false)
+                .build();
+
+        emailVerificationCodeRepository.save(verificationCode);
+    }
+
+    private void sendVerificationEmail(String email, String username, String code) {
+        try {
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .to(email)
+                    .subject("Verify your email address")
+                    .templateName("verification-code")
+                    .variables(Map.of(
+                            "code", code,
+                            "username", username
+                    ))
+                    .build();
+
+            emailClient.sendEmail(emailRequest);
+        } catch (Exception e) {
+            log.error("Failed to send verification email to: {}", email, e);
+        }
+    }
+
+    private void consumePasswordToken(ResetPasswordRequest request) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new TokenException("Invalid password reset token"));
+
+        if (resetToken.getUsed()) {
+            throw new TokenException("Password reset token has already been used");
+        }
+
+        if (resetToken.isExpired()) {
+            throw new TokenException("Password reset token has expired");
+        }
+
+        userClient.updatePassword(
+                new UserClient.UpdatePasswordRequest(resetToken.getUserId(), request.getNewPassword())
+        );
+
+        resetToken.setUsed(true);
+        resetToken.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(resetToken);
+
+        log.info("Password updated successfully for user ID: {}", resetToken.getUserId());
+    }
+
+    private String generatePlaceholderPassword() {
+        return "Tmp!" + UUID.randomUUID().toString();
     }
 
     private boolean validateCredentials(String usernameOrEmail, String password) {

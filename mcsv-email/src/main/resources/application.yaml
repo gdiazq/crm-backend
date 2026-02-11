@@ -1,0 +1,46 @@
+server:
+  port: 9093
+
+spring:
+  application:
+    name: mcsv-email
+
+  config:
+    import: "configserver:"
+
+  cloud:
+    config:
+      uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+  mail:
+    host: ${MAIL_HOST:email-smtp.us-east-1.amazonaws.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    from: ${MAIL_FROM:noreply@example.com}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+info:
+  app:
+    name: Email Microservicio Server
+    description: Microservicio para manejar envio de emails
+    version: 1.0.0
+
+# Configuración para Documentation swagger
+openapi:
+  service:
+    title: email-service doc
+    version: 1.0.0
+    url: ${URLAPI:http://localhost:9090}/api/email
+
+springdoc:
+  api-docs:
+    path: /api/api-docs/email
+  swagger-ui:
+    path: /api-docs/swagger-ui.html

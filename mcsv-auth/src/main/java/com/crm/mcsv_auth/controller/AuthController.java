@@ -10,6 +10,7 @@ import com.crm.mcsv_auth.dto.MfaVerifyRequest;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserSessionDto;
+import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.RateLimiterService;
@@ -46,9 +47,35 @@ public class AuthController {
     private static final long WINDOW_SECONDS = 60;
 
     @PostMapping("/register")
-    @Operation(summary = "User registration", description = "Register a new user and return access and refresh tokens")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody com.crm.mcsv_auth.dto.RegisterRequest request) {
-        AuthResponse response = authService.register(request);
+    @Operation(summary = "User registration", description = "Register a new user and send email verification code")
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody com.crm.mcsv_auth.dto.RegisterRequest request) {
+        Map<String, String> response = authService.register(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-email")
+    @Operation(summary = "Verify email", description = "Verify user email with 6-digit code and return password creation token")
+    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        Map<String, String> response = authService.verifyEmail(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/create-password")
+    @Operation(summary = "Create password", description = "Create password after email verification using one-time token")
+    public ResponseEntity<Map<String, String>> createPassword(@Valid @RequestBody com.crm.mcsv_auth.dto.ResetPasswordRequest request) {
+        authService.createPassword(request);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Password created successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Resend verification code", description = "Resend email verification code")
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        authService.resendVerificationCode(email);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Verification code sent successfully");
         return ResponseEntity.ok(response);
     }
 

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -77,7 +78,7 @@ public class UserController {
     @Operation(summary = "Deactivate user", description = "Deactivate a user by their ID")
     public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
         UpdateUserRequest request = UpdateUserRequest.builder()
-                .enabled(false)
+                .status(false)
                 .build();
         userService.updateUser(id, request);
         return ResponseEntity.ok().build();
@@ -105,6 +106,13 @@ public class UserController {
     @Operation(summary = "Update password", description = "Update user password")
     public ResponseEntity<Void> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         userService.updatePassword(request.getUserId(), request.getNewPassword());
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/verify-email")
+    @Operation(summary = "Verify email", description = "Mark user email as verified")
+    public ResponseEntity<Void> verifyEmail(@PathVariable Long id) {
+        userService.verifyEmail(id);
         return ResponseEntity.ok().build();
     }
 

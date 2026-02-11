@@ -4,31 +4,31 @@ services:
   mcsv_db:
     # Nombre del contenedor
     container_name: mcsv_db
-    # Imagen de MySQL a utilizar
-    image: mysql:8.4
+    # Imagen de PostgreSQL a utilizar
+    image: postgres:17
     # Política de reinicio
     restart: always
     # Mapeo de volúmenes para datos persistentes
     volumes:
-      - micrm-data:/var/lib/mysql
-    # Variables de entorno para configurar MySQL
+      - micrm-data:/var/lib/postgresql/data
+    # Variables de entorno para configurar PostgreSQL
     environment:
       # Nombre de la base de datos
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # Usuario de la base de datos
+      POSTGRES_USER: ${POSTGRES_USER}
       # Contraseña del usuario
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      # Contraseña del usuario root
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     # Mapeo de puertos (host:contenedor)
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${POSTGRES_PORT}:5432"
     # Redes a las que se conectará el servicio
     networks:
       - micrm_network
 
 # Definición de volúmenes persistentes
 volumes:
-  # Volumen para almacenar datos de MySQL
+  # Volumen para almacenar datos de PostgreSQL
   micrm-data:
     name: micrm-data # Nombre del volumen
 

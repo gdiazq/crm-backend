@@ -131,8 +131,8 @@ public class UserServiceImpl implements UserService {
         if (request.getPhoneNumber() != null) {
             user.setPhoneNumber(request.getPhoneNumber());
         }
-        if (request.getEnabled() != null) {
-            user.setEnabled(request.getEnabled());
+        if (request.getStatus() != null) {
+            user.setEnabled(request.getStatus());
         }
 
         if (request.getRoleIds() != null) {
@@ -232,5 +232,19 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void verifyEmail(Long userId) {
+        log.info("Verifying email for user id: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        log.info("Email verified successfully for user id: {}", userId);
     }
 }

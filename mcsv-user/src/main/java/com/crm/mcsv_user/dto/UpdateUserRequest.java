@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -28,7 +29,8 @@ public class UpdateUserRequest {
     @Size(max = 20, message = "Phone number must not exceed 20 characters")
     private String phoneNumber;
 
-    private Boolean enabled;
+    @JsonAlias("enabled")
+    private Boolean status;
 
     private Set<Long> roleIds;
 }

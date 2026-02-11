@@ -1,5 +1,6 @@
 package com.crm.mcsv_auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +19,9 @@ public class UserDTO {
     private String password;
     private String firstName;
     private String lastName;
-    private Boolean enabled;
+    private Boolean emailVerified;
+    @JsonAlias("enabled")
+    private Boolean status;
     private Boolean accountNonExpired;
     private Boolean accountNonLocked;
     private Boolean credentialsNonExpired;
