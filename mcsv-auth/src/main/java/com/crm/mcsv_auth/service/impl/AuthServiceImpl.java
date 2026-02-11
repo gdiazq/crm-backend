@@ -423,6 +423,16 @@ public class AuthServiceImpl implements AuthService {
         log.info("Verification code resent to: {}", email);
     }
 
+    @Override
+    public boolean checkEmailAvailability(String email) {
+        try {
+            ResponseEntity<UserDTO> response = userClient.getUserByEmail(email);
+            return response.getBody() == null;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private String generateVerificationCode() {
         int code = SECURE_RANDOM.nextInt(900000) + 100000;
         return String.valueOf(code);

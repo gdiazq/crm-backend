@@ -21,11 +21,7 @@ import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -76,6 +72,15 @@ public class AuthController {
         authService.resendVerificationCode(email);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Verification code sent successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/check-email")
+    @Operation(summary = "Check email availability", description = "Check if an email is available for registration")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam String email) {
+        boolean available = authService.checkEmailAvailability(email);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("available", available);
         return ResponseEntity.ok(response);
     }
 

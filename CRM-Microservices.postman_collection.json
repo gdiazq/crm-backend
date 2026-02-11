@@ -148,6 +148,34 @@
 					"response": []
 				},
 				{
+					"name": "Check Email Availability",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9090/v1/api/auth/check-email?email=john@example.com",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"v1",
+								"api",
+								"auth",
+								"check-email"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "john@example.com"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Login",
 					"event": [
 						{
