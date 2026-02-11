@@ -13,7 +13,7 @@ public class AuthorizerController {
 
     private final AuthService authService;
 
-    @PostMapping("/validateToken")
+    @PostMapping("/v1/validateToken")
     public ValidationError validateToken(@RequestParam String jwt) {
         boolean isValid = authService.validateToken(extractToken(jwt));
         if (isValid) {
@@ -22,7 +22,7 @@ public class AuthorizerController {
         return new ValidationError(false, "Invalid token");
     }
 
-    @PostMapping("/validateTokenUrl")
+    @PostMapping("/v1/validateTokenUrl")
     public ValidationError validateTokenUrl(
             @RequestParam String jwt,
             @RequestParam String urlPath,

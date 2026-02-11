@@ -23,7 +23,7 @@ openapi:
     service:
         title: user-service doc #title that you will want to display in the swagger ui
         version: 1.0.0
-        url: ${URLAPI:http://localhost:9090}/api/user # url api swagger
+        url: ${URLAPI:http://localhost:9090}/v1/api/user # url api swagger
 
 springdoc:
   api-docs:

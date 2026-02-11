@@ -117,7 +117,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                 .uri(uriBuilder -> uriBuilder
                         .scheme("lb")
                         .host("mcsv-auth")
-                        .path("/validateToken")
+                        .path("/v1/validateToken")
                         .queryParam("jwt", tokenHeader)
                         .build())
                 .retrieve()
@@ -138,7 +138,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                 .uri(uriBuilder -> uriBuilder
                         .scheme("lb")
                         .host("mcsv-auth")
-                        .path("/validateTokenUrl")
+                        .path("/v1/validateTokenUrl")
                         .queryParam("jwt", token)
                         .queryParam("urlPath", urlPath)
                         .queryParam("method", method)

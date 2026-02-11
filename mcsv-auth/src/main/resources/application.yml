@@ -25,7 +25,7 @@ openapi:
     service:
         title: authorizer-service doc #title that you will want to display in the swagger ui
         version: 1.0.0
-        url: ${URLAPI:http://localhost:9090}/api/auth #api gateway url
+        url: ${URLAPI:http://localhost:9090}/v1/api/auth #api gateway url
 
 springdoc:
     api-docs:

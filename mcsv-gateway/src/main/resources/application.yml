@@ -38,22 +38,22 @@ spring:
         - id: mcsv-auth
           uri: lb://mcsv-auth
           predicates:
-            - Path=/api/auth/**
+            - Path=/v1/api/auth/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=3
         - id: mcsv-user
           uri: lb://mcsv-user
           predicates:
-            - Path=/api/user/**
+            - Path=/v1/api/user/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=3
             - AuthFilter
         - id: mcsv-role
           uri: lb://mcsv-user
           predicates:
-            - Path=/api/role/**
+            - Path=/v1/api/role/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=3
             - AuthFilter
 
 server:
