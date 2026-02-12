@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -16,7 +17,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "refresh_tokens", indexes = {
+    @Index(name = "idx_refresh_token_user_id", columnList = "user_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,9 +35,6 @@ public class RefreshToken {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
-
-    @Column(name = "username", nullable = false, length = 100)
-    private String username;
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;

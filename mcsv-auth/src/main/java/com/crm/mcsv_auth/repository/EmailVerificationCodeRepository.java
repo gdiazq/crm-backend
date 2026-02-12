@@ -11,10 +11,10 @@ import java.util.Optional;
 @Repository
 public interface EmailVerificationCodeRepository extends JpaRepository<EmailVerificationCode, Long> {
 
-    Optional<EmailVerificationCode> findByEmailAndCodeAndUsedFalse(String email, String code);
+    Optional<EmailVerificationCode> findByUserIdAndCodeAndUsedFalse(Long userId, String code);
 
     void deleteByExpiresAtBefore(LocalDateTime date);
 
     @Modifying
-    void deleteByEmailAndUsedFalse(String email);
+    void deleteByUserIdAndUsedFalse(Long userId);
 }

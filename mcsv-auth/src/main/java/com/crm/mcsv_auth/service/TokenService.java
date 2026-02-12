@@ -4,7 +4,7 @@ import com.crm.mcsv_auth.entity.RefreshToken;
 
 public interface TokenService {
 
-    RefreshToken createRefreshToken(Long userId, String username);
+    RefreshToken createRefreshToken(Long userId);
 
     RefreshToken validateRefreshToken(String token);
 

@@ -89,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Generar código de verificación y enviar email
         String code = generateVerificationCode();
-        saveVerificationCode(user.getId(), user.getEmail(), code);
+        saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("User registered successfully, verification email sent to: {}", user.getEmail());
@@ -149,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Generar tokens
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
-        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), user.getUsername());
+        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
 
         log.info("User logged in successfully: {}", user.getUsername());
 
@@ -201,7 +201,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Rotar refresh token
         tokenService.revokeRefreshToken(request.getRefreshToken());
-        RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId(), user.getUsername());
+        RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId());
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
 
@@ -264,7 +264,6 @@ public class AuthServiceImpl implements AuthService {
         PasswordResetToken resetToken = PasswordResetToken.builder()
                 .token(token)
                 .userId(user.getId())
-                .email(user.getEmail())
                 .expiresAt(expiresAt)
                 .used(false)
                 .build();
@@ -376,8 +375,11 @@ public class AuthServiceImpl implements AuthService {
     public Map<String, String> verifyEmail(VerifyEmailRequest request) {
         log.info("Email verification attempt for: {}", request.getEmail());
 
+        // Obtener usuario por email para buscar por userId
+        UserDTO user = getUserByEmail(request.getEmail());
+
         EmailVerificationCode verificationCode = emailVerificationCodeRepository
-                .findByEmailAndCodeAndUsedFalse(request.getEmail(), request.getCode())
+                .findByUserIdAndCodeAndUsedFalse(user.getId(), request.getCode())
                 .orElseThrow(() -> new AuthenticationException("Invalid verification code"));
 
         if (verificationCode.isExpired()) {
@@ -396,7 +398,6 @@ public class AuthServiceImpl implements AuthService {
         PasswordResetToken passwordToken = PasswordResetToken.builder()
                 .token(token)
                 .userId(verificationCode.getUserId())
-                .email(request.getEmail())
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .used(false)
                 .build();
@@ -422,11 +423,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Invalidar códigos anteriores
-        emailVerificationCodeRepository.deleteByEmailAndUsedFalse(email);
+        emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
         // Generar nuevo código y enviar
         String code = generateVerificationCode();
-        saveVerificationCode(user.getId(), user.getEmail(), code);
+        saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("Verification code resent to: {}", email);
@@ -447,11 +448,10 @@ public class AuthServiceImpl implements AuthService {
         return String.valueOf(code);
     }
 
-    private void saveVerificationCode(Long userId, String email, String code) {
+    private void saveVerificationCode(Long userId, String code) {
         EmailVerificationCode verificationCode = EmailVerificationCode.builder()
                 .code(code)
                 .userId(userId)
-                .email(email)
                 .expiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
                 .used(false)
                 .build();

@@ -28,8 +28,8 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     @Transactional
-    public RefreshToken createRefreshToken(Long userId, String username) {
-        log.info("Creating refresh token for user: {}", username);
+    public RefreshToken createRefreshToken(Long userId) {
+        log.info("Creating refresh token for userId: {}", userId);
 
         String plainToken = UUID.randomUUID().toString();
         String token = hashToken(plainToken);
@@ -38,7 +38,6 @@ public class TokenServiceImpl implements TokenService {
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(token)
                 .userId(userId)
-                .username(username)
                 .expiresAt(expiresAt)
                 .revoked(false)
                 .build();

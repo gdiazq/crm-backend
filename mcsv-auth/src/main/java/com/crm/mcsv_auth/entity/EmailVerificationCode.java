@@ -6,7 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "email_verification_codes")
+@Table(name = "email_verification_codes", indexes = {
+    @Index(name = "idx_email_verification_user_id", columnList = "user_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,9 +24,6 @@ public class EmailVerificationCode {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
-
-    @Column(nullable = false, length = 150)
-    private String email;
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
