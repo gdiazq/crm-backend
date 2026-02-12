@@ -1366,6 +1366,164 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Storage Service (gateway)",
+			"item": [
+				{
+					"name": "Upload File",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "uploadedBy",
+									"value": "{{userId}}",
+									"type": "text"
+								},
+								{
+									"key": "entityType",
+									"value": "USER_AVATAR",
+									"type": "text"
+								},
+								{
+									"key": "entityId",
+									"value": "{{userId}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrlStorage}}/upload",
+							"host": [
+								"{{baseUrlStorage}}"
+							],
+							"path": [
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download File",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrlStorage}}/download/1",
+							"host": [
+								"{{baseUrlStorage}}"
+							],
+							"path": [
+								"download",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete File",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrlStorage}}/1?userId={{userId}}",
+							"host": [
+								"{{baseUrlStorage}}"
+							],
+							"path": [
+								"1"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Files by Entity",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrlStorage}}/files?entityType=USER_AVATAR&entityId={{userId}}",
+							"host": [
+								"{{baseUrlStorage}}"
+							],
+							"path": [
+								"files"
+							],
+							"query": [
+								{
+									"key": "entityType",
+									"value": "USER_AVATAR"
+								},
+								{
+									"key": "entityId",
+									"value": "{{userId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get File Metadata",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrlStorage}}/files/1",
+							"host": [
+								"{{baseUrlStorage}}"
+							],
+							"path": [
+								"files",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
@@ -1387,6 +1545,11 @@
 		{
 			"key": "baseUrlNotification",
 			"value": "http://localhost:9090/v1/api/notification",
+			"type": "string"
+		},
+		{
+			"key": "baseUrlStorage",
+			"value": "http://localhost:9090/v1/api/storage",
 			"type": "string"
 		}
 	]

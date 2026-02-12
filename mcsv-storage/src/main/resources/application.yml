@@ -1,0 +1,40 @@
+server:
+  port: 9095
+
+spring:
+  application:
+    name: mcsv-storage
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET:crm-uploads}
+    region: ${AWS_REGION:us-east-1}
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+
+info:
+  app:
+    name: Storage Microservicio Server
+    description: Microservicio para manejar almacenamiento de archivos con AWS S3
+    version: 1.0.0
+
+openapi:
+  service:
+    title: storage-service doc
+    version: 1.0.0
+    url: ${URLAPI:http://localhost:9090}/api/storage
+
+springdoc:
+  api-docs:
+    path: /api/api-docs/storage
+  swagger-ui:
+    path: /api-docs/swagger-ui.html
