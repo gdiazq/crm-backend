@@ -39,4 +39,6 @@ public interface AuthService {
     void resendVerificationCode(String email);
 
     boolean checkEmailAvailability(String email);
+
+    AuthResponse.UserInfo getCurrentUser(String token);
 }

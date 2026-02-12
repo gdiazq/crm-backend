@@ -530,6 +530,29 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public AuthResponse.UserInfo getCurrentUser(String token) {
+        if (!jwtUtil.validateToken(token)) {
+            throw new AuthenticationException("Invalid or expired token");
+        }
+
+        Long userId = jwtUtil.extractUserId(token);
+        UserDTO user = getUserById(userId);
+
+        Set<String> roles = user.getRoles().stream()
+                .map(UserDTO.RoleDTO::getName)
+                .collect(Collectors.toSet());
+
+        return AuthResponse.UserInfo.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .roles(roles)
+                .build();
+    }
+
     private boolean validateCredentials(String usernameOrEmail, String password) {
         try {
             ResponseEntity<Boolean> response = userClient.validateCredentials(

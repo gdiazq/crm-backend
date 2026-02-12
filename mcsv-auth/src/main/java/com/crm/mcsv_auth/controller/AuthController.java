@@ -206,6 +206,14 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/me")
+    @Operation(summary = "Get current user", description = "Get authenticated user info from JWT token")
+    public ResponseEntity<AuthResponse.UserInfo> me(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
+        return ResponseEntity.ok(userInfo);
+    }
+
     @GetMapping("/validate")
     @Operation(summary = "Validate token", description = "Validate JWT access token")
     public ResponseEntity<Map<String, Boolean>> validateToken(@RequestHeader("Authorization") String authHeader) {
