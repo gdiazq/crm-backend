@@ -55,6 +55,19 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
+        - id: mcsv-notification-ws
+          uri: lb:ws://mcsv-notification
+          predicates:
+            - Path=/v1/api/notification/ws/**
+          filters:
+            - StripPrefix=3
+        - id: mcsv-notification
+          uri: lb://mcsv-notification
+          predicates:
+            - Path=/v1/api/notification/**
+          filters:
+            - StripPrefix=3
+            - AuthFilter
 
 server:
   port: 9090

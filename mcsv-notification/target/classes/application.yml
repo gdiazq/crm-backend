@@ -1,0 +1,32 @@
+server:
+  port: 9094
+
+spring:
+  application:
+    name: mcsv-notification
+
+  config:
+    import: "configserver:"
+
+  cloud:
+    config:
+      uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+info:
+  app:
+    name: Notification Microservicio Server
+    description: Microservicio para manejar notificaciones en tiempo real
+    version: 1.0.0
+
+# Configuración para Documentation swagger
+openapi:
+  service:
+    title: notification-service doc
+    version: 1.0.0
+    url: ${URLAPI:http://localhost:9090}/api/notification
+
+springdoc:
+  api-docs:
+    path: /api/api-docs/notification
+  swagger-ui:
+    path: /api-docs/swagger-ui.html

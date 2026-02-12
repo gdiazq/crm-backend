@@ -16,5 +16,6 @@
         <module>mcsv-auth</module>
         <module>mcsv-gateway</module>
         <module>mcsv-email</module>
+        <module>mcsv-notification</module>
     </modules>
 </project>

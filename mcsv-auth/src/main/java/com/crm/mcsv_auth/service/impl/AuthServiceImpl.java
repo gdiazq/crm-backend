@@ -1,11 +1,13 @@
 package com.crm.mcsv_auth.service.impl;
 
 import com.crm.mcsv_auth.client.EmailClient;
+import com.crm.mcsv_auth.client.NotificationClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.JwtConfig;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.EmailRequest;
+import com.crm.mcsv_auth.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
@@ -47,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserClient userClient;
     private final EmailClient emailClient;
+    private final NotificationClient notificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
@@ -90,6 +93,9 @@ public class AuthServiceImpl implements AuthService {
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("User registered successfully, verification email sent to: {}", user.getEmail());
+
+        // Enviar notificación de bienvenida
+        sendWelcomeNotification(user.getId(), user.getUsername());
 
         return Map.of("message", "Registration successful. Please check your email for the verification code.");
     }
@@ -153,6 +159,9 @@ public class AuthServiceImpl implements AuthService {
                 .userAgent(userAgent)
                 .deviceId(deviceId)
                 .build());
+
+        // Enviar notificación de bienvenida al login
+        sendLoginNotification(user.getId(), user.getUsername());
 
         // Construir respuesta
         return AuthResponse.builder()
@@ -493,6 +502,32 @@ public class AuthServiceImpl implements AuthService {
 
     private String generatePlaceholderPassword() {
         return "Tmp!" + UUID.randomUUID().toString();
+    }
+
+    private void sendWelcomeNotification(Long userId, String username) {
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(userId)
+                    .title("Bienvenido a CRM")
+                    .message("Hola " + username + ", tu cuenta ha sido creada exitosamente. Verifica tu correo para comenzar.")
+                    .type("SUCCESS")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send welcome notification to userId: {}", userId, e);
+        }
+    }
+
+    private void sendLoginNotification(Long userId, String username) {
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(userId)
+                    .title("Inicio de sesión")
+                    .message("Bienvenido de vuelta, " + username + ". Has iniciado sesión exitosamente.")
+                    .type("INFO")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send login notification to userId: {}", userId, e);
+        }
     }
 
     private boolean validateCredentials(String usernameOrEmail, String password) {
