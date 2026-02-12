@@ -1,0 +1,17 @@
+package com.crm.mcsv_notification.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TicketValidationResponse {
+
+    private boolean valid;
+    private Long userId;
+    private String errorMessage;
+}

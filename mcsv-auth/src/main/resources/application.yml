@@ -36,6 +36,14 @@ springdoc:
 url:
     recuperar-password: ${URL_FRONT:localhost:4200}
 
+cookie:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
+    domain: ${COOKIE_DOMAIN:}
+    path: /
+    access-token-max-age: 28800
+    refresh-token-max-age: 604800
+
 azure:
     tenant-id: AZURE_TENANT_ID
     client-id: YOUR_CLIENT_ID

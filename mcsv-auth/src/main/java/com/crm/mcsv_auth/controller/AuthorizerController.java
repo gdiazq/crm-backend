@@ -1,7 +1,9 @@
 package com.crm.mcsv_auth.controller;
 
+import com.crm.mcsv_auth.dto.TicketValidationResponse;
 import com.crm.mcsv_auth.dto.ValidationError;
 import com.crm.mcsv_auth.service.AuthService;
+import com.crm.mcsv_auth.service.WsTicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthorizerController {
 
     private final AuthService authService;
+    private final WsTicketService wsTicketService;
 
     @PostMapping("/v1/validateToken")
     public ValidationError validateToken(@RequestParam String jwt) {
@@ -33,6 +36,11 @@ public class AuthorizerController {
             return new ValidationError(true, null);
         }
         return new ValidationError(false, "Invalid token");
+    }
+
+    @PostMapping("/v1/validateTicket")
+    public TicketValidationResponse validateTicket(@RequestParam String ticket) {
+        return wsTicketService.validateAndConsumeTicket(ticket);
     }
 
     private String extractToken(String tokenHeader) {

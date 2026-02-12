@@ -8,8 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +28,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
 
     private final Logger logger = LoggerFactory.getLogger(AuthFilter.class);
     private static final String ERROR_SERVICE_UNAVAILABLE = "Servicio no disponible";
+    private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private final WebClient.Builder webClient;
 
@@ -55,28 +58,47 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                 return chain.filter(exchange);
             }
 
-            if (checkExchangeHeader(exchange)) {
+            ServerWebExchange mutatedExchange = injectAuthFromCookieIfNeeded(exchange);
+
+            if (checkExchangeHeader(mutatedExchange)) {
                 logger.error("Authentication header not present");
                 return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ERROR_SERVICE_UNAVAILABLE));
             }
 
-            if (checkExchangeHeaderToken(exchange)) {
+            if (checkExchangeHeaderToken(mutatedExchange)) {
                 logger.error("Authentication header jwt invalid format");
                 return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, ERROR_SERVICE_UNAVAILABLE));
             }
 
-            return checkExchangeValidToken(exchange).flatMap(valid -> {
+            return checkExchangeValidToken(mutatedExchange).flatMap(valid -> {
                 if (!valid.isValid()) {
                     return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, valid.getErrorMessage()));
                 }
-                return checkExchangeValidUrl(exchange).flatMap(validUrl -> {
+                return checkExchangeValidUrl(mutatedExchange).flatMap(validUrl -> {
                     if (!validUrl.isValid()) {
                         return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, validUrl.getErrorMessage()));
                     }
-                    return chain.filter(exchange);
+                    return chain.filter(mutatedExchange);
                 });
             });
         });
+    }
+
+    private ServerWebExchange injectAuthFromCookieIfNeeded(ServerWebExchange exchange) {
+        if (exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+            return exchange;
+        }
+
+        HttpCookie cookie = exchange.getRequest().getCookies().getFirst(ACCESS_TOKEN_COOKIE);
+        if (cookie == null || cookie.getValue().isBlank()) {
+            return exchange;
+        }
+
+        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + cookie.getValue())
+                .build();
+
+        return exchange.mutate().request(mutatedRequest).build();
     }
 
     private boolean checkExchangeHeader(ServerWebExchange exchange) {

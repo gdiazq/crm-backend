@@ -21,12 +21,15 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: '*'
+            allowedOrigins: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+            allowCredentials: true
             allowedHeaders:
               - Content-Type
               - Authorization
               - Connection
               - Upgrade
+              - X-Device-Id
+              - X-Username
             allowedMethods:
               - GET
               - POST

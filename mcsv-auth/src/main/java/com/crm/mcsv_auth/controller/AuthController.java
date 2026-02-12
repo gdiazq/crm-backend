@@ -11,14 +11,18 @@ import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
+import com.crm.mcsv_auth.dto.WsTicketResponse;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.RateLimiterService;
+import com.crm.mcsv_auth.service.WsTicketService;
+import com.crm.mcsv_auth.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +31,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,6 +40,8 @@ public class AuthController {
     private final AuthService authService;
     private final RateLimiterService rateLimiterService;
     private final MfaService mfaService;
+    private final CookieUtil cookieUtil;
+    private final WsTicketService wsTicketService;
 
     private static final int LOGIN_LIMIT = 5;
     private static final int FORGOT_PASSWORD_LIMIT = 3;
@@ -85,14 +90,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "User login", description = "Authenticate user and return access and refresh tokens")
+    @Operation(summary = "User login", description = "Authenticate user and return access and refresh tokens via cookies")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         String ipAddress = getClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         String deviceId = httpRequest.getHeader("X-Device-Id");
         rateLimiterService.checkRateLimit("login:" + ipAddress, LOGIN_LIMIT, WINDOW_SECONDS);
         AuthResponse response = authService.login(request, ipAddress, userAgent, deviceId);
-        return ResponseEntity.ok(response);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.createAccessTokenCookie(response.getAccessToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.createRefreshTokenCookie(response.getRefreshToken()).toString())
+                .body(response);
     }
 
     @PostMapping("/mfa/setup")
@@ -161,22 +170,60 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "Refresh access token", description = "Generate new access token using refresh token")
-    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        AuthResponse response = authService.refreshToken(request);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Refresh access token", description = "Generate new access token using refresh token from cookie")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @CookieValue(name = "refresh_token", required = false) String refreshTokenCookie,
+            @RequestBody(required = false) RefreshTokenRequest request
+    ) {
+        String refreshToken = refreshTokenCookie;
+        if (refreshToken == null || refreshToken.isBlank()) {
+            if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+                refreshToken = request.getRefreshToken();
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token is required");
+            }
+        }
+
+        RefreshTokenRequest tokenRequest = RefreshTokenRequest.builder()
+                .refreshToken(refreshToken)
+                .build();
+        AuthResponse response = authService.refreshToken(tokenRequest);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.createAccessTokenCookie(response.getAccessToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.createRefreshTokenCookie(response.getRefreshToken()).toString())
+                .body(response);
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "User logout", description = "Logout user and revoke refresh token")
-    public ResponseEntity<Map<String, String>> logout(@Valid @RequestBody RefreshTokenRequest request) {
-        boolean logoutAll = Boolean.TRUE.equals(request.getLogoutAll());
-        authService.logout(request.getRefreshToken(), logoutAll);
+    @Operation(summary = "User logout", description = "Logout user and revoke refresh token, clear cookies")
+    public ResponseEntity<Map<String, String>> logout(
+            @CookieValue(name = "refresh_token", required = false) String refreshTokenCookie,
+            @RequestBody(required = false) RefreshTokenRequest request
+    ) {
+        String refreshToken = refreshTokenCookie;
+        boolean logoutAll = false;
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+                refreshToken = request.getRefreshToken();
+            }
+        }
+        if (request != null && Boolean.TRUE.equals(request.getLogoutAll())) {
+            logoutAll = true;
+        }
+
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            authService.logout(refreshToken, logoutAll);
+        }
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logged out successfully");
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.clearAccessTokenCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.clearRefreshTokenCookie().toString())
+                .body(response);
     }
 
     @PostMapping("/forgot-password")
@@ -207,9 +254,12 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Get current user", description = "Get authenticated user info from JWT token")
-    public ResponseEntity<AuthResponse.UserInfo> me(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
+    @Operation(summary = "Get current user", description = "Get authenticated user info from JWT token (cookie or header)")
+    public ResponseEntity<AuthResponse.UserInfo> me(
+            @CookieValue(name = "access_token", required = false) String accessTokenCookie,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        String token = resolveToken(accessTokenCookie, authHeader);
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
         return ResponseEntity.ok(userInfo);
     }
@@ -224,6 +274,28 @@ public class AuthController {
         response.put("valid", isValid);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/ws-ticket")
+    @Operation(summary = "Get WebSocket ticket", description = "Generate a single-use ticket for WebSocket authentication")
+    public ResponseEntity<WsTicketResponse> getWsTicket(
+            @CookieValue(name = "access_token", required = false) String accessTokenCookie,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        String token = resolveToken(accessTokenCookie, authHeader);
+        AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
+        String ticket = wsTicketService.createTicket(userInfo.getId());
+        return ResponseEntity.ok(WsTicketResponse.builder().ticket(ticket).build());
+    }
+
+    private String resolveToken(String accessTokenCookie, String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        if (accessTokenCookie != null && !accessTokenCookie.isBlank()) {
+            return accessTokenCookie;
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authentication token provided");
     }
 
     private String getClientIp(HttpServletRequest request) {
