@@ -245,7 +245,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
-        log.info("Forgot password request for email: {}", request.getEmail());
+        log.info("Forgot password request");
 
         // Buscar usuario por email
         UserDTO user;
@@ -253,26 +253,19 @@ public class AuthServiceImpl implements AuthService {
             user = getUserByEmail(request.getEmail());
         } catch (Exception e) {
             // No revelar si el email existe o no por seguridad
-            log.warn("Forgot password requested for non-existent email: {}", request.getEmail());
+            log.warn("Forgot password requested for non-existent email");
             return;
         }
 
-        // Generar token de reseteo
-        String token = UUID.randomUUID().toString();
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
+        // Invalidar códigos anteriores
+        emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
-        PasswordResetToken resetToken = PasswordResetToken.builder()
-                .token(token)
-                .userId(user.getId())
-                .expiresAt(expiresAt)
-                .used(false)
-                .build();
+        // Generar código de verificación y enviar por email
+        String code = generateVerificationCode();
+        saveVerificationCode(user.getId(), code);
+        sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
-        passwordResetTokenRepository.save(resetToken);
-
-        // TODO: Enviar email con el token de reseteo
-        log.info("Password reset token created for user: {}", user.getUsername());
-        log.info("Reset token: {}", token); // En producción esto NO debe loguearse
+        log.info("Verification code sent for password reset to user: {}", user.getUsername());
     }
 
     @Override
