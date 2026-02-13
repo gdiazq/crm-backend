@@ -128,7 +128,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john@example.com\"\n}"
+							"raw": "{\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"+1234567890\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9090/v1/api/auth/resend-verification",

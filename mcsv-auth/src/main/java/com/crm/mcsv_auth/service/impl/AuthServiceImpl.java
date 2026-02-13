@@ -413,24 +413,34 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void resendVerificationCode(String email) {
-        log.info("Resend verification code request for: {}", email);
+    public void resendVerificationCode(String email, String phoneNumber) {
+        log.info("Resend verification code request");
 
-        UserDTO user = getUserByEmail(email);
+        UserDTO user;
+        try {
+            user = getUserByEmail(email);
+        } catch (Exception e) {
+            log.warn("Resend verification requested for non-existent email");
+            return;
+        }
 
         if (Boolean.TRUE.equals(user.getEmailVerified())) {
-            throw new AuthenticationException("Email is already verified");
+            return;
+        }
+
+        // Validar que el teléfono coincida con el registrado
+        if (user.getPhoneNumber() == null || !user.getPhoneNumber().equals(phoneNumber)) {
+            log.warn("Resend verification: phone number mismatch");
+            return;
         }
 
         // Invalidar códigos anteriores
         emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
-        // Generar nuevo código y enviar
+        // Generar nuevo código y enviar por email
         String code = generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
-
-        log.info("Verification code resent to: {}", email);
     }
 
     @Override

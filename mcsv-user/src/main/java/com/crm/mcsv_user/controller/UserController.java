@@ -109,7 +109,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{id}/verify-email")
+    @PutMapping("/{id}/verify-email")
     @Operation(summary = "Verify email", description = "Mark user email as verified")
     public ResponseEntity<Void> verifyEmail(@PathVariable Long id) {
         userService.verifyEmail(id);

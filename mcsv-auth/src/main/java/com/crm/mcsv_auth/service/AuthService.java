@@ -36,7 +36,7 @@ public interface AuthService {
 
     void createPassword(ResetPasswordRequest request);
 
-    void resendVerificationCode(String email);
+    void resendVerificationCode(String email, String phoneNumber);
 
     boolean checkEmailAvailability(String email);
 

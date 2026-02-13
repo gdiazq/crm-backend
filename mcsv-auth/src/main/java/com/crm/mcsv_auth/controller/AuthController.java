@@ -71,12 +71,13 @@ public class AuthController {
     }
 
     @PostMapping("/resend-verification")
-    @Operation(summary = "Resend verification code", description = "Resend email verification code")
+    @Operation(summary = "Resend verification code", description = "Resend email verification code after validating phone number")
     public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        authService.resendVerificationCode(email);
+        String phoneNumber = request.get("phoneNumber");
+        authService.resendVerificationCode(email, phoneNumber);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Verification code sent successfully");
+        response.put("message", "If the account exists, a verification code has been sent");
         return ResponseEntity.ok(response);
     }
 
