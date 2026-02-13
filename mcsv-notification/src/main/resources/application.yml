@@ -12,6 +12,12 @@ spring:
     config:
       uri: ${CONFIG_SERVER_URI:http://localhost:8888}
 
+notification:
+  cleanup:
+    cron: "0 0 3 * * *"
+    read-retention-days: 30
+    archived-retention-days: 60
+
 info:
   app:
     name: Notification Microservicio Server
