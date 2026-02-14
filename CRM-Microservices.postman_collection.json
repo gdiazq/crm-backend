@@ -1439,10 +1439,14 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:9090/v1/api/notification/read-all?userId={{userId}}",
+							"raw": "http://localhost:9090/v1/api/notification/read-all",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1453,13 +1457,11 @@
 								"api",
 								"notification",
 								"read-all"
-							],
-							"query": [
-								{
-									"key": "userId",
-									"value": "{{userId}}"
-								}
 							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}}\n}"
 						}
 					},
 					"response": []

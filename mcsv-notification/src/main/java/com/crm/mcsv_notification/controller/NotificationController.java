@@ -68,8 +68,8 @@ public class NotificationController {
 
     @PatchMapping("/read-all")
     @Operation(summary = "Mark all as read", description = "Mark all non-archived notifications as read")
-    public ResponseEntity<Void> markAllAsRead(@RequestParam Long userId) {
-        notificationService.markAllAsRead(userId);
+    public ResponseEntity<Void> markAllAsRead(@RequestBody Map<String, Long> body) {
+        notificationService.markAllAsRead(body.get("userId"));
         return ResponseEntity.ok().build();
     }
 
