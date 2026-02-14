@@ -71,9 +71,8 @@ public class UserController {
     @PutMapping("/update")
     @Operation(summary = "Update user", description = "Update an existing user")
     public ResponseEntity<UserResponse> updateUser(
-            @RequestParam Long id,
             @Valid @RequestBody UpdateUserRequest request) {
-        UserResponse updatedUser = userService.updateUser(id, request);
+        UserResponse updatedUser = userService.updateUser(request.getId(), request);
         return ResponseEntity.ok(updatedUser);
     }
 

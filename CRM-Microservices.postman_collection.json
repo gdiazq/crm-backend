@@ -978,10 +978,10 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john.updated@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe Updated\",\n  \"phoneNumber\": \"+0987654321\",\n  \"status\": true,\n  \"roleIds\": [1]\n}"
+									"raw": "{\n  \"id\": {{userId}},\n  \"email\": \"john.updated@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe Updated\",\n  \"phoneNumber\": \"+0987654321\",\n  \"status\": true,\n  \"roleIds\": [1]\n}"
 								},
 								"url": {
-									"raw": "http://localhost:9090/v1/api/user/update?id={{userId}}",
+									"raw": "http://localhost:9090/v1/api/user/update",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -992,12 +992,6 @@
 										"api",
 										"user",
 										"update"
-									],
-									"query": [
-										{
-											"key": "id",
-											"value": "{{userId}}"
-										}
 									]
 								}
 							},
