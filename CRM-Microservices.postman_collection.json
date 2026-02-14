@@ -369,7 +369,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"token\": \"reset-token-here\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+							"raw": "{\n  \"token\": \"{{passwordToken}}\",\n  \"newPassword\": \"NewPassword123!\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9090/v1/api/auth/reset-password",
