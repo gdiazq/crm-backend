@@ -41,4 +41,6 @@ public interface AuthService {
     boolean checkEmailAvailability(String email);
 
     AuthResponse.UserInfo getCurrentUser(String token);
+
+    boolean checkMfaStatus(String email);
 }

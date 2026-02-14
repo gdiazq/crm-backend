@@ -90,6 +90,16 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/pre-login")
+    @Operation(summary = "Pre-login check", description = "Check if user requires MFA before login")
+    public ResponseEntity<Map<String, Boolean>> preLogin(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        boolean mfaRequired = authService.checkMfaStatus(email);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("mfaRequired", mfaRequired);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user and return access and refresh tokens via cookies")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
@@ -143,10 +153,11 @@ public class AuthController {
     }
 
     @GetMapping("/mfa/status")
-    public ResponseEntity<MfaStatusResponse> mfaStatus(@RequestHeader("X-Username") String username) {
-        var user = authService.getUserByUsername(username);
+    @Operation(summary = "MFA status", description = "Check if MFA is enabled for a user by email")
+    public ResponseEntity<MfaStatusResponse> mfaStatus(@RequestParam String email) {
+        boolean enabled = authService.checkMfaStatus(email);
         return ResponseEntity.ok(MfaStatusResponse.builder()
-                .enabled(mfaService.isMfaEnabled(user.getId()))
+                .enabled(enabled)
                 .build());
     }
 

@@ -19,6 +19,7 @@ import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.exception.AuthenticationException;
+import com.crm.mcsv_auth.exception.MfaRequiredException;
 import com.crm.mcsv_auth.exception.TokenException;
 import com.crm.mcsv_auth.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
@@ -105,22 +106,19 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId) {
         log.info("Login attempt for: {}", request.getEmail());
 
-        // Validar credenciales con el microservicio de usuarios
+        // Validar credenciales
         boolean isValidCredentials = validateCredentials(request.getEmail(), request.getPassword());
-
         if (!isValidCredentials) {
             throw new AuthenticationException("Invalid username or password");
         }
 
-        // Obtener usuario del microservicio de usuarios (solo para obtener datos, no contraseña)
+        // Obtener usuario
         UserDTO user = getUserByUsernameOrEmail(request.getEmail());
 
+        // Validar código MFA si está habilitado
         if (mfaService.isMfaEnabled(user.getId())) {
-            if (deviceId == null || deviceId.isBlank()) {
-                throw new AuthenticationException("Device ID required for MFA");
-            }
             if (request.getTotpCode() == null || request.getTotpCode().isBlank()) {
-                throw new AuthenticationException("MFA code required");
+                throw new AuthenticationException("MFA code is required");
             }
             boolean mfaValid = mfaService.verifyTotp(user.getId(), request.getTotpCode());
             if (!mfaValid) {
@@ -558,6 +556,12 @@ public class AuthServiceImpl implements AuthService {
                 .avatarUrl(extractAvatarUrl(user))
                 .roles(roles)
                 .build();
+    }
+
+    @Override
+    public boolean checkMfaStatus(String email) {
+        UserDTO user = getUserByUsernameOrEmail(email);
+        return mfaService.isMfaEnabled(user.getId());
     }
 
     private String extractAvatarUrl(UserDTO user) {

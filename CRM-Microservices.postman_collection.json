@@ -176,6 +176,37 @@
 					"response": []
 				},
 				{
+					"name": "Pre-Login (MFA check)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9090/v1/api/auth/pre-login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"v1",
+								"api",
+								"auth",
+								"pre-login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Login",
 					"event": [
 						{
@@ -600,12 +631,12 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "X-Username",
-								"value": "johndoe"
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:9090/v1/api/auth/mfa/status",
+							"raw": "http://localhost:9090/v1/api/auth/mfa/status?email=john@example.com",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -617,6 +648,12 @@
 								"auth",
 								"mfa",
 								"status"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "john@example.com"
+								}
 							]
 						}
 					},

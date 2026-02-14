@@ -37,6 +37,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(MfaRequiredException.class)
+    public ResponseEntity<MfaErrorResponse> handleMfaRequiredException(
+            MfaRequiredException ex, WebRequest request) {
+        log.info("MFA required: {}", ex.getMessage());
+
+        MfaErrorResponse errorResponse = MfaErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .error("MFA Required")
+                .message(ex.getMessage())
+                .mfaRequired(true)
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(TokenException.class)
     public ResponseEntity<ErrorResponse> handleTokenException(
             TokenException ex, WebRequest request) {
@@ -116,5 +133,18 @@ public class GlobalExceptionHandler {
         private String message;
         private String path;
         private Map<String, String> validationErrors;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MfaErrorResponse {
+        private LocalDateTime timestamp;
+        private int status;
+        private String error;
+        private String message;
+        private boolean mfaRequired;
+        private String path;
     }
 }
