@@ -1,26 +1,33 @@
 package com.crm.mcsv_user.service.impl;
 
+import com.crm.mcsv_user.client.StorageClient;
 import com.crm.mcsv_user.dto.CreateUserRequest;
+import com.crm.mcsv_user.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
+import com.crm.mcsv_user.entity.UserProfile;
 import com.crm.mcsv_user.exception.DuplicateResourceException;
 import com.crm.mcsv_user.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
 import com.crm.mcsv_user.repository.RoleRepository;
+import com.crm.mcsv_user.repository.UserProfileRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,8 +38,10 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UserProfileRepository userProfileRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final StorageClient storageClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -246,5 +255,59 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("Email verified successfully for user id: {}", userId);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, String> uploadAvatar(Long userId, MultipartFile file) {
+        log.info("Uploading avatar for user id: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("File must be an image");
+        }
+
+        // Delete previous avatar from storage if exists
+        UserProfile profile = userProfileRepository.findByUserId(userId).orElse(null);
+        if (profile != null && profile.getAvatarUrl() != null) {
+            try {
+                ResponseEntity<List<FileMetadataResponse>> existing =
+                        storageClient.listByEntity("USER_AVATAR", userId);
+                if (existing.getBody() != null) {
+                    for (FileMetadataResponse meta : existing.getBody()) {
+                        storageClient.delete(meta.getId(), userId);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to delete previous avatar for user {}: {}", userId, e.getMessage());
+            }
+        }
+
+        // Upload new avatar to storage (public)
+        ResponseEntity<FileMetadataResponse> uploadResponse =
+                storageClient.upload(file, userId, "USER_AVATAR", userId, true);
+
+        if (uploadResponse.getBody() == null || uploadResponse.getBody().getUrl() == null) {
+            throw new RuntimeException("Failed to upload avatar to storage");
+        }
+
+        String avatarUrl = uploadResponse.getBody().getUrl();
+
+        // Save URL in UserProfile
+        if (profile == null) {
+            profile = UserProfile.builder()
+                    .user(user)
+                    .avatarUrl(avatarUrl)
+                    .build();
+        } else {
+            profile.setAvatarUrl(avatarUrl);
+        }
+        userProfileRepository.save(profile);
+
+        log.info("Avatar uploaded successfully for user id: {}", userId);
+        return Map.of("avatarUrl", avatarUrl);
     }
 }

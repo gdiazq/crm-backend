@@ -8,6 +8,12 @@ spring:
     config:
         import: "configserver:"
 
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 5MB
+            max-request-size: 5MB
+
     cloud:
         config:
             uri: ${CONFIG_SERVER_URI:http://localhost:8888}

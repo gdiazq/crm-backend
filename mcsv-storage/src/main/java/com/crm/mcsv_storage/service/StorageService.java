@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface StorageService {
 
-    FileMetadataResponse upload(MultipartFile file, Long uploadedBy, String entityType, Long entityId);
+    FileMetadataResponse upload(MultipartFile file, Long uploadedBy, String entityType, Long entityId, Boolean isPublic);
 
     String getPresignedUrl(Long id);
 

@@ -1092,6 +1092,44 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Upload Avatar",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": ""
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:9090/v1/api/user/{{userId}}/avatar",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9090",
+									"path": [
+										"v1",
+										"api",
+										"user",
+										"{{userId}}",
+										"avatar"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},

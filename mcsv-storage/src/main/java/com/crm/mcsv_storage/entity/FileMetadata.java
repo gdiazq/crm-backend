@@ -54,6 +54,10 @@ public class FileMetadata {
     @Column(name = "entity_id")
     private Long entityId;
 
+    @Column(name = "is_public", nullable = false)
+    @Builder.Default
+    private Boolean isPublic = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

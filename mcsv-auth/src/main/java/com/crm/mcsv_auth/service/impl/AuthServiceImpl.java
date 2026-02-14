@@ -175,6 +175,7 @@ public class AuthServiceImpl implements AuthService {
                         .email(user.getEmail())
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
+                        .avatarUrl(extractAvatarUrl(user))
                         .roles(roles)
                         .build())
                 .build();
@@ -216,6 +217,7 @@ public class AuthServiceImpl implements AuthService {
                         .email(user.getEmail())
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
+                        .avatarUrl(extractAvatarUrl(user))
                         .roles(roles)
                         .build())
                 .build();
@@ -553,8 +555,16 @@ public class AuthServiceImpl implements AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .phoneNumber(user.getPhoneNumber())
+                .avatarUrl(extractAvatarUrl(user))
                 .roles(roles)
                 .build();
+    }
+
+    private String extractAvatarUrl(UserDTO user) {
+        if (user.getProfile() != null) {
+            return user.getProfile().getAvatarUrl();
+        }
+        return null;
     }
 
     private boolean validateCredentials(String usernameOrEmail, String password) {

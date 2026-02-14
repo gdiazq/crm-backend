@@ -4,8 +4,10 @@ import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
 
@@ -34,4 +36,6 @@ public interface UserService {
     void updatePassword(Long userId, String newPassword);
 
     void verifyEmail(Long userId);
+
+    Map<String, String> uploadAvatar(Long userId, MultipartFile file);
 }

@@ -15,6 +15,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -37,25 +38,32 @@ public class StorageServiceImpl implements StorageService {
     @Value("${aws.s3.bucket}")
     private String bucket;
 
+    @Value("${aws.s3.region}")
+    private String region;
+
     @Override
     @Transactional
-    public FileMetadataResponse upload(MultipartFile file, Long uploadedBy, String entityType, Long entityId) {
+    public FileMetadataResponse upload(MultipartFile file, Long uploadedBy, String entityType, Long entityId, Boolean isPublic) {
         if (file.isEmpty()) {
             throw new StorageException("Cannot upload empty file");
         }
 
+        boolean publicFile = Boolean.TRUE.equals(isPublic);
         String originalFileName = file.getOriginalFilename();
         String s3Key = buildS3Key(entityType, entityId, originalFileName);
 
         try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            PutObjectRequest.Builder putBuilder = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(s3Key)
-                    .contentType(file.getContentType())
-                    .build();
+                    .contentType(file.getContentType());
 
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
-            log.info("File uploaded to S3: {}", s3Key);
+            if (publicFile) {
+                putBuilder.acl(ObjectCannedACL.PUBLIC_READ);
+            }
+
+            s3Client.putObject(putBuilder.build(), RequestBody.fromBytes(file.getBytes()));
+            log.info("File uploaded to S3: {} (public={})", s3Key, publicFile);
         } catch (IOException e) {
             throw new StorageException("Failed to read file content", e);
         } catch (Exception e) {
@@ -71,6 +79,7 @@ public class StorageServiceImpl implements StorageService {
                 .uploadedBy(uploadedBy)
                 .entityType(entityType)
                 .entityId(entityId)
+                .isPublic(publicFile)
                 .build();
 
         FileMetadata saved = fileMetadataRepository.save(metadata);
@@ -146,11 +155,18 @@ public class StorageServiceImpl implements StorageService {
     }
 
     private FileMetadataResponse toResponse(FileMetadata metadata) {
+        String url = null;
+        if (Boolean.TRUE.equals(metadata.getIsPublic())) {
+            url = String.format("https://%s.s3.%s.amazonaws.com/%s",
+                    metadata.getBucket(), region, metadata.getS3Key());
+        }
+
         return FileMetadataResponse.builder()
                 .id(metadata.getId())
                 .fileName(metadata.getFileName())
                 .contentType(metadata.getContentType())
                 .size(metadata.getSize())
+                .url(url)
                 .entityType(metadata.getEntityType())
                 .entityId(metadata.getEntityId())
                 .createdAt(metadata.getCreatedAt())

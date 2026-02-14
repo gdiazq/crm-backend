@@ -32,8 +32,9 @@ public class StorageController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("uploadedBy") Long uploadedBy,
             @RequestParam(value = "entityType", required = false) String entityType,
-            @RequestParam(value = "entityId", required = false) Long entityId) {
-        FileMetadataResponse response = storageService.upload(file, uploadedBy, entityType, entityId);
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "isPublic", defaultValue = "false") Boolean isPublic) {
+        FileMetadataResponse response = storageService.upload(file, uploadedBy, entityType, entityId, isPublic);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
