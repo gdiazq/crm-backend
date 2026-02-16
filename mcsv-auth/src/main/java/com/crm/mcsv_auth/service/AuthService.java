@@ -3,11 +3,15 @@ package com.crm.mcsv_auth.service;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
+import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
+import com.crm.mcsv_auth.dto.UserDTO;
+import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 
+import java.util.List;
 import java.util.Map;
 
 public interface AuthService {
@@ -26,11 +30,11 @@ public interface AuthService {
 
     boolean validateToken(String token);
 
-    com.crm.mcsv_auth.dto.UserDTO getUserByUsername(String username);
+    UserDTO getUserByUsername(String username);
 
     void logoutDevice(Long userId, String deviceId);
 
-    java.util.List<com.crm.mcsv_auth.dto.UserSessionDto> listActiveSessions(Long userId);
+    List<UserSessionDto> listActiveSessions(Long userId);
 
     Map<String, String> verifyEmail(VerifyEmailRequest request);
 
@@ -43,4 +47,6 @@ public interface AuthService {
     AuthResponse.UserInfo getCurrentUser(String token);
 
     boolean checkMfaStatus(String email);
+
+    MfaStatusResponse getMfaStatusByEmail(String email);
 }

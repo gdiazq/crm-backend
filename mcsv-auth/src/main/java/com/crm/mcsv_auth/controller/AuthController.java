@@ -153,12 +153,10 @@ public class AuthController {
     }
 
     @GetMapping("/mfa/status/{email}")
-    @Operation(summary = "MFA status", description = "Check if MFA is enabled for a user by email")
+    @Operation(summary = "MFA status", description = "Get MFA status, verification and last verification date for a user by email")
     public ResponseEntity<MfaStatusResponse> mfaStatus(@PathVariable String email) {
-        boolean enabled = authService.checkMfaStatus(email);
-        return ResponseEntity.ok(MfaStatusResponse.builder()
-                .status(enabled)
-                .build());
+        MfaStatusResponse mfaStatus = authService.getMfaStatusByEmail(email);
+        return ResponseEntity.ok(mfaStatus);
     }
 
     @PostMapping("/logout-device")

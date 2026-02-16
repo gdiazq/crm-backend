@@ -10,6 +10,7 @@ import com.crm.mcsv_auth.dto.EmailRequest;
 import com.crm.mcsv_auth.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
+import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
@@ -562,6 +563,12 @@ public class AuthServiceImpl implements AuthService {
     public boolean checkMfaStatus(String email) {
         UserDTO user = getUserByUsernameOrEmail(email);
         return mfaService.isMfaEnabled(user.getId());
+    }
+
+    @Override
+    public MfaStatusResponse getMfaStatusByEmail(String email) {
+        UserDTO user = getUserByUsernameOrEmail(email);
+        return mfaService.getMfaStatus(user.getId());
     }
 
     private String extractAvatarUrl(UserDTO user) {

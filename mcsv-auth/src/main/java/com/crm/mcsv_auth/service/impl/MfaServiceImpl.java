@@ -1,6 +1,7 @@
 package com.crm.mcsv_auth.service.impl;
 
 import com.crm.mcsv_auth.dto.MfaSetupResponse;
+import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.entity.UserMfa;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.repository.UserMfaRepository;
@@ -71,6 +72,22 @@ public class MfaServiceImpl implements MfaService {
         return userMfaRepository.findByUserId(userId)
                 .map(UserMfa::getEnabled)
                 .orElse(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MfaStatusResponse getMfaStatus(Long userId) {
+        return userMfaRepository.findByUserId(userId)
+                .map(mfa -> MfaStatusResponse.builder()
+                        .status(mfa.getEnabled())
+                        .verified(mfa.getVerifiedAt() != null)
+                        .lastVerification(mfa.getVerifiedAt())
+                        .build())
+                .orElse(MfaStatusResponse.builder()
+                        .status(false)
+                        .verified(false)
+                        .lastVerification(null)
+                        .build());
     }
 
     @Override
