@@ -636,7 +636,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:9090/v1/api/auth/mfa/status?email=john@example.com",
+							"raw": "http://localhost:9090/v1/api/auth/mfa/status/john@example.com",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -647,13 +647,8 @@
 								"api",
 								"auth",
 								"mfa",
-								"status"
-							],
-							"query": [
-								{
-									"key": "email",
-									"value": "john@example.com"
-								}
+								"status",
+								"john@example.com"
 							]
 						}
 					},

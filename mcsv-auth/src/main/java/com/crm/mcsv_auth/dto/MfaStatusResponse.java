@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class MfaStatusResponse {
-    private boolean enabled;
+    private boolean status;
 }

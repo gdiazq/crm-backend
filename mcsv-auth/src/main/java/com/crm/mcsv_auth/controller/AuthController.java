@@ -152,12 +152,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/mfa/status")
+    @GetMapping("/mfa/status/{email}")
     @Operation(summary = "MFA status", description = "Check if MFA is enabled for a user by email")
-    public ResponseEntity<MfaStatusResponse> mfaStatus(@RequestParam String email) {
+    public ResponseEntity<MfaStatusResponse> mfaStatus(@PathVariable String email) {
         boolean enabled = authService.checkMfaStatus(email);
         return ResponseEntity.ok(MfaStatusResponse.builder()
-                .enabled(enabled)
+                .status(enabled)
                 .build());
     }
 
