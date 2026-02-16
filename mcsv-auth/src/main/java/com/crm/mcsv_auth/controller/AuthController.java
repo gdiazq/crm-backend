@@ -160,22 +160,33 @@ public class AuthController {
     }
 
     @PostMapping("/logout-device")
+    @Operation(summary = "Logout session", description = "Revoke a specific session by its ID")
     public ResponseEntity<Map<String, String>> logoutDevice(
-            @RequestHeader("X-Username") String username,
-            HttpServletRequest httpRequest
+            @CookieValue(name = "access_token", required = false) String accessTokenCookie,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Long> body
     ) {
-        String deviceId = getRequiredDeviceId(httpRequest);
-        var user = authService.getUserByUsername(username);
-        authService.logoutDevice(user.getId(), deviceId);
+        String token = resolveToken(accessTokenCookie, authHeader);
+        AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
+        Long sessionId = body.get("sessionId");
+        if (sessionId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sessionId is required");
+        }
+        authService.logoutSession(userInfo.getId(), sessionId);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Device logged out");
+        response.put("message", "Session closed successfully");
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/sessions")
-    public ResponseEntity<List<UserSessionDto>> listSessions(@RequestHeader("X-Username") String username) {
-        var user = authService.getUserByUsername(username);
-        List<UserSessionDto> sessions = authService.listActiveSessions(user.getId());
+    @Operation(summary = "List active sessions", description = "List all active sessions for the authenticated user")
+    public ResponseEntity<List<UserSessionDto>> listSessions(
+            @CookieValue(name = "access_token", required = false) String accessTokenCookie,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        String token = resolveToken(accessTokenCookie, authHeader);
+        AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
+        List<UserSessionDto> sessions = authService.listActiveSessions(userInfo.getId());
         return ResponseEntity.ok(sessions);
     }
 

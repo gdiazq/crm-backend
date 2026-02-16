@@ -19,6 +19,7 @@ import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
+import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.exception.MfaRequiredException;
 import com.crm.mcsv_auth.exception.TokenException;
@@ -152,7 +153,17 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User logged in successfully: {}", user.getUsername());
 
-        userSessionRepository.save(com.crm.mcsv_auth.entity.UserSession.builder()
+        // Revocar sesión anterior del mismo dispositivo
+        if (deviceId != null && !deviceId.isBlank()) {
+            userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(user.getId(), deviceId)
+                    .ifPresent(oldSession -> {
+                        oldSession.setRevoked(true);
+                        oldSession.setRevokedAt(LocalDateTime.now());
+                        userSessionRepository.save(oldSession);
+                    });
+        }
+
+        userSessionRepository.save(UserSession.builder()
                 .userId(user.getId())
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
@@ -239,6 +250,13 @@ public class AuthServiceImpl implements AuthService {
             log.info("User logged out from all devices");
         } else {
             tokenService.revokeRefreshToken(refreshToken);
+            // Revocar la sesión más reciente del usuario
+            userSessionRepository.findFirstByUserIdAndRevokedFalseOrderByCreatedAtDesc(token.getUserId())
+                    .ifPresent(session -> {
+                        session.setRevoked(true);
+                        session.setRevokedAt(LocalDateTime.now());
+                        userSessionRepository.save(session);
+                    });
             log.info("User logged out successfully");
         }
     }
@@ -306,6 +324,16 @@ public class AuthServiceImpl implements AuthService {
                     session.setRevokedAt(LocalDateTime.now());
                     userSessionRepository.save(session);
                 });
+    }
+
+    @Override
+    @Transactional
+    public void logoutSession(Long userId, Long sessionId) {
+        UserSession session = userSessionRepository.findByIdAndUserIdAndRevokedFalse(sessionId, userId)
+                .orElseThrow(() -> new AuthenticationException("Session not found"));
+        session.setRevoked(true);
+        session.setRevokedAt(LocalDateTime.now());
+        userSessionRepository.save(session);
     }
 
     @Override

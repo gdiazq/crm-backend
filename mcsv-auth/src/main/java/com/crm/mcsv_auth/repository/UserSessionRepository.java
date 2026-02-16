@@ -12,4 +12,6 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     List<UserSession> findByUserId(Long userId);
     List<UserSession> findByUserIdAndRevokedFalse(Long userId);
     Optional<UserSession> findByUserIdAndDeviceIdAndRevokedFalse(Long userId, String deviceId);
+    Optional<UserSession> findByIdAndUserIdAndRevokedFalse(Long id, Long userId);
+    Optional<UserSession> findFirstByUserIdAndRevokedFalseOrderByCreatedAtDesc(Long userId);
 }

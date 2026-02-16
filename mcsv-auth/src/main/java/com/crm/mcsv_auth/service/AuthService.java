@@ -34,6 +34,8 @@ public interface AuthService {
 
     void logoutDevice(Long userId, String deviceId);
 
+    void logoutSession(Long userId, Long sessionId);
+
     List<UserSessionDto> listActiveSessions(Long userId);
 
     Map<String, String> verifyEmail(VerifyEmailRequest request);
