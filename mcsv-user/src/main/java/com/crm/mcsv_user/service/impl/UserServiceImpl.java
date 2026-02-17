@@ -48,8 +48,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAllUsers(Pageable pageable) {
-        log.info("Fetching users page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
+    public Page<UserResponse> getAllUsers(String search, Pageable pageable) {
+        log.info("Fetching users page: {}, size: {}, search: {}", pageable.getPageNumber(), pageable.getPageSize(), search);
+        if (search != null && !search.isBlank()) {
+            return userRepository.searchUsers(search.trim(), pageable)
+                    .map(userMapper::toResponse);
+        }
         return userRepository.findAll(pageable)
                 .map(userMapper::toResponse);
     }

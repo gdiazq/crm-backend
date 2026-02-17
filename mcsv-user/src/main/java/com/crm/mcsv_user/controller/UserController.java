@@ -37,12 +37,13 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/paged")
-    @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users")
+    @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users with optional search")
     public ResponseEntity<Page<UserResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<UserResponse> users = userService.getAllUsers(pageable);
+        Page<UserResponse> users = userService.getAllUsers(search, pageable);
         return ResponseEntity.ok(users);
     }
 

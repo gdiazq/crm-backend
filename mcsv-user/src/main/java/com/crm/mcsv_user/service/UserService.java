@@ -13,7 +13,7 @@ import java.util.Map;
 
 public interface UserService {
 
-    Page<UserResponse> getAllUsers(Pageable pageable);
+    Page<UserResponse> getAllUsers(String search, Pageable pageable);
 
     UserDTO getUserById(Long id);
 
