@@ -234,7 +234,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\"\n}"
+							"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\",\n  \"totpCode\": \"\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9090/v1/api/auth/login",
@@ -696,8 +696,8 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "X-Username",
-								"value": "johndoe"
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
 							}
 						],
 						"url": {
@@ -723,12 +723,12 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "X-Username",
-								"value": "johndoe"
+								"key": "Content-Type",
+								"value": "application/json"
 							},
 							{
-								"key": "X-Device-Id",
-								"value": "device-123"
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
 							}
 						],
 						"url": {
@@ -744,6 +744,10 @@
 								"auth",
 								"logout-device"
 							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": 1\n}"
 						}
 					},
 					"response": []
@@ -842,7 +846,7 @@
 									}
 								],
 								"url": {
-									"raw": "http://localhost:9090/v1/api/user/paged",
+									"raw": "http://localhost:9090/v1/api/user/paged?page=0&size=10",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -853,6 +857,16 @@
 										"api",
 										"user",
 										"paged"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
 									]
 								}
 							},

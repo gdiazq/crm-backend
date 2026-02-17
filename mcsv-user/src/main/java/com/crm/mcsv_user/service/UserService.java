@@ -4,6 +4,8 @@ import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -11,7 +13,7 @@ import java.util.Map;
 
 public interface UserService {
 
-    List<UserResponse> getAllUsers();
+    Page<UserResponse> getAllUsers(Pageable pageable);
 
     UserDTO getUserById(Long id);
 
