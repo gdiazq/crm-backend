@@ -2,6 +2,7 @@ package com.crm.mcsv_auth.service.impl;
 
 import com.crm.mcsv_auth.client.GitHubApiClient;
 import com.crm.mcsv_auth.client.GitHubTokenClient;
+import com.crm.mcsv_auth.client.NotificationClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.GitHubOAuth2Config;
 import com.crm.mcsv_auth.config.JwtConfig;
@@ -9,6 +10,7 @@ import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.GitHubTokenResponse;
 import com.crm.mcsv_auth.dto.GitHubUserInfo;
+import com.crm.mcsv_auth.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
@@ -42,6 +44,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
     private final TokenService tokenService;
     private final UserSessionRepository userSessionRepository;
     private final JwtConfig jwtConfig;
+    private final NotificationClient notificationClient;
 
     @Override
     public String buildAuthorizationUrl() {
@@ -79,10 +82,14 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         }
 
         // 3. Buscar o crear usuario
-        UserDTO user = findOrCreateUser(githubUser);
+        boolean[] isNewUser = {false};
+        UserDTO user = findOrCreateUser(githubUser, isNewUser);
 
-        // 4. Actualizar last login
+        // 4. Actualizar last login y avatar de GitHub
         userClient.updateLastLogin(user.getId());
+        if (githubUser.getAvatarUrl() != null) {
+            userClient.updateAvatarUrl(user.getId(), java.util.Map.of("avatarUrl", githubUser.getAvatarUrl()));
+        }
 
         // 5. Generar tokens
         Set<String> roles = user.getRoles().stream()
@@ -109,6 +116,13 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
                 .deviceId(deviceId)
                 .build());
 
+        // 7. Enviar notificación
+        if (isNewUser[0]) {
+            sendWelcomeNotification(user.getId(), user.getUsername());
+        } else {
+            sendLoginNotification(user.getId(), user.getUsername());
+        }
+
         String avatarUrl = user.getProfile() != null ? user.getProfile().getAvatarUrl() : null;
 
         return AuthResponse.builder()
@@ -128,7 +142,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
                 .build();
     }
 
-    private UserDTO findOrCreateUser(GitHubUserInfo githubUser) {
+    private UserDTO findOrCreateUser(GitHubUserInfo githubUser, boolean[] isNewUser) {
         // Buscar por email
         try {
             ResponseEntity<UserDTO> response = userClient.getUserByEmail(githubUser.getEmail());
@@ -161,6 +175,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         // Marcar email como verificado (GitHub ya lo verificó)
         userClient.verifyEmail(response.getBody().getId());
 
+        isNewUser[0] = true;
         log.info("New user created from GitHub login: {}", username);
         return response.getBody();
     }
@@ -184,5 +199,31 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
             return new String[]{fullName, ""};
         }
         return new String[]{fullName.substring(0, space), fullName.substring(space + 1)};
+    }
+
+    private void sendWelcomeNotification(Long userId, String username) {
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(userId)
+                    .title("Bienvenido a CRM")
+                    .message("Hola " + username + ", tu cuenta ha sido creada exitosamente con GitHub.")
+                    .type("SUCCESS")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send welcome notification to userId: {}", userId, e);
+        }
+    }
+
+    private void sendLoginNotification(Long userId, String username) {
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(userId)
+                    .title("Inicio de sesión")
+                    .message("Bienvenido de vuelta, " + username + ". Has iniciado sesión con GitHub.")
+                    .type("INFO")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send login notification to userId: {}", userId, e);
+        }
     }
 }

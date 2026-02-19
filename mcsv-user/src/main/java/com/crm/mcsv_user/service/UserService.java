@@ -29,6 +29,8 @@ public interface UserService {
 
     void updateLastLogin(Long userId);
 
+    void updateAvatarUrl(Long userId, String avatarUrl);
+
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);

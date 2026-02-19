@@ -83,11 +83,11 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    @PostMapping("/deactivate/{id}")
-    @Operation(summary = "Deactivate user", description = "Deactivate a user by their ID")
-    public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
+    @PutMapping("/{id}/status")
+    @Operation(summary = "Toggle user status", description = "Enable or disable a user by their ID")
+    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         UpdateUserRequest request = UpdateUserRequest.builder()
-                .status(false)
+                .status(body.get("status"))
                 .build();
         userService.updateUser(id, request);
         return ResponseEntity.ok().build();
@@ -129,6 +129,13 @@ public class UserController {
     @Operation(summary = "Update last login", description = "Update the last login timestamp for a user")
     public ResponseEntity<Void> updateLastLogin(@PathVariable Long id) {
         userService.updateLastLogin(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/avatar-url")
+    @Operation(summary = "Update avatar URL", description = "Set avatar URL directly without uploading to storage")
+    public ResponseEntity<Void> updateAvatarUrl(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        userService.updateAvatarUrl(id, body.get("avatarUrl"));
         return ResponseEntity.ok().build();
     }
 

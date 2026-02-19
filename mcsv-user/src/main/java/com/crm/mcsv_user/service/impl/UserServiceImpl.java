@@ -191,6 +191,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public void updateAvatarUrl(Long userId, String avatarUrl) {
+        log.info("Updating avatar URL for user id: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        UserProfile profile = userProfileRepository.findByUserId(userId).orElse(null);
+        if (profile == null) {
+            profile = UserProfile.builder()
+                    .user(user)
+                    .avatarUrl(avatarUrl)
+                    .build();
+        } else {
+            profile.setAvatarUrl(avatarUrl);
+        }
+        userProfileRepository.save(profile);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
