@@ -56,3 +56,4 @@ github:
         client-secret: ${GITHUB_CLIENT_SECRET:}
         redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:9090/v1/api/auth/oauth2/github/callback}
         scope: user:email
+        frontend-success-url: ${URL_FRONT:http://localhost:4200}/dashboard

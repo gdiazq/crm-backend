@@ -125,6 +125,13 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/last-login")
+    @Operation(summary = "Update last login", description = "Update the last login timestamp for a user")
+    public ResponseEntity<Void> updateLastLogin(@PathVariable Long id) {
+        userService.updateLastLogin(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload avatar", description = "Upload user avatar image")
     public ResponseEntity<Map<String, String>> uploadAvatar(

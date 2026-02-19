@@ -12,4 +12,5 @@ public class GitHubOAuth2Config {
     private String clientSecret;
     private String redirectUri;
     private String scope = "user:email";
+    private String frontendSuccessUrl;
 }

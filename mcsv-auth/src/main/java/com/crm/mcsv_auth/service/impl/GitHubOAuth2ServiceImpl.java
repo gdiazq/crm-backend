@@ -81,7 +81,10 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         // 3. Buscar o crear usuario
         UserDTO user = findOrCreateUser(githubUser);
 
-        // 4. Generar tokens
+        // 4. Actualizar last login
+        userClient.updateLastLogin(user.getId());
+
+        // 5. Generar tokens
         Set<String> roles = user.getRoles().stream()
                 .map(UserDTO.RoleDTO::getName)
                 .collect(Collectors.toSet());
@@ -89,7 +92,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
         RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
 
-        // 5. Revocar sesión anterior del mismo dispositivo si aplica
+        // 6. Revocar sesión anterior del mismo dispositivo si aplica
         if (deviceId != null && !deviceId.isBlank()) {
             userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(user.getId(), deviceId)
                     .ifPresent(oldSession -> {
@@ -144,7 +147,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         CreateUserInternalRequest createRequest = CreateUserInternalRequest.builder()
                 .username(username)
                 .email(githubUser.getEmail())
-                .password(UUID.randomUUID().toString()) // password aleatorio, no lo usará
+                .password("Gh@" + UUID.randomUUID().toString().toUpperCase().replace("-", "1")) // password aleatorio, no lo usará
                 .firstName(nameParts[0])
                 .lastName(nameParts[1])
                 .roleIds(Set.of(1L)) // ROLE_USER por defecto

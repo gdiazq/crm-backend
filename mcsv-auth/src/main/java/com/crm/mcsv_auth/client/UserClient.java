@@ -39,6 +39,9 @@ public interface UserClient {
     @PutMapping("/{id}/verify-email")
     ResponseEntity<Void> verifyEmail(@PathVariable("id") Long id);
 
+    @PutMapping("/{id}/last-login")
+    ResponseEntity<Void> updateLastLogin(@PathVariable("id") Long id);
+
     class UpdatePasswordRequest {
         private Long userId;
         private String newPassword;

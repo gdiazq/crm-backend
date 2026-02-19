@@ -1,5 +1,6 @@
 package com.crm.mcsv_auth.controller;
 
+import com.crm.mcsv_auth.config.GitHubOAuth2Config;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.service.GitHubOAuth2Service;
 import com.crm.mcsv_auth.util.CookieUtil;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +26,7 @@ public class OAuth2Controller {
 
     private final GitHubOAuth2Service gitHubOAuth2Service;
     private final CookieUtil cookieUtil;
+    private final GitHubOAuth2Config gitHubOAuth2Config;
 
     @GetMapping("/github")
     @Operation(summary = "GitHub OAuth2 URL", description = "Returns the GitHub authorization URL to redirect the user")
@@ -33,8 +36,8 @@ public class OAuth2Controller {
     }
 
     @GetMapping("/github/callback")
-    @Operation(summary = "GitHub OAuth2 callback", description = "Exchanges the GitHub code for a JWT and returns user info")
-    public ResponseEntity<AuthResponse> githubCallback(
+    @Operation(summary = "GitHub OAuth2 callback", description = "Exchanges the GitHub code for a JWT, sets cookies and redirects to frontend")
+    public ResponseEntity<Void> githubCallback(
             @RequestParam("code") String code,
             HttpServletRequest httpRequest
     ) {
@@ -44,9 +47,10 @@ public class OAuth2Controller {
 
         AuthResponse response = gitHubOAuth2Service.authenticate(code, ipAddress, userAgent, deviceId);
 
-        return ResponseEntity.ok()
+        return ResponseEntity.status(HttpStatus.FOUND)
                 .header(HttpHeaders.SET_COOKIE, cookieUtil.createAccessTokenCookie(response.getAccessToken()).toString())
                 .header(HttpHeaders.SET_COOKIE, cookieUtil.createRefreshTokenCookie(response.getRefreshToken()).toString())
-                .body(response);
+                .header(HttpHeaders.LOCATION, gitHubOAuth2Config.getFrontendSuccessUrl())
+                .build();
     }
 }
