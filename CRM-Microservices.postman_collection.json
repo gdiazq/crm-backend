@@ -826,6 +826,80 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "GitHub OAuth2 - Get Auth URL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9090/v1/api/auth/oauth2/github",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"v1",
+								"api",
+								"auth",
+								"oauth2",
+								"github"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GitHub OAuth2 - Callback",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"accessToken\", jsonData.accessToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"    pm.environment.set(\"userId\", jsonData.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Device-Id",
+								"value": "{{deviceId}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:9090/v1/api/auth/oauth2/github/callback?code=GITHUB_CODE_HERE",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9090",
+							"path": [
+								"v1",
+								"api",
+								"auth",
+								"oauth2",
+								"github",
+								"callback"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "GITHUB_CODE_HERE"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1375,7 +1449,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:9090/v1/api/notification/paged?userId={{userId}}&type=&page=0&size=20",
+							"raw": "http://localhost:9090/v1/api/notification/paged?type=&page=0&size=20",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1388,10 +1462,6 @@
 								"paged"
 							],
 							"query": [
-								{
-									"key": "userId",
-									"value": "{{userId}}"
-								},
 								{
 									"key": "type",
 									"value": ""
@@ -1420,7 +1490,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:9090/v1/api/notification/count?userId={{userId}}",
+							"raw": "http://localhost:9090/v1/api/notification/count",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1431,12 +1501,6 @@
 								"api",
 								"notification",
 								"count"
-							],
-							"query": [
-								{
-									"key": "userId",
-									"value": "{{userId}}"
-								}
 							]
 						}
 					},
@@ -1458,7 +1522,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"ids\": [1, 2, 3],\n  \"userId\": {{userId}}\n}"
+							"raw": "{\"ids\": [1, 2, 3]}"
 						},
 						"url": {
 							"raw": "http://localhost:9090/v1/api/notification/read",
@@ -1504,10 +1568,6 @@
 								"notification",
 								"read-all"
 							]
-						},
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}}\n}"
 						}
 					},
 					"response": []
@@ -1528,7 +1588,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"ids\": [1, 2, 3],\n  \"userId\": {{userId}}\n}"
+							"raw": "{\"ids\": [1, 2, 3]}"
 						},
 						"url": {
 							"raw": "http://localhost:9090/v1/api/notification/archive",

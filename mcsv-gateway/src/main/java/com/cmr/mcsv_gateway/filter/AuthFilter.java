@@ -1,6 +1,10 @@
 package com.cmr.mcsv_gateway.filter;
 
+import com.cmr.mcsv_gateway.config.JwtConfig;
 import com.cmr.mcsv_gateway.model.ValidationError;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -19,6 +23,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +36,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private final WebClient.Builder webClient;
+    private final JwtConfig jwtConfig;
 
     @Getter
     @Setter
@@ -40,9 +46,10 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
         private boolean postLogger;
     }
 
-    public AuthFilter(WebClient.Builder webClient) {
+    public AuthFilter(WebClient.Builder webClient, JwtConfig jwtConfig) {
         super(Config.class);
         this.webClient = webClient;
+        this.jwtConfig = jwtConfig;
         logger.info("AuthFilter");
     }
 
@@ -78,7 +85,8 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     if (!validUrl.isValid()) {
                         return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, validUrl.getErrorMessage()));
                     }
-                    return chain.filter(mutatedExchange);
+                    ServerWebExchange enrichedExchange = injectUserIdHeader(mutatedExchange);
+                    return chain.filter(enrichedExchange);
                 });
             });
         });
@@ -148,6 +156,29 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     logger.error("Exception during token validation", e);
                     return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage()));
                 });
+    }
+
+    private ServerWebExchange injectUserIdHeader(ServerWebExchange exchange) {
+        try {
+            String tokenHeader = getTokenHeader(exchange);
+            String token = tokenHeader.substring(7); // remove "Bearer "
+            Claims claims = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8)))
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            Object userId = claims.get("userId");
+            if (userId != null) {
+                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                        .headers(headers -> headers.remove("X-User-Id")) // eliminar cualquier valor del cliente
+                        .header("X-User-Id", userId.toString())
+                        .build();
+                return exchange.mutate().request(mutatedRequest).build();
+            }
+        } catch (Exception e) {
+            logger.warn("Could not extract userId from token: {}", e.getMessage());
+        }
+        return exchange;
     }
 
     private Mono<ValidationError> checkExchangeValidUrl(ServerWebExchange exchange) {

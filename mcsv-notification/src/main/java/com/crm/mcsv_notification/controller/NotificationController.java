@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,7 +39,7 @@ public class NotificationController {
     @GetMapping("/paged")
     @Operation(summary = "List notifications", description = "List notifications paged (type: null=inbox, unread, archived)")
     public ResponseEntity<Page<NotificationResponse>> list(
-            @RequestParam Long userId,
+            @RequestHeader("X-User-Id") Long userId,
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -49,7 +50,7 @@ public class NotificationController {
 
     @GetMapping("/count")
     @Operation(summary = "Count notifications", description = "Get notification counts for badge (totalInbox, totalUnread, totalArchived)")
-    public ResponseEntity<Map<String, Long>> count(@RequestParam Long userId) {
+    public ResponseEntity<Map<String, Long>> count(@RequestHeader("X-User-Id") Long userId) {
         Map<String, Long> counts = notificationService.count(userId);
         return ResponseEntity.ok(counts);
     }
@@ -57,10 +58,10 @@ public class NotificationController {
     @PatchMapping("/read")
     @Operation(summary = "Mark as read", description = "Mark specific notifications as read")
     public ResponseEntity<Void> markAsRead(
+            @RequestHeader("X-User-Id") Long userId,
             @RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")
         List<Integer> rawIds = (List<Integer>) body.get("ids");
-        Long userId = ((Number) body.get("userId")).longValue();
         List<Long> ids = rawIds.stream().map(Integer::longValue).toList();
         notificationService.markAsRead(ids, userId);
         return ResponseEntity.ok().build();
@@ -68,18 +69,18 @@ public class NotificationController {
 
     @PatchMapping("/read-all")
     @Operation(summary = "Mark all as read", description = "Mark all non-archived notifications as read")
-    public ResponseEntity<Void> markAllAsRead(@RequestBody Map<String, Long> body) {
-        notificationService.markAllAsRead(body.get("userId"));
+    public ResponseEntity<Void> markAllAsRead(@RequestHeader("X-User-Id") Long userId) {
+        notificationService.markAllAsRead(userId);
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/archive")
     @Operation(summary = "Archive notifications", description = "Archive specific notifications")
     public ResponseEntity<Void> archive(
+            @RequestHeader("X-User-Id") Long userId,
             @RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")
         List<Integer> rawIds = (List<Integer>) body.get("ids");
-        Long userId = ((Number) body.get("userId")).longValue();
         List<Long> ids = rawIds.stream().map(Integer::longValue).toList();
         notificationService.archive(ids, userId);
         return ResponseEntity.ok().build();
