@@ -58,6 +58,13 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
+        - id: mcsv-select
+          uri: lb://mcsv-user
+          predicates:
+            - Path=/v1/api/select/**
+          filters:
+            - StripPrefix=2
+            - AuthFilter
         - id: mcsv-notification-ws
           uri: lb:ws://mcsv-notification
           predicates:
