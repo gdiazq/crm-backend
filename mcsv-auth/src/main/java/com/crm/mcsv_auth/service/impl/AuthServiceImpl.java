@@ -600,10 +600,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String extractAvatarUrl(UserDTO user) {
-        if (user.getProfile() != null) {
-            return user.getProfile().getAvatarUrl();
-        }
-        return null;
+        return user.getAvatarUrl();
     }
 
     private boolean validateCredentials(String usernameOrEmail, String password) {

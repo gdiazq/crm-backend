@@ -32,4 +32,34 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<User> searchUsers(@Param("search") String search, Pageable pageable);
+
+    @Query(value = "SELECT u FROM User u ORDER BY (SELECT MIN(r.name) FROM u.roles r) ASC",
+           countQuery = "SELECT COUNT(u) FROM User u")
+    Page<User> findAllSortedByRoleAsc(Pageable pageable);
+
+    @Query(value = "SELECT u FROM User u ORDER BY (SELECT MIN(r.name) FROM u.roles r) DESC",
+           countQuery = "SELECT COUNT(u) FROM User u")
+    Page<User> findAllSortedByRoleDesc(Pageable pageable);
+
+    @Query(value = "SELECT u FROM User u WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "ORDER BY (SELECT MIN(r.name) FROM u.roles r) ASC",
+           countQuery = "SELECT COUNT(u) FROM User u WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<User> searchUsersSortedByRoleAsc(@Param("search") String search, Pageable pageable);
+
+    @Query(value = "SELECT u FROM User u WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                   "ORDER BY (SELECT MIN(r.name) FROM u.roles r) DESC",
+           countQuery = "SELECT COUNT(u) FROM User u WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<User> searchUsersSortedByRoleDesc(@Param("search") String search, Pageable pageable);
 }

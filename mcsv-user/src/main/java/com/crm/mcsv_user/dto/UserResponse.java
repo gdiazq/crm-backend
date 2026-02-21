@@ -24,6 +24,7 @@ public class UserResponse {
     @JsonAlias("enabled")
     private Boolean status;
     private Set<RoleDTO> roles;
+    private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
 }

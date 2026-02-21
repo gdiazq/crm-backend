@@ -3,11 +3,9 @@ package com.crm.mcsv_user.mapper;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UserDTO;
-import com.crm.mcsv_user.dto.UserProfileDTO;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
-import com.crm.mcsv_user.entity.UserProfile;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -35,7 +33,7 @@ public class UserMapper {
                 .roles(user.getRoles().stream()
                         .map(this::roleToDTO)
                         .collect(Collectors.toSet()))
-                .profile(user.getProfile() != null ? profileToDTO(user.getProfile()) : null)
+                .avatarUrl(user.getAvatarUrl())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .lastLogin(user.getLastLogin())
@@ -59,6 +57,7 @@ public class UserMapper {
                 .roles(user.getRoles().stream()
                         .map(this::roleToDTO)
                         .collect(Collectors.toSet()))
+                .avatarUrl(user.getAvatarUrl())
                 .createdAt(user.getCreatedAt())
                 .lastLogin(user.getLastLogin())
                 .build();
@@ -95,27 +94,4 @@ public class UserMapper {
                 .build();
     }
 
-    public UserProfileDTO profileToDTO(UserProfile profile) {
-        if (profile == null) {
-            return null;
-        }
-
-        return UserProfileDTO.builder()
-                .id(profile.getId())
-                .avatarUrl(profile.getAvatarUrl())
-                .dateOfBirth(profile.getDateOfBirth())
-                .gender(profile.getGender())
-                .address(profile.getAddress())
-                .city(profile.getCity())
-                .state(profile.getState())
-                .country(profile.getCountry())
-                .postalCode(profile.getPostalCode())
-                .bio(profile.getBio())
-                .company(profile.getCompany())
-                .position(profile.getPosition())
-                .websiteUrl(profile.getWebsiteUrl())
-                .linkedinUrl(profile.getLinkedinUrl())
-                .twitterUrl(profile.getTwitterUrl())
-                .build();
-    }
 }

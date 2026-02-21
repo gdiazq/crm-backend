@@ -27,7 +27,7 @@ public class UserDTO {
     private Boolean accountNonLocked;
     private Boolean credentialsNonExpired;
     private Set<RoleDTO> roles;
-    private UserProfileDTO profile;
+    private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastLogin;

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,14 +38,28 @@ public class UserController {
 
     private final UserService userService;
 
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "username", "firstName", "lastName", "email", "phoneNumber",
+            "emailVerified", "enabled", "createdAt", "lastLogin", "roles"
+    );
+
     @GetMapping("/paged")
-    @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users with optional search")
+    @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users with optional search and sorting")
     public ResponseEntity<Page<UserResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<UserResponse> users = userService.getAllUsers(search, pageable);
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Pageable pageable;
+        if ("roles".equals(safeSortBy)) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
+            pageable = PageRequest.of(page, size, sort);
+        }
+        Page<UserResponse> users = userService.getAllUsers(search, pageable, safeSortBy, sortDir);
         return ResponseEntity.ok(users);
     }
 

@@ -1,7 +1,5 @@
 package com.crm.mcsv_auth.dto;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +11,6 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AuthResponse {
 
     private String accessToken;
@@ -26,7 +23,6 @@ public class AuthResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class UserInfo {
         private Long id;
         private String username;

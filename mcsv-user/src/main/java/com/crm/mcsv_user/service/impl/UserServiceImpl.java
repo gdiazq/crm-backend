@@ -8,12 +8,10 @@ import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
-import com.crm.mcsv_user.entity.UserProfile;
 import com.crm.mcsv_user.exception.DuplicateResourceException;
 import com.crm.mcsv_user.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
 import com.crm.mcsv_user.repository.RoleRepository;
-import com.crm.mcsv_user.repository.UserProfileRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -41,21 +39,32 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final UserProfileRepository userProfileRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final StorageClient storageClient;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAllUsers(String search, Pageable pageable) {
-        log.info("Fetching users page: {}, size: {}, search: {}", pageable.getPageNumber(), pageable.getPageSize(), search);
-        if (search != null && !search.isBlank()) {
-            return userRepository.searchUsers(search.trim(), pageable)
+    public Page<UserResponse> getAllUsers(String search, Pageable pageable, String sortBy, String sortDir) {
+        log.info("Fetching users page: {}, size: {}, search: {}, sortBy: {}, sortDir: {}", pageable.getPageNumber(), pageable.getPageSize(), search, sortBy, sortDir);
+        boolean hasSearch = search != null && !search.isBlank();
+        boolean asc = !"desc".equalsIgnoreCase(sortDir);
+
+        if ("roles".equals(sortBy)) {
+            if (hasSearch) {
+                return (asc ? userRepository.searchUsersSortedByRoleAsc(search.trim(), pageable)
+                            : userRepository.searchUsersSortedByRoleDesc(search.trim(), pageable))
+                        .map(userMapper::toResponse);
+            }
+            return (asc ? userRepository.findAllSortedByRoleAsc(pageable)
+                        : userRepository.findAllSortedByRoleDesc(pageable))
                     .map(userMapper::toResponse);
         }
-        return userRepository.findAll(pageable)
-                .map(userMapper::toResponse);
+
+        if (hasSearch) {
+            return userRepository.searchUsers(search.trim(), pageable).map(userMapper::toResponse);
+        }
+        return userRepository.findAll(pageable).map(userMapper::toResponse);
     }
 
     @Override
@@ -198,16 +207,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        UserProfile profile = userProfileRepository.findByUserId(userId).orElse(null);
-        if (profile == null) {
-            profile = UserProfile.builder()
-                    .user(user)
-                    .avatarUrl(avatarUrl)
-                    .build();
-        } else {
-            profile.setAvatarUrl(avatarUrl);
-        }
-        userProfileRepository.save(profile);
+        user.setAvatarUrl(avatarUrl);
+        userRepository.save(user);
     }
 
     @Override
@@ -296,8 +297,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Delete previous avatar from storage if exists
-        UserProfile profile = userProfileRepository.findByUserId(userId).orElse(null);
-        if (profile != null && profile.getAvatarUrl() != null) {
+        if (user.getAvatarUrl() != null) {
             try {
                 ResponseEntity<List<FileMetadataResponse>> existing =
                         storageClient.listByEntity("USER_AVATAR", userId);
@@ -321,16 +321,9 @@ public class UserServiceImpl implements UserService {
 
         String avatarUrl = uploadResponse.getBody().getUrl();
 
-        // Save URL in UserProfile
-        if (profile == null) {
-            profile = UserProfile.builder()
-                    .user(user)
-                    .avatarUrl(avatarUrl)
-                    .build();
-        } else {
-            profile.setAvatarUrl(avatarUrl);
-        }
-        userProfileRepository.save(profile);
+        // Save URL in user
+        user.setAvatarUrl(avatarUrl);
+        userRepository.save(user);
 
         log.info("Avatar uploaded successfully for user id: {}", userId);
         return Map.of("avatarUrl", avatarUrl);

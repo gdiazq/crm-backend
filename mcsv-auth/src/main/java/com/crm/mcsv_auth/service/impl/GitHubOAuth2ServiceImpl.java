@@ -123,7 +123,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
             sendLoginNotification(user.getId(), user.getUsername());
         }
 
-        String avatarUrl = user.getProfile() != null ? user.getProfile().getAvatarUrl() : null;
+        String avatarUrl = githubUser.getAvatarUrl() != null ? githubUser.getAvatarUrl() : user.getAvatarUrl();
 
         return AuthResponse.builder()
                 .accessToken(accessToken)

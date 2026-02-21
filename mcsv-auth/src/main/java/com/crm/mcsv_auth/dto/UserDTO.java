@@ -27,16 +27,7 @@ public class UserDTO {
     private Boolean accountNonLocked;
     private Boolean credentialsNonExpired;
     private Set<RoleDTO> roles;
-    private UserProfileDTO profile;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class UserProfileDTO {
-        private Long id;
-        private String avatarUrl;
-    }
+    private String avatarUrl;
 
     @Data
     @NoArgsConstructor

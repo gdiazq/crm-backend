@@ -920,7 +920,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "http://localhost:9090/v1/api/user/paged?page=0&size=10",
+                  "raw": "{{baseUrl}}/v1/api/user/paged?page=0&size=10&sortBy=createdAt&sortDir=desc",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -940,6 +940,19 @@
                     {
                       "key": "size",
                       "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt"
+                    },
+                    {
+                      "key": "sortDir",
+                      "value": "desc"
                     }
                   ]
                 }
