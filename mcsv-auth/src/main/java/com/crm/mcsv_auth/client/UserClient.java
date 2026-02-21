@@ -45,6 +45,11 @@ public interface UserClient {
     @PutMapping("/{id}/avatar-url")
     ResponseEntity<Void> updateAvatarUrl(@PathVariable("id") Long id, @RequestBody java.util.Map<String, String> body);
 
+    @PostMapping("/{id}/verify-email-code")
+    ResponseEntity<Boolean> validateAndConsumeCode(
+            @PathVariable("id") Long userId,
+            @RequestBody java.util.Map<String, String> body);
+
     class UpdatePasswordRequest {
         private Long userId;
         private String newPassword;

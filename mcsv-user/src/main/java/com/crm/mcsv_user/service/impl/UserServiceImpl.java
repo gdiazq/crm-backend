@@ -1,21 +1,26 @@
 package com.crm.mcsv_user.service.impl;
 
+import com.crm.mcsv_user.client.EmailClient;
 import com.crm.mcsv_user.client.StorageClient;
 import com.crm.mcsv_user.dto.CreateUserRequest;
+import com.crm.mcsv_user.dto.EmailRequest;
 import com.crm.mcsv_user.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
+import com.crm.mcsv_user.entity.EmailVerificationCode;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
 import com.crm.mcsv_user.exception.DuplicateResourceException;
 import com.crm.mcsv_user.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
+import com.crm.mcsv_user.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,11 +30,15 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +51,14 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final StorageClient storageClient;
+    private final EmailVerificationCodeRepository emailVerificationCodeRepository;
+    private final EmailClient emailClient;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+    private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Override
     @Transactional(readOnly = true)
@@ -108,7 +125,10 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userMapper.toEntity(request);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        String rawPassword = (request.getPassword() != null && !request.getPassword().isBlank())
+                ? request.getPassword()
+                : "Tmp!" + UUID.randomUUID();
+        user.setPassword(passwordEncoder.encode(rawPassword));
 
         if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
             Set<Role> roles = new HashSet<>();
@@ -327,5 +347,61 @@ public class UserServiceImpl implements UserService {
 
         log.info("Avatar uploaded successfully for user id: {}", userId);
         return Map.of("avatarUrl", avatarUrl);
+    }
+
+    @Override
+    @Transactional
+    public void sendVerificationCode(Long userId, String email, String username) {
+        log.info("Sending verification code for admin-created user id: {}", userId);
+
+        // Invalidate any previous unused codes
+        emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(userId);
+
+        // Generate 6-digit code
+        String code = String.valueOf(SECURE_RANDOM.nextInt(900000) + 100000);
+
+        EmailVerificationCode verificationCode = EmailVerificationCode.builder()
+                .code(code)
+                .userId(userId)
+                .expiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
+                .used(false)
+                .build();
+        emailVerificationCodeRepository.save(verificationCode);
+
+        try {
+            String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+            String link = frontendUrl + "/verify-email?email=" + encodedEmail + "&code=" + code;
+
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .to(email)
+                    .subject("Verify your email address")
+                    .templateName("verification-code")
+                    .variables(Map.of("code", code, "username", username, "link", link))
+                    .build();
+            emailClient.sendEmail(emailRequest);
+            log.info("Verification email sent to: {}", email);
+        } catch (Exception e) {
+            log.error("Failed to send verification email to: {}", email, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean validateAndConsumeCode(Long userId, String code) {
+        log.info("Validating admin verification code for user id: {}", userId);
+
+        return emailVerificationCodeRepository
+                .findByUserIdAndCodeAndUsedFalse(userId, code)
+                .map(verificationCode -> {
+                    if (verificationCode.isExpired()) {
+                        log.warn("Verification code expired for user id: {}", userId);
+                        return false;
+                    }
+                    verificationCode.setUsed(true);
+                    emailVerificationCodeRepository.save(verificationCode);
+                    log.info("Verification code consumed for user id: {}", userId);
+                    return true;
+                })
+                .orElse(false);
     }
 }

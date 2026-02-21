@@ -32,11 +32,14 @@ import com.crm.mcsv_auth.service.TokenService;
 import com.crm.mcsv_auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -61,6 +64,9 @@ public class AuthServiceImpl implements AuthService {
     private final UserSessionRepository userSessionRepository;
     private final MfaService mfaService;
     private final JwtConfig jwtConfig;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -397,40 +403,51 @@ public class AuthServiceImpl implements AuthService {
     public Map<String, String> verifyEmail(VerifyEmailRequest request) {
         log.info("Email verification attempt for: {}", request.getEmail());
 
-        // Obtener usuario por email para buscar por userId
         UserDTO user = getUserByEmail(request.getEmail());
 
-        EmailVerificationCode verificationCode = emailVerificationCodeRepository
-                .findByUserIdAndCodeAndUsedFalse(user.getId(), request.getCode())
-                .orElseThrow(() -> new AuthenticationException("Invalid verification code"));
+        // Try local (mcsv-auth) verification codes first (register/forgot-password flow)
+        java.util.Optional<EmailVerificationCode> localCode = emailVerificationCodeRepository
+                .findByUserIdAndCodeAndUsedFalse(user.getId(), request.getCode());
 
-        if (verificationCode.isExpired()) {
-            throw new AuthenticationException("Verification code has expired. Please request a new one.");
+        if (localCode.isPresent()) {
+            EmailVerificationCode verificationCode = localCode.get();
+            if (verificationCode.isExpired()) {
+                throw new AuthenticationException("Verification code has expired. Please request a new one.");
+            }
+            verificationCode.setUsed(true);
+            emailVerificationCodeRepository.save(verificationCode);
+            log.info("Email verified via local code for: {}", request.getEmail());
+            return completeEmailVerification(user.getId());
         }
 
-        // Marcar código como usado
-        verificationCode.setUsed(true);
-        emailVerificationCodeRepository.save(verificationCode);
+        // Fallback: check codes stored in mcsv-user (admin-created user flow)
+        try {
+            ResponseEntity<Boolean> response = userClient.validateAndConsumeCode(
+                    user.getId(), java.util.Map.of("code", request.getCode()));
+            if (Boolean.TRUE.equals(response.getBody())) {
+                log.info("Email verified via admin code for: {}", request.getEmail());
+                return completeEmailVerification(user.getId());
+            }
+        } catch (Exception e) {
+            log.error("Error calling validateAndConsumeCode on mcsv-user: {}", e.getMessage());
+        }
 
-        // Marcar email como verificado en mcsv-user
-        userClient.verifyEmail(verificationCode.getUserId());
+        throw new AuthenticationException("Invalid verification code");
+    }
 
-        // Generar token de un solo uso para crear contraseña
+    private Map<String, String> completeEmailVerification(Long userId) {
+        userClient.verifyEmail(userId);
+
         String token = UUID.randomUUID().toString();
         PasswordResetToken passwordToken = PasswordResetToken.builder()
                 .token(token)
-                .userId(verificationCode.getUserId())
+                .userId(userId)
                 .expiresAt(LocalDateTime.now().plusHours(24))
                 .used(false)
                 .build();
         passwordResetTokenRepository.save(passwordToken);
 
-        log.info("Email verified successfully for: {}", request.getEmail());
-
-        return Map.of(
-                "message", "Email verified successfully",
-                "token", token
-        );
+        return Map.of("message", "Email verified successfully", "token", token);
     }
 
     @Override
@@ -493,13 +510,17 @@ public class AuthServiceImpl implements AuthService {
 
     private void sendVerificationEmail(String email, String username, String code) {
         try {
+            String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+            String link = frontendUrl + "/verify-email?email=" + encodedEmail + "&code=" + code;
+
             EmailRequest emailRequest = EmailRequest.builder()
                     .to(email)
                     .subject("Verify your email address")
                     .templateName("verification-code")
                     .variables(Map.of(
                             "code", code,
-                            "username", username
+                            "username", username,
+                            "link", link
                     ))
                     .build();
 

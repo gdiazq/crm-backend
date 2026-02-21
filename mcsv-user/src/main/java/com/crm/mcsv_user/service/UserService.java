@@ -42,4 +42,8 @@ public interface UserService {
     void verifyEmail(Long userId);
 
     Map<String, String> uploadAvatar(Long userId, MultipartFile file);
+
+    void sendVerificationCode(Long userId, String email, String username);
+
+    boolean validateAndConsumeCode(Long userId, String code);
 }

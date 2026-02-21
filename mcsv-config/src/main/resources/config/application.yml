@@ -61,3 +61,7 @@ jwt:
     secret: ${SECRET_KEY}
     expireAt: 480
     emailToken: ${EMAIL_TOKEN}
+
+app:
+    frontend:
+        url: ${URL_FRONT:http://localhost:5173}

@@ -88,7 +88,15 @@ public class UserController {
     @Operation(summary = "Create user", description = "Create a new user")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse createdUser = userService.createUser(request);
+        userService.sendVerificationCode(createdUser.getId(), createdUser.getEmail(), createdUser.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    }
+
+    @PostMapping("/{id}/verify-email-code")
+    @Operation(summary = "Validate admin email verification code", description = "Validate and consume the email verification code generated for admin-created users")
+    public ResponseEntity<Boolean> validateEmailCode(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        boolean valid = userService.validateAndConsumeCode(id, body.get("code"));
+        return ResponseEntity.ok(valid);
     }
 
     @PutMapping("/update")
