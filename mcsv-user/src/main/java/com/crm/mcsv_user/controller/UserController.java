@@ -44,23 +44,20 @@ public class UserController {
     );
 
     @GetMapping("/paged")
-    @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users with optional search and sorting")
+    @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users with optional filters and sorting")
     public ResponseEntity<Page<UserResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Boolean status,
+            @RequestParam(required = false) Long roleId,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
-        Pageable pageable;
-        if ("roles".equals(safeSortBy)) {
-            pageable = PageRequest.of(page, size);
-        } else {
-            Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
-            pageable = PageRequest.of(page, size, sort);
-        }
-        Page<UserResponse> users = userService.getAllUsers(search, pageable, safeSortBy, sortDir);
-        return ResponseEntity.ok(users);
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(userService.filterUsers(name, email, status, roleId, pageable, safeSortBy, sortDir));
     }
 
     @GetMapping("/detail/{id}")

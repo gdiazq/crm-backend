@@ -1,6 +1,7 @@
 package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.service.RoleService;
+import com.crm.mcsv_user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 public class SelectController {
 
     private final RoleService roleService;
+    private final UserService userService;
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles for selector", description = "Retrieve id and name of all roles")
@@ -29,4 +31,40 @@ public class SelectController {
     }
 
     record RoleSelectItem(Long id, String name) {}
+
+    @GetMapping("/users/name")
+    @Operation(summary = "Get users name for selector", description = "Retrieve id and name of all users")
+    public ResponseEntity<List<UserNameSelectItem>> getUserNames() {
+        List<UserNameSelectItem> users = userService.getAllUsersForSelect().stream()
+                .map(u -> new UserNameSelectItem(
+                        u.getId(),
+                        (u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "").trim()
+                ))
+                .toList();
+        return ResponseEntity.ok(users);
+    }
+
+    record UserNameSelectItem(Long id, String name) {}
+
+    @GetMapping("/users/email")
+    @Operation(summary = "Get users email for selector", description = "Retrieve id and email of all users")
+    public ResponseEntity<List<UserEmailSelectItem>> getUserEmails() {
+        List<UserEmailSelectItem> users = userService.getAllUsersForSelect().stream()
+                .map(u -> new UserEmailSelectItem(u.getId(), u.getEmail()))
+                .toList();
+        return ResponseEntity.ok(users);
+    }
+
+    record UserEmailSelectItem(Long id, String email) {}
+
+    @GetMapping("/status")
+    @Operation(summary = "Get status options for selector", description = "Retrieve available status options")
+    public ResponseEntity<List<StatusSelectItem>> getStatus() {
+        return ResponseEntity.ok(List.of(
+                new StatusSelectItem(true, "Activo"),
+                new StatusSelectItem(false, "Inactivo")
+        ));
+    }
+
+    record StatusSelectItem(Boolean id, String name) {}
 }

@@ -86,6 +86,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<UserResponse> filterUsers(String name, String email, Boolean status, Long roleId, Pageable pageable, String sortBy, String sortDir) {
+        log.info("Filtering users - name: {}, email: {}, status: {}, roleId: {}", name, email, status, roleId);
+        return userRepository.filterUsers(
+                (name != null && !name.isBlank()) ? name.trim() : null,
+                (email != null && !email.isBlank()) ? email.trim() : null,
+                status,
+                roleId,
+                pageable
+        ).map(userMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getAllUsersForSelect() {
+        log.info("Fetching all users for select");
+        return userRepository.findAll().stream()
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public UserDTO getUserById(Long id) {
         log.info("Fetching user by id: {}", id);
         User user = userRepository.findById(id)
