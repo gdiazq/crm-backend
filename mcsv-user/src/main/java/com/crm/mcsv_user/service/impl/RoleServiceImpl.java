@@ -9,6 +9,8 @@ import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,17 @@ public class RoleServiceImpl implements RoleService {
                 .stream()
                 .map(userMapper::roleToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RoleDTO> getAllRolesPaged(String search, Pageable pageable) {
+        log.info("Fetching roles paged, search: {}", search);
+        boolean hasSearch = search != null && !search.isBlank();
+        if (hasSearch) {
+            return roleRepository.searchRoles(search.trim(), pageable).map(userMapper::roleToDTO);
+        }
+        return roleRepository.findAll(pageable).map(userMapper::roleToDTO);
     }
 
     @Override

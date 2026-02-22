@@ -5,6 +5,10 @@ import com.crm.mcsv_user.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,10 +30,16 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping("/paged")
-    @Operation(summary = "Get all roles", description = "Retrieve a list of all roles")
-    public ResponseEntity<List<RoleDTO>> getAllRoles() {
-        List<RoleDTO> roles = roleService.getAllRoles();
-        return ResponseEntity.ok(roles);
+    @Operation(summary = "Get all roles (paged)", description = "Retrieve a paginated list of roles with optional search")
+    public ResponseEntity<Page<RoleDTO>> getAllRoles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(roleService.getAllRolesPaged(search, pageable));
     }
 
     @GetMapping("/{id}")
