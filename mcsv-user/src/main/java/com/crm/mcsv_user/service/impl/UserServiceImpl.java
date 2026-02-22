@@ -130,14 +130,10 @@ public class UserServiceImpl implements UserService {
                 : "Tmp!" + UUID.randomUUID();
         user.setPassword(passwordEncoder.encode(rawPassword));
 
-        if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
-            Set<Role> roles = new HashSet<>();
-            for (Long roleId : request.getRoleIds()) {
-                Role role = roleRepository.findById(roleId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
-                roles.add(role);
-            }
-            user.setRoles(roles);
+        if (request.getRoleId() != null) {
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + request.getRoleId()));
+            user.setRoles(new HashSet<>(Set.of(role)));
         } else {
             Role defaultRole = roleRepository.findByName("ROLE_USER")
                     .orElseThrow(() -> new ResourceNotFoundException("Default role ROLE_USER not found"));
@@ -178,14 +174,10 @@ public class UserServiceImpl implements UserService {
             user.setEnabled(request.getStatus());
         }
 
-        if (request.getRoleIds() != null) {
-            Set<Role> roles = new HashSet<>();
-            for (Long roleId : request.getRoleIds()) {
-                Role role = roleRepository.findById(roleId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
-                roles.add(role);
-            }
-            user.setRoles(roles);
+        if (request.getRoleId() != null) {
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + request.getRoleId()));
+            user.setRoles(new HashSet<>(Set.of(role)));
         }
 
         User updatedUser = userRepository.save(user);

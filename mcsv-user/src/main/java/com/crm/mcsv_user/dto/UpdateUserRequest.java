@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,5 +32,5 @@ public class UpdateUserRequest {
     @JsonAlias("enabled")
     private Boolean status;
 
-    private Set<Long> roleIds;
+    private Long roleId;
 }
