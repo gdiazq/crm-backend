@@ -91,6 +91,9 @@ public class UserMapper {
                 .id(role.getId())
                 .name(role.getName())
                 .description(role.getDescription())
+                .enabled(role.getEnabled())
+                .createdAt(role.getCreatedAt())
+                .updatedAt(role.getUpdatedAt())
                 .build();
     }
 

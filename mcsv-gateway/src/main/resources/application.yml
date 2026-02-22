@@ -56,7 +56,7 @@ spring:
           predicates:
             - Path=/v1/api/role/**
           filters:
-            - StripPrefix=3
+            - StripPrefix=2
             - AuthFilter
         - id: mcsv-select
           uri: lb://mcsv-user
