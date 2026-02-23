@@ -89,8 +89,8 @@ public class UserServiceImpl implements UserService {
     public Page<UserResponse> filterUsers(String name, String email, Boolean status, Long roleId, Pageable pageable, String sortBy, String sortDir) {
         log.info("Filtering users - name: {}, email: {}, status: {}, roleId: {}", name, email, status, roleId);
         return userRepository.filterUsers(
-                (name != null && !name.isBlank()) ? name.trim() : null,
-                (email != null && !email.isBlank()) ? email.trim() : null,
+                (name != null && !name.isBlank()) ? name.trim() : "",
+                (email != null && !email.isBlank()) ? email.trim() : "",
                 status,
                 roleId,
                 pageable

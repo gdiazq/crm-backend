@@ -34,17 +34,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> searchUsers(@Param("search") String search, Pageable pageable);
 
     @Query(value = "SELECT DISTINCT u FROM User u LEFT JOIN u.roles r WHERE " +
-            "(:name IS NULL OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "('' = :name OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
             "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%')) " +
             "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-            "(:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
+            "('' = :email OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
             "(:status IS NULL OR u.enabled = :status) AND " +
             "(:roleId IS NULL OR r.id = :roleId)",
            countQuery = "SELECT COUNT(DISTINCT u) FROM User u LEFT JOIN u.roles r WHERE " +
-            "(:name IS NULL OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+            "('' = :name OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
             "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%')) " +
             "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-            "(:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
+            "('' = :email OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +
             "(:status IS NULL OR u.enabled = :status) AND " +
             "(:roleId IS NULL OR r.id = :roleId)")
     Page<User> filterUsers(@Param("name") String name, @Param("email") String email,
