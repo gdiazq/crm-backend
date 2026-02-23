@@ -90,7 +90,7 @@ server:
   port: 9090
 
 jwt:
-  secret: ${SECRET_KEY:LR4kE6n+U8T0JzB9Gqf1l3P7t2W0yN9xY5sZ7mV3aK6dJ0hC8rT1qL2vO4bM5uF+}
+  secret: ${SECRET_KEY}
   expireAt: 480
 
 # Zipkin's - telemetries
