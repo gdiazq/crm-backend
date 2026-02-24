@@ -12,6 +12,8 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,11 +30,12 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateAccessToken(Long userId, String username, Set<String> roles) {
+    public String generateAccessToken(Long userId, String username, Set<String> roles, Set<String> permissions) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("username", username);
         claims.put("roles", roles);
+        claims.put("permissions", permissions);
 
         return createToken(claims, username);
     }
@@ -61,7 +64,20 @@ public class JwtUtil {
 
     public Set<String> extractRoles(String token) {
         Claims claims = extractAllClaims(token);
-        return (Set<String>) claims.get("roles");
+        Object roles = claims.get("roles");
+        if (roles instanceof List) {
+            return new HashSet<>((List<String>) roles);
+        }
+        return new HashSet<>();
+    }
+
+    public Set<String> extractPermissions(String token) {
+        Claims claims = extractAllClaims(token);
+        Object permissions = claims.get("permissions");
+        if (permissions instanceof List) {
+            return new HashSet<>((List<String>) permissions);
+        }
+        return new HashSet<>();
     }
 
     public Date extractExpiration(String token) {

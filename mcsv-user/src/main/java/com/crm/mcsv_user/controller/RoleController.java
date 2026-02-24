@@ -2,6 +2,7 @@ package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PagedResponse;
+import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.service.RoleService;
@@ -11,7 +12,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -90,5 +93,29 @@ public class RoleController {
     public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
         roleService.deleteRole(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/permissions")
+    @Operation(summary = "Get all permissions", description = "Retrieve list of all available permissions")
+    public ResponseEntity<List<PermissionDTO>> getAllPermissions() {
+        return ResponseEntity.ok(roleService.getAllPermissions());
+    }
+
+    @PutMapping("/{id}/permissions")
+    @Operation(summary = "Set permissions", description = "Replace all permissions of a role")
+    public ResponseEntity<RoleDTO> setPermissions(@PathVariable Long id, @RequestBody Map<String, Set<Long>> body) {
+        return ResponseEntity.ok(roleService.setPermissions(id, body.get("permissionIds")));
+    }
+
+    @PostMapping("/{id}/permissions/add")
+    @Operation(summary = "Add permissions", description = "Add permissions to a role")
+    public ResponseEntity<RoleDTO> addPermissions(@PathVariable Long id, @RequestBody Map<String, Set<Long>> body) {
+        return ResponseEntity.ok(roleService.addPermissions(id, body.get("permissionIds")));
+    }
+
+    @DeleteMapping("/{id}/permissions")
+    @Operation(summary = "Remove permissions", description = "Remove permissions from a role")
+    public ResponseEntity<RoleDTO> removePermissions(@PathVariable Long id, @RequestBody Map<String, Set<Long>> body) {
+        return ResponseEntity.ok(roleService.removePermissions(id, body.get("permissionIds")));
     }
 }

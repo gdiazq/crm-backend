@@ -1,7 +1,9 @@
 package com.crm.mcsv_user.util;
 
+import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
+import com.crm.mcsv_user.repository.PermissionRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,159 +26,177 @@ public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
         log.info("Starting data initialization...");
-        
-        // Initialize roles if they don't exist
+
+        initializePermissions();
         initializeRoles();
-        
-        // Initialize users if they don't exist
+        assignPermissionsToRoles(); // siempre corre, idempotente
         initializeUsers();
-        
+
         log.info("Data initialization completed.");
     }
+
+    // -------------------------------------------------------------------------
+    // Permisos
+    // -------------------------------------------------------------------------
+
+    private void initializePermissions() {
+        log.info("Initializing permissions...");
+
+        createPermissionIfNotExists("USER:CREATE", "Create users");
+        createPermissionIfNotExists("USER:READ",   "Read users");
+        createPermissionIfNotExists("USER:UPDATE", "Update users");
+        createPermissionIfNotExists("USER:DELETE", "Delete users");
+        createPermissionIfNotExists("ROLE:CREATE", "Create roles");
+        createPermissionIfNotExists("ROLE:READ",   "Read roles");
+        createPermissionIfNotExists("ROLE:UPDATE", "Update roles");
+        createPermissionIfNotExists("ROLE:DELETE", "Delete roles");
+
+        log.info("Permissions initialized.");
+    }
+
+    private void createPermissionIfNotExists(String name, String description) {
+        if (permissionRepository.findByName(name).isEmpty()) {
+            permissionRepository.save(Permission.builder()
+                    .name(name)
+                    .description(description)
+                    .build());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Roles (solo crea si no existen, sin tocar permisos aquí)
+    // -------------------------------------------------------------------------
 
     private void initializeRoles() {
         log.info("Initializing roles...");
 
-        // Check if roles already exist to prevent duplicates
-        if (roleRepository.count() == 0) {
-            // Create common roles
-            Role adminRole = Role.builder()
-                    .name("ROLE_ADMIN")
-                    .description("Administrator with full access")
-                    .build();
-            
-            Role userRole = Role.builder()
-                    .name("ROLE_USER")
-                    .description("Regular user with basic permissions")
-                    .build();
-            
-            Role managerRole = Role.builder()
-                    .name("ROLE_MANAGER")
-                    .description("Manager with intermediate permissions")
-                    .build();
+        createRoleIfNotExists("ROLE_ADMIN",   "Administrator with full access");
+        createRoleIfNotExists("ROLE_USER",    "Regular user with basic permissions");
+        createRoleIfNotExists("ROLE_MANAGER", "Manager with intermediate permissions");
 
-            roleRepository.save(adminRole);
-            roleRepository.save(userRole);
-            roleRepository.save(managerRole);
+        log.info("Roles initialized.");
+    }
 
-            log.info("Created 3 roles: ROLE_ADMIN, ROLE_USER, ROLE_MANAGER");
-        } else {
-            log.info("Roles already exist, skipping role initialization.");
+    private void createRoleIfNotExists(String name, String description) {
+        if (roleRepository.findByName(name).isEmpty()) {
+            roleRepository.save(Role.builder()
+                    .name(name)
+                    .description(description)
+                    .build());
+            log.info("Created role: {}", name);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Asignación de permisos a roles (idempotente: addAll no duplica)
+    // -------------------------------------------------------------------------
+
+    private void assignPermissionsToRoles() {
+        log.info("Assigning permissions to roles...");
+
+        Permission userCreate = permissionRepository.findByName("USER:CREATE").orElseThrow();
+        Permission userRead   = permissionRepository.findByName("USER:READ").orElseThrow();
+        Permission userUpdate = permissionRepository.findByName("USER:UPDATE").orElseThrow();
+        Permission userDelete = permissionRepository.findByName("USER:DELETE").orElseThrow();
+        Permission roleCreate = permissionRepository.findByName("ROLE:CREATE").orElseThrow();
+        Permission roleRead   = permissionRepository.findByName("ROLE:READ").orElseThrow();
+        Permission roleUpdate = permissionRepository.findByName("ROLE:UPDATE").orElseThrow();
+        Permission roleDelete = permissionRepository.findByName("ROLE:DELETE").orElseThrow();
+
+        assignToRole("ROLE_ADMIN", new HashSet<>(Set.of(
+                userCreate, userRead, userUpdate, userDelete,
+                roleCreate, roleRead, roleUpdate, roleDelete)));
+
+        assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(userRead, userUpdate)));
+
+        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead)));
+
+        log.info("Permissions assigned to roles.");
+    }
+
+    private void assignToRole(String roleName, Set<Permission> permissions) {
+        roleRepository.findByName(roleName).ifPresent(role -> {
+            role.getPermissions().addAll(permissions);
+            roleRepository.save(role);
+            log.info("Permissions assigned to {}: {}", roleName,
+                    permissions.stream().map(Permission::getName).toList());
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Usuarios de muestra
+    // -------------------------------------------------------------------------
 
     private void initializeUsers() {
         log.info("Initializing sample users...");
 
-        // Check if users already exist to prevent duplicates
-        if (userRepository.count() == 0) {
-            // Get the roles we created
-            Role adminRole = roleRepository.findByName("ROLE_ADMIN")
-                    .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));
-            Role userRole = roleRepository.findByName("ROLE_USER")
-                    .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
-            Role managerRole = roleRepository.findByName("ROLE_MANAGER")
-                    .orElseThrow(() -> new RuntimeException("ROLE_MANAGER not found"));
-
-            // Create sample users with different roles
-            Set<Role> adminRoles = new HashSet<>();
-            adminRoles.add(adminRole);
-
-            Set<Role> userRoles = new HashSet<>();
-            userRoles.add(userRole);
-
-            Set<Role> managerRoles = new HashSet<>();
-            managerRoles.add(managerRole);
-            managerRoles.add(userRole); // Managers also have user permissions
-
-            // Admin user
-            User adminUser = User.builder()
-                    .username("admin")
-                    .email("admin@crm.com")
-                    .password(passwordEncoder.encode("admin123"))
-                    .firstName("System")
-                    .lastName("Administrator")
-                    .phoneNumber("+1111111111")
-                    .enabled(true)
-                    .accountNonExpired(true)
-                    .accountNonLocked(true)
-                    .credentialsNonExpired(true)
-                    .roles(adminRoles)
-                    .build();
-
-            // Regular user
-            User regularUser = User.builder()
-                    .username("johndoe")
-                    .email("john.doe@crm.com")
-                    .password(passwordEncoder.encode("password123"))
-                    .firstName("John")
-                    .lastName("Doe")
-                    .phoneNumber("+1234567890")
-                    .enabled(true)
-                    .accountNonExpired(true)
-                    .accountNonLocked(true)
-                    .credentialsNonExpired(true)
-                    .roles(userRoles)
-                    .build();
-
-            // Manager user
-            User managerUser = User.builder()
-                    .username("manager")
-                    .email("manager@crm.com")
-                    .password(passwordEncoder.encode("manager123"))
-                    .firstName("Jane")
-                    .lastName("Manager")
-                    .phoneNumber("+1987654321")
-                    .enabled(true)
-                    .accountNonExpired(true)
-                    .accountNonLocked(true)
-                    .credentialsNonExpired(true)
-                    .roles(managerRoles)
-                    .build();
-
-            // Additional sample users
-            User user2 = User.builder()
-                    .username("janedoe")
-                    .email("jane.doe@crm.com")
-                    .password(passwordEncoder.encode("password123"))
-                    .firstName("Jane")
-                    .lastName("Doe")
-                    .phoneNumber("+1122334455")
-                    .enabled(true)
-                    .accountNonExpired(true)
-                    .accountNonLocked(true)
-                    .credentialsNonExpired(true)
-                    .roles(userRoles)
-                    .build();
-
-            User user3 = User.builder()
-                    .username("robertsmith")
-                    .email("robert.smith@crm.com")
-                    .password(passwordEncoder.encode("password123"))
-                    .firstName("Robert")
-                    .lastName("Smith")
-                    .phoneNumber("+1555123456")
-                    .enabled(true)
-                    .accountNonExpired(true)
-                    .accountNonLocked(true)
-                    .credentialsNonExpired(true)
-                    .roles(userRoles)
-                    .build();
-
-            userRepository.save(adminUser);
-            userRepository.save(regularUser);
-            userRepository.save(managerUser);
-            userRepository.save(user2);
-            userRepository.save(user3);
-
-            log.info("Created 5 sample users: admin, johndoe, manager, janedoe, robertsmith");
-        } else {
+        if (userRepository.count() > 0) {
             log.info("Users already exist, skipping user initialization.");
+            return;
         }
+
+        Role adminRole = roleRepository.findByName("ROLE_ADMIN")
+                .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
+        Role managerRole = roleRepository.findByName("ROLE_MANAGER")
+                .orElseThrow(() -> new RuntimeException("ROLE_MANAGER not found"));
+
+        Set<Role> adminRoles   = new HashSet<>(Set.of(adminRole));
+        Set<Role> userRoles    = new HashSet<>(Set.of(userRole));
+        Set<Role> managerRoles = new HashSet<>(Set.of(managerRole, userRole));
+
+        userRepository.save(User.builder()
+                .username("admin").email("admin@crm.com")
+                .password(passwordEncoder.encode("admin123"))
+                .firstName("System").lastName("Administrator")
+                .phoneNumber("+1111111111")
+                .enabled(true).accountNonExpired(true)
+                .accountNonLocked(true).credentialsNonExpired(true)
+                .roles(adminRoles).build());
+
+        userRepository.save(User.builder()
+                .username("johndoe").email("john.doe@crm.com")
+                .password(passwordEncoder.encode("password123"))
+                .firstName("John").lastName("Doe")
+                .phoneNumber("+1234567890")
+                .enabled(true).accountNonExpired(true)
+                .accountNonLocked(true).credentialsNonExpired(true)
+                .roles(userRoles).build());
+
+        userRepository.save(User.builder()
+                .username("manager").email("manager@crm.com")
+                .password(passwordEncoder.encode("manager123"))
+                .firstName("Jane").lastName("Manager")
+                .phoneNumber("+1987654321")
+                .enabled(true).accountNonExpired(true)
+                .accountNonLocked(true).credentialsNonExpired(true)
+                .roles(managerRoles).build());
+
+        userRepository.save(User.builder()
+                .username("janedoe").email("jane.doe@crm.com")
+                .password(passwordEncoder.encode("password123"))
+                .firstName("Jane").lastName("Doe")
+                .phoneNumber("+1122334455")
+                .enabled(true).accountNonExpired(true)
+                .accountNonLocked(true).credentialsNonExpired(true)
+                .roles(userRoles).build());
+
+        userRepository.save(User.builder()
+                .username("robertsmith").email("robert.smith@crm.com")
+                .password(passwordEncoder.encode("password123"))
+                .firstName("Robert").lastName("Smith")
+                .phoneNumber("+1555123456")
+                .enabled(true).accountNonExpired(true)
+                .accountNonLocked(true).credentialsNonExpired(true)
+                .roles(userRoles).build());
+
+        log.info("Created 5 sample users: admin, johndoe, manager, janedoe, robertsmith");
     }
 }

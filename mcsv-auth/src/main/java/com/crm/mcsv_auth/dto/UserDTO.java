@@ -37,5 +37,16 @@ public class UserDTO {
         private Long id;
         private String name;
         private String description;
+        private Set<PermissionDTO> permissions;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class PermissionDTO {
+        private Long id;
+        private String name;
+        private String description;
     }
 }

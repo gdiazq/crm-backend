@@ -96,7 +96,13 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
                 .map(UserDTO.RoleDTO::getName)
                 .collect(Collectors.toSet());
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
+        Set<String> permissions = user.getRoles().stream()
+                .filter(r -> r.getPermissions() != null)
+                .flatMap(r -> r.getPermissions().stream())
+                .map(UserDTO.PermissionDTO::getName)
+                .collect(Collectors.toSet());
+
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
         RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
 
         // 6. Revocar sesión anterior del mismo dispositivo si aplica

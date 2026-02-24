@@ -1,6 +1,7 @@
 package com.crm.mcsv_user.mapper;
 
 import com.crm.mcsv_user.dto.CreateUserRequest;
+import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
@@ -92,6 +93,13 @@ public class UserMapper {
                 .name(role.getName())
                 .description(role.getDescription())
                 .enabled(role.getEnabled())
+                .permissions(role.getPermissions().stream()
+                        .map(p -> PermissionDTO.builder()
+                                .id(p.getId())
+                                .name(p.getName())
+                                .description(p.getDescription())
+                                .build())
+                        .collect(Collectors.toSet()))
                 .createdAt(role.getCreatedAt())
                 .updatedAt(role.getUpdatedAt())
                 .build();

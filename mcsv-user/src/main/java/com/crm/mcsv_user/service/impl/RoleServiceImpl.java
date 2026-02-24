@@ -1,13 +1,16 @@
 package com.crm.mcsv_user.service.impl;
 
 import com.crm.mcsv_user.dto.CreateRoleRequest;
+import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
+import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
 import com.crm.mcsv_user.exception.DuplicateResourceException;
 import com.crm.mcsv_user.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
+import com.crm.mcsv_user.repository.PermissionRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.RoleService;
@@ -18,8 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +34,7 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
     private final UserMapper userMapper;
 
     @Override
@@ -149,5 +155,50 @@ public class RoleServiceImpl implements RoleService {
         userRepository.saveAll(users);
 
         log.info("Role status updated to {}. Affected {} users.", enabled, users.size());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PermissionDTO> getAllPermissions() {
+        log.info("Fetching all permissions");
+        return permissionRepository.findAll().stream()
+                .map(p -> PermissionDTO.builder()
+                        .id(p.getId())
+                        .name(p.getName())
+                        .description(p.getDescription())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public RoleDTO setPermissions(Long roleId, Set<Long> permissionIds) {
+        log.info("Setting permissions for role id: {}", roleId);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+        List<Permission> permissions = permissionRepository.findAllByIdIn(permissionIds);
+        role.setPermissions(new HashSet<>(permissions));
+        return userMapper.roleToDTO(roleRepository.save(role));
+    }
+
+    @Override
+    @Transactional
+    public RoleDTO addPermissions(Long roleId, Set<Long> permissionIds) {
+        log.info("Adding permissions to role id: {}", roleId);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+        List<Permission> permissions = permissionRepository.findAllByIdIn(permissionIds);
+        role.getPermissions().addAll(permissions);
+        return userMapper.roleToDTO(roleRepository.save(role));
+    }
+
+    @Override
+    @Transactional
+    public RoleDTO removePermissions(Long roleId, Set<Long> permissionIds) {
+        log.info("Removing permissions from role id: {}", roleId);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+        role.getPermissions().removeIf(p -> permissionIds.contains(p.getId()));
+        return userMapper.roleToDTO(roleRepository.save(role));
     }
 }

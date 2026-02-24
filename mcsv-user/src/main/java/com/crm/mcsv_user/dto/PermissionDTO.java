@@ -5,19 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.Set;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RoleDTO {
+public class PermissionDTO {
     private Long id;
     private String name;
     private String description;
-    private Boolean enabled;
-    private Set<PermissionDTO> permissions;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

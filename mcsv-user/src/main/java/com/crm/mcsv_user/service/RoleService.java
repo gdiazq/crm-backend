@@ -1,6 +1,7 @@
 package com.crm.mcsv_user.service;
 
 import com.crm.mcsv_user.dto.CreateRoleRequest;
+import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface RoleService {
 
@@ -28,4 +30,12 @@ public interface RoleService {
     void updateStatus(Long id, Boolean enabled);
 
     Map<String, Long> getRoleStats();
+
+    List<PermissionDTO> getAllPermissions();
+
+    RoleDTO setPermissions(Long roleId, Set<Long> permissionIds);
+
+    RoleDTO addPermissions(Long roleId, Set<Long> permissionIds);
+
+    RoleDTO removePermissions(Long roleId, Set<Long> permissionIds);
 }

@@ -148,13 +148,19 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("User account is locked");
         }
 
-        // Extraer roles
+        // Extraer roles y permisos
         Set<String> roles = user.getRoles().stream()
                 .map(UserDTO.RoleDTO::getName)
                 .collect(Collectors.toSet());
 
+        Set<String> permissions = user.getRoles().stream()
+                .filter(r -> r.getPermissions() != null)
+                .flatMap(r -> r.getPermissions().stream())
+                .map(UserDTO.PermissionDTO::getName)
+                .collect(Collectors.toSet());
+
         // Generar tokens
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
         RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
 
         log.info("User logged in successfully: {}", user.getUsername());
@@ -208,13 +214,19 @@ public class AuthServiceImpl implements AuthService {
         // Obtener usuario
         UserDTO user = getUserById(refreshToken.getUserId());
 
-        // Extraer roles
+        // Extraer roles y permisos
         Set<String> roles = user.getRoles().stream()
                 .map(UserDTO.RoleDTO::getName)
                 .collect(Collectors.toSet());
 
+        Set<String> permissions = user.getRoles().stream()
+                .filter(r -> r.getPermissions() != null)
+                .flatMap(r -> r.getPermissions().stream())
+                .map(UserDTO.PermissionDTO::getName)
+                .collect(Collectors.toSet());
+
         // Generar nuevo access token
-        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles);
+        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
 
         // Rotar refresh token
         tokenService.revokeRefreshToken(request.getRefreshToken());
