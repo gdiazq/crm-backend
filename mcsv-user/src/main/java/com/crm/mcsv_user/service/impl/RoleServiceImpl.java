@@ -2,6 +2,7 @@ package com.crm.mcsv_user.service.impl;
 
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.RoleDTO;
+import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
 import com.crm.mcsv_user.exception.DuplicateResourceException;
@@ -86,6 +87,31 @@ public class RoleServiceImpl implements RoleService {
         log.info("Role created successfully with id: {}", savedRole.getId());
 
         return userMapper.roleToDTO(savedRole);
+    }
+
+    @Override
+    @Transactional
+    public RoleDTO updateRole(Long id, UpdateRoleRequest request) {
+        log.info("Updating role with id: {}", id);
+
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + id));
+
+        if (request.getName() != null && !request.getName().equals(role.getName())) {
+            if (roleRepository.existsByName(request.getName())) {
+                throw new DuplicateResourceException("Role already exists with name: " + request.getName());
+            }
+            role.setName(request.getName());
+        }
+
+        if (request.getDescription() != null) {
+            role.setDescription(request.getDescription());
+        }
+
+        Role updatedRole = roleRepository.save(role);
+        log.info("Role updated successfully with id: {}", updatedRole.getId());
+
+        return userMapper.roleToDTO(updatedRole);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.RoleDTO;
+import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.service.RoleService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,6 +66,13 @@ public class RoleController {
     public ResponseEntity<RoleDTO> createRole(@Valid @RequestBody CreateRoleRequest request) {
         RoleDTO createdRole = roleService.createRole(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRole);
+    }
+
+    @PutMapping("/update")
+    @Operation(summary = "Update role", description = "Update an existing role")
+    public ResponseEntity<RoleDTO> updateRole(@Valid @RequestBody UpdateRoleRequest request) {
+        RoleDTO updatedRole = roleService.updateRole(request.getId(), request);
+        return ResponseEntity.ok(updatedRole);
     }
 
     @PutMapping("/{id}/status")
