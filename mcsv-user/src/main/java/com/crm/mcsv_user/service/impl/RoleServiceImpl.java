@@ -42,13 +42,10 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RoleDTO> getAllRolesPaged(String search, Pageable pageable) {
-        log.info("Fetching roles paged, search: {}", search);
-        boolean hasSearch = search != null && !search.isBlank();
-        if (hasSearch) {
-            return roleRepository.searchRoles(search.trim(), pageable).map(userMapper::roleToDTO);
-        }
-        return roleRepository.findAll(pageable).map(userMapper::roleToDTO);
+    public Page<RoleDTO> getAllRolesPaged(String search, Boolean status, Pageable pageable) {
+        log.info("Fetching roles paged, search: {}, status: {}", search, status);
+        String safeSearch = (search != null && !search.isBlank()) ? search.trim() : "";
+        return roleRepository.filterRoles(safeSearch, status, pageable).map(userMapper::roleToDTO);
     }
 
     @Override

@@ -35,16 +35,17 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping("/paged")
-    @Operation(summary = "Get all roles (paged)", description = "Retrieve a paginated list of roles with optional search")
+    @Operation(summary = "Get all roles (paged)", description = "Retrieve a paginated list of roles with optional search and status filter")
     public ResponseEntity<Page<RoleDTO>> getAllRoles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean status,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(roleService.getAllRolesPaged(search, pageable));
+        return ResponseEntity.ok(roleService.getAllRolesPaged(search, status, pageable));
     }
 
     @GetMapping("/{id}")

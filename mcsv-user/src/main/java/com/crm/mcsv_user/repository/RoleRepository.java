@@ -19,4 +19,14 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
 
     @Query("SELECT r FROM Role r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<Role> searchRoles(@Param("search") String search, Pageable pageable);
+
+    @Query(value = "SELECT r FROM Role r WHERE " +
+            "('' = :search OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "(:status IS NULL OR r.enabled = :status)",
+           countQuery = "SELECT COUNT(r) FROM Role r WHERE " +
+            "('' = :search OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "(:status IS NULL OR r.enabled = :status)")
+    Page<Role> filterRoles(@Param("search") String search, @Param("status") Boolean status, Pageable pageable);
 }

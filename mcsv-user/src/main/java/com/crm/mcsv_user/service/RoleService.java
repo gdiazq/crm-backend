@@ -12,7 +12,7 @@ public interface RoleService {
 
     List<RoleDTO> getAllRoles();
 
-    Page<RoleDTO> getAllRolesPaged(String search, Pageable pageable);
+    Page<RoleDTO> getAllRolesPaged(String search, Boolean status, Pageable pageable);
 
     RoleDTO getRoleById(Long id);
 
