@@ -83,4 +83,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> searchUsersSortedByRoleDesc(@Param("search") String search, Pageable pageable);
 
     List<User> findAllByRolesId(Long roleId);
+
+    long countByEnabled(boolean enabled);
 }

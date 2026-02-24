@@ -1,6 +1,7 @@
 package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.dto.CreateRoleRequest;
+import com.crm.mcsv_user.dto.PagedResponse;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.service.RoleService;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import java.util.Map;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -24,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/role")
 @RequiredArgsConstructor
@@ -36,7 +36,7 @@ public class RoleController {
 
     @GetMapping("/paged")
     @Operation(summary = "Get all roles (paged)", description = "Retrieve a paginated list of roles with optional search and status filter")
-    public ResponseEntity<Page<RoleDTO>> getAllRoles(
+    public ResponseEntity<PagedResponse<RoleDTO>> getAllRoles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
@@ -45,7 +45,9 @@ public class RoleController {
             @RequestParam(defaultValue = "asc") String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(roleService.getAllRolesPaged(search, status, pageable));
+        Page<RoleDTO> result = roleService.getAllRolesPaged(search, status, pageable);
+        Map<String, Long> stats = roleService.getRoleStats();
+        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
     }
 
     @GetMapping("/{id}")

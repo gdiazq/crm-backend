@@ -50,4 +50,6 @@ public interface UserService {
     void sendVerificationCode(Long userId, String email, String username);
 
     boolean validateAndConsumeCode(Long userId, String code);
+
+    Map<String, Long> getUserStats();
 }

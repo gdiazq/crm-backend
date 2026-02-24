@@ -1,6 +1,7 @@
 package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.dto.CreateUserRequest;
+import com.crm.mcsv_user.dto.PagedResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UpdatePasswordRequest;
 import com.crm.mcsv_user.dto.UserDTO;
@@ -45,7 +46,7 @@ public class UserController {
 
     @GetMapping("/paged")
     @Operation(summary = "Get all users (paged)", description = "Retrieve a paginated list of users with optional filters and sorting")
-    public ResponseEntity<Page<UserResponse>> getAllUsers(
+    public ResponseEntity<PagedResponse<UserResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String name,
@@ -57,7 +58,9 @@ public class UserController {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(userService.filterUsers(name, email, status, roleId, pageable, safeSortBy, sortDir));
+        Page<UserResponse> result = userService.filterUsers(name, email, status, roleId, pageable, safeSortBy, sortDir);
+        Map<String, Long> stats = userService.getUserStats();
+        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
     }
 
     @GetMapping("/detail/{id}")

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -122,6 +123,14 @@ public class RoleServiceImpl implements RoleService {
 
         roleRepository.deleteById(id);
         log.info("Role deleted successfully with id: {}", id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getRoleStats() {
+        long total = roleRepository.count();
+        long active = roleRepository.countByEnabled(true);
+        return Map.of("total", total, "active", active);
     }
 
     @Override

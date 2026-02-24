@@ -29,4 +29,6 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
             "OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "(:status IS NULL OR r.enabled = :status)")
     Page<Role> filterRoles(@Param("search") String search, @Param("status") Boolean status, Pageable pageable);
+
+    long countByEnabled(boolean enabled);
 }

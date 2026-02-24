@@ -400,6 +400,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getUserStats() {
+        long total = userRepository.count();
+        long active = userRepository.countByEnabled(true);
+        return Map.of("total", total, "active", active);
+    }
+
+    @Override
     @Transactional
     public boolean validateAndConsumeCode(Long userId, String code) {
         log.info("Validating admin verification code for user id: {}", userId);
