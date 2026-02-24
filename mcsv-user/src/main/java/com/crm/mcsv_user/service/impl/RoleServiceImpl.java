@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.service.impl;
 
+import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
@@ -69,16 +70,16 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public RoleDTO createRole(String name, String description) {
-        log.info("Creating new role with name: {}", name);
+    public RoleDTO createRole(CreateRoleRequest request) {
+        log.info("Creating new role with name: {}", request.getName());
 
-        if (roleRepository.existsByName(name)) {
-            throw new DuplicateResourceException("Role already exists with name: " + name);
+        if (roleRepository.existsByName(request.getName())) {
+            throw new DuplicateResourceException("Role already exists with name: " + request.getName());
         }
 
         Role role = Role.builder()
-                .name(name)
-                .description(description)
+                .name(request.getName())
+                .description(request.getDescription())
                 .build();
 
         Role savedRole = roleRepository.save(role);

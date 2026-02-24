@@ -1,7 +1,9 @@
 package com.crm.mcsv_user.controller;
 
+import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.service.RoleService;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/role")
@@ -62,10 +62,8 @@ public class RoleController {
 
     @PostMapping("/create")
     @Operation(summary = "Create role", description = "Create a new role")
-    public ResponseEntity<RoleDTO> createRole(
-            @RequestParam String name,
-            @RequestParam(required = false) String description) {
-        RoleDTO createdRole = roleService.createRole(name, description);
+    public ResponseEntity<RoleDTO> createRole(@Valid @RequestBody CreateRoleRequest request) {
+        RoleDTO createdRole = roleService.createRole(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRole);
     }
 

@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.service;
 
+import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.RoleDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +17,7 @@ public interface RoleService {
 
     RoleDTO getRoleByName(String name);
 
-    RoleDTO createRole(String name, String description);
+    RoleDTO createRole(CreateRoleRequest request);
 
     void deleteRole(Long id);
 
