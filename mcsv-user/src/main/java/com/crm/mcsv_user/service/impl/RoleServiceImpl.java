@@ -2,10 +2,12 @@ package com.crm.mcsv_user.service.impl;
 
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.entity.Role;
+import com.crm.mcsv_user.entity.User;
 import com.crm.mcsv_user.exception.DuplicateResourceException;
 import com.crm.mcsv_user.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
 import com.crm.mcsv_user.repository.RoleRepository;
+import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     @Override
@@ -95,5 +98,23 @@ public class RoleServiceImpl implements RoleService {
 
         roleRepository.deleteById(id);
         log.info("Role deleted successfully with id: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long id, Boolean enabled) {
+        log.info("Updating status for role id: {} to {}", id, enabled);
+
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + id));
+
+        role.setEnabled(enabled);
+        roleRepository.save(role);
+
+        List<User> users = userRepository.findAllByRolesId(id);
+        users.forEach(u -> u.setEnabled(enabled));
+        userRepository.saveAll(users);
+
+        log.info("Role status updated to {}. Affected {} users.", enabled, users.size());
     }
 }

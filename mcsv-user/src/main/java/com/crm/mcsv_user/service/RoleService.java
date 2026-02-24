@@ -19,4 +19,6 @@ public interface RoleService {
     RoleDTO createRole(String name, String description);
 
     void deleteRole(Long id);
+
+    void updateStatus(Long id, Boolean enabled);
 }
