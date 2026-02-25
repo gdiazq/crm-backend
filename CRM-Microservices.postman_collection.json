@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "crm-microservices-001",
     "name": "CRM Microservices",
-    "description": "Colección completa de endpoints para mcsv-auth, mcsv-user y mcsv-notification",
+    "description": "Colección completa de endpoints para mcsv-auth, mcsv-user, mcsv-notification, mcsv-storage",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -26,22 +26,29 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/register",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "register"
-              ]
+              "path": ["v1", "api", "auth", "register"]
             }
           },
           "response": []
         },
         {
           "name": "Verify Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"passwordToken\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -57,33 +64,12 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/verify-email",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "verify-email"
-              ]
+              "path": ["v1", "api", "auth", "verify-email"]
             }
           },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set(\"passwordToken\", jsonData.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
+          "response": []
         },
         {
           "name": "Create Password",
@@ -102,16 +88,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/create-password",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "create-password"
-              ]
+              "path": ["v1", "api", "auth", "create-password"]
             }
           },
           "response": []
@@ -133,16 +112,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/resend-verification",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "resend-verification"
-              ]
+              "path": ["v1", "api", "auth", "resend-verification"]
             }
           },
           "response": []
@@ -155,16 +127,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/check-email?email=john@example.com",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "check-email"
-              ],
+              "path": ["v1", "api", "auth", "check-email"],
               "query": [
                 {
                   "key": "email",
@@ -192,16 +157,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/pre-login",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "pre-login"
-              ]
+              "path": ["v1", "api", "auth", "pre-login"]
             }
           },
           "response": []
@@ -239,16 +197,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/login",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "login"
-              ]
+              "path": ["v1", "api", "auth", "login"]
             }
           },
           "response": []
@@ -266,16 +217,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/me",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "me"
-              ]
+              "path": ["v1", "api", "auth", "me"]
             }
           },
           "response": []
@@ -312,16 +256,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/refresh",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "refresh"
-              ]
+              "path": ["v1", "api", "auth", "refresh"]
             }
           },
           "response": []
@@ -343,16 +280,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/logout",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "logout"
-              ]
+              "path": ["v1", "api", "auth", "logout"]
             }
           },
           "response": []
@@ -374,16 +304,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/forgot-password",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "forgot-password"
-              ]
+              "path": ["v1", "api", "auth", "forgot-password"]
             }
           },
           "response": []
@@ -405,16 +328,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/reset-password",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "reset-password"
-              ]
+              "path": ["v1", "api", "auth", "reset-password"]
             }
           },
           "response": []
@@ -436,16 +352,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/user/update-password",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "user",
-                "update-password"
-              ]
+              "path": ["v1", "api", "user", "update-password"]
             }
           },
           "response": []
@@ -463,16 +372,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/validate",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "validate"
-              ]
+              "path": ["v1", "api", "auth", "validate"]
             }
           },
           "response": []
@@ -499,14 +401,9 @@
             "url": {
               "raw": "http://localhost:9092/v1/validateToken",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9092",
-              "path": [
-                "v1",
-                "validateToken"
-              ]
+              "path": ["v1", "validateToken"]
             }
           },
           "response": []
@@ -541,14 +438,9 @@
             "url": {
               "raw": "http://localhost:9092/v1/validateTokenUrl",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9092",
-              "path": [
-                "v1",
-                "validateTokenUrl"
-              ]
+              "path": ["v1", "validateTokenUrl"]
             }
           },
           "response": []
@@ -574,17 +466,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/mfa/setup",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "mfa",
-                "setup"
-              ]
+              "path": ["v1", "api", "auth", "mfa", "setup"]
             }
           },
           "response": []
@@ -610,17 +494,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/mfa/verify",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "mfa",
-                "verify"
-              ]
+              "path": ["v1", "api", "auth", "mfa", "verify"]
             }
           },
           "response": []
@@ -638,18 +514,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/mfa/status/john@example.com",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "mfa",
-                "status",
-                "john@example.com"
-              ]
+              "path": ["v1", "api", "auth", "mfa", "status", "john@example.com"]
             }
           },
           "response": []
@@ -675,17 +542,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/mfa/disable",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "mfa",
-                "disable"
-              ]
+              "path": ["v1", "api", "auth", "mfa", "disable"]
             }
           },
           "response": []
@@ -703,16 +562,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/sessions",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "sessions"
-              ]
+              "path": ["v1", "api", "auth", "sessions"]
             }
           },
           "response": []
@@ -731,23 +583,16 @@
                 "value": "Bearer {{accessToken}}"
               }
             ],
-            "url": {
-              "raw": "http://localhost:9090/v1/api/auth/logout-device",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "logout-device"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"sessionId\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:9090/v1/api/auth/logout-device",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "api", "auth", "logout-device"]
             }
           },
           "response": []
@@ -779,16 +624,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/ws-ticket",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "ws-ticket"
-              ]
+              "path": ["v1", "api", "auth", "ws-ticket"]
             }
           },
           "response": []
@@ -815,14 +653,9 @@
             "url": {
               "raw": "http://localhost:9092/v1/validateTicket",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9092",
-              "path": [
-                "v1",
-                "validateTicket"
-              ]
+              "path": ["v1", "validateTicket"]
             }
           },
           "response": []
@@ -835,17 +668,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/oauth2/github",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "oauth2",
-                "github"
-              ]
+              "path": ["v1", "api", "auth", "oauth2", "github"]
             }
           },
           "response": []
@@ -879,18 +704,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/auth/oauth2/github/callback?code=GITHUB_CODE_HERE",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "auth",
-                "oauth2",
-                "github",
-                "callback"
-              ],
+              "path": ["v1", "api", "auth", "oauth2", "github", "callback"],
               "query": [
                 {
                   "key": "code",
@@ -920,18 +736,11 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{baseUrl}}/v1/api/user/paged?page=0&size=10&sortBy=createdAt&sortDir=desc",
+                  "raw": "http://localhost:9090/v1/api/user/paged?page=0&size=10&sortBy=createdAt&sortDir=desc",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "paged"
-                  ],
+                  "path": ["v1", "api", "user", "paged"],
                   "query": [
                     {
                       "key": "page",
@@ -942,8 +751,23 @@
                       "value": "10"
                     },
                     {
-                      "key": "search",
+                      "key": "name",
                       "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "email",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "status",
+                      "value": "true",
+                      "disabled": true
+                    },
+                    {
+                      "key": "roleId",
+                      "value": "1",
                       "disabled": true
                     },
                     {
@@ -972,17 +796,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/detail/{{userId}}",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "detail",
-                    "{{userId}}"
-                  ]
+                  "path": ["v1", "api", "user", "detail", "{{userId}}"]
                 }
               },
               "response": []
@@ -1000,18 +816,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/detail/username/johndoe",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "detail",
-                    "username",
-                    "johndoe"
-                  ]
+                  "path": ["v1", "api", "user", "detail", "username", "johndoe"]
                 }
               },
               "response": []
@@ -1029,17 +836,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/detail/email?email=john@example.com",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "detail",
-                    "email"
-                  ],
+                  "path": ["v1", "api", "user", "detail", "email"],
                   "query": [
                     {
                       "key": "email",
@@ -1072,25 +871,46 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
                   }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\",\n  \"roleIds\": [1]\n}"
+                  "raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\",\n  \"roleIds\": [1]\n}"
                 },
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/create",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "create"
-                  ]
+                  "path": ["v1", "api", "user", "create"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Verify Email Code (admin created user)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/user/{{userId}}/verify-email-code",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "user", "{{userId}}", "verify-email-code"]
                 }
               },
               "response": []
@@ -1116,16 +936,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/update",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "update"
-                  ]
+                  "path": ["v1", "api", "user", "update"]
                 }
               },
               "response": []
@@ -1138,6 +951,10 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
                   }
                 ],
                 "body": {
@@ -1150,19 +967,41 @@
                   }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/v1/api/user/{{userId}}/status",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "{{userId}}",
-                    "status"
-                  ]
+                  "raw": "http://localhost:9090/v1/api/user/{{userId}}/status",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "user", "{{userId}}", "status"]
                 },
                 "description": "Enable or disable a user. Send status: true to activate, status: false to deactivate."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Avatar URL",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"avatarUrl\": \"https://example.com/avatar.jpg\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/user/{{userId}}/avatar-url",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "user", "{{userId}}", "avatar-url"]
+                }
               },
               "response": []
             },
@@ -1183,16 +1022,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/sign-up",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "sign-up"
-                  ]
+                  "path": ["v1", "api", "user", "sign-up"]
                 }
               },
               "response": []
@@ -1214,16 +1046,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/validate-credentials",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "validate-credentials"
-                  ]
+                  "path": ["v1", "api", "user", "validate-credentials"]
                 }
               },
               "response": []
@@ -1251,17 +1076,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/user/{{userId}}/avatar",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "user",
-                    "{{userId}}",
-                    "avatar"
-                  ]
+                  "path": ["v1", "api", "user", "{{userId}}", "avatar"]
                 }
               },
               "response": []
@@ -1282,17 +1099,38 @@
                   }
                 ],
                 "url": {
-                  "raw": "http://localhost:9090/v1/api/role/paged",
+                  "raw": "http://localhost:9090/v1/api/role/paged?page=0&size=10&sortBy=name&sortDir=asc",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "role",
-                    "paged"
+                  "path": ["v1", "api", "role", "paged"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "status",
+                      "value": "true",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sortDir",
+                      "value": "asc"
+                    }
                   ]
                 }
               },
@@ -1311,16 +1149,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/role/1",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "role",
-                    "1"
-                  ]
+                  "path": ["v1", "api", "role", "1"]
                 }
               },
               "response": []
@@ -1338,17 +1169,9 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/role/name/ROLE_USER",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "role",
-                    "name",
-                    "ROLE_USER"
-                  ]
+                  "path": ["v1", "api", "role", "name", "ROLE_USER"]
                 }
               },
               "response": []
@@ -1359,33 +1182,205 @@
                 "method": "POST",
                 "header": [
                   {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"ROLE_ADMIN\",\n  \"description\": \"Administrador del sistema\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/create",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "create"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Role",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": 1,\n  \"name\": \"ROLE_ADMIN\",\n  \"description\": \"Administrador actualizado\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/update",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "update"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Toggle Role Status",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": false\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/1/status",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "1", "status"]
+                },
+                "description": "Enable or disable a role. Send status: true to activate, status: false to deactivate."
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Permissions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
                     "key": "Authorization",
                     "value": "Bearer {{accessToken}}"
                   }
                 ],
                 "url": {
-                  "raw": "http://localhost:9090/v1/api/role/create?name=ROLE_ADMIN&description=Administrador del sistema",
+                  "raw": "http://localhost:9090/v1/api/role/permissions",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "role",
-                    "create"
-                  ],
-                  "query": [
-                    {
-                      "key": "name",
-                      "value": "ROLE_ADMIN"
-                    },
-                    {
-                      "key": "description",
-                      "value": "Administrador del sistema"
-                    }
-                  ]
+                  "path": ["v1", "api", "role", "permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Permissions for Select",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/permissions/select",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "permissions", "select"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Set Permissions (replace all)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissionIds\": [1, 2, 3]\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/1/permissions",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "1", "permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Add Permissions",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissionIds\": [4, 5]\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/1/permissions/add",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "1", "permissions", "add"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Remove Permissions",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissionIds\": [4, 5]\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:9090/v1/api/role/1/permissions",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "9090",
+                  "path": ["v1", "api", "role", "1", "permissions"]
                 }
               },
               "response": []
@@ -1403,21 +1398,99 @@
                 "url": {
                   "raw": "http://localhost:9090/v1/api/role/1",
                   "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
+                  "host": ["localhost"],
                   "port": "9090",
-                  "path": [
-                    "v1",
-                    "api",
-                    "role",
-                    "1"
-                  ]
+                  "path": ["v1", "api", "role", "1"]
                 }
               },
               "response": []
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Select Service (gateway)",
+      "item": [
+        {
+          "name": "Get Roles for Select",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:9090/v1/api/select/roles",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "api", "select", "roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Users (name) for Select",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:9090/v1/api/select/users/name",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "api", "select", "users", "name"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Users (email) for Select",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:9090/v1/api/select/users/email",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "api", "select", "users", "email"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Status Options for Select",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:9090/v1/api/select/status",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "api", "select", "status"]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1445,16 +1518,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/notification/send",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "notification",
-                "send"
-              ]
+              "path": ["v1", "api", "notification", "send"]
             }
           },
           "response": []
@@ -1472,16 +1538,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/notification/paged?type=&page=0&size=20",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "notification",
-                "paged"
-              ],
+              "path": ["v1", "api", "notification", "paged"],
               "query": [
                 {
                   "key": "type",
@@ -1513,16 +1572,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/notification/count",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "notification",
-                "count"
-              ]
+              "path": ["v1", "api", "notification", "count"]
             }
           },
           "response": []
@@ -1548,16 +1600,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/notification/read",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "notification",
-                "read"
-              ]
+              "path": ["v1", "api", "notification", "read"]
             }
           },
           "response": []
@@ -1579,16 +1624,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/notification/read-all",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "notification",
-                "read-all"
-              ]
+              "path": ["v1", "api", "notification", "read-all"]
             }
           },
           "response": []
@@ -1614,16 +1652,9 @@
             "url": {
               "raw": "http://localhost:9090/v1/api/notification/archive",
               "protocol": "http",
-              "host": [
-                "localhost"
-              ],
+              "host": ["localhost"],
               "port": "9090",
-              "path": [
-                "v1",
-                "api",
-                "notification",
-                "archive"
-              ]
+              "path": ["v1", "api", "notification", "archive"]
             }
           },
           "response": []
@@ -1670,12 +1701,8 @@
             },
             "url": {
               "raw": "{{baseUrlStorage}}/upload",
-              "host": [
-                "{{baseUrlStorage}}"
-              ],
-              "path": [
-                "upload"
-              ]
+              "host": ["{{baseUrlStorage}}"],
+              "path": ["upload"]
             }
           },
           "response": []
@@ -1692,13 +1719,8 @@
             ],
             "url": {
               "raw": "{{baseUrlStorage}}/download/1",
-              "host": [
-                "{{baseUrlStorage}}"
-              ],
-              "path": [
-                "download",
-                "1"
-              ]
+              "host": ["{{baseUrlStorage}}"],
+              "path": ["download", "1"]
             }
           },
           "response": []
@@ -1715,12 +1737,8 @@
             ],
             "url": {
               "raw": "{{baseUrlStorage}}/1?userId={{userId}}",
-              "host": [
-                "{{baseUrlStorage}}"
-              ],
-              "path": [
-                "1"
-              ],
+              "host": ["{{baseUrlStorage}}"],
+              "path": ["1"],
               "query": [
                 {
                   "key": "userId",
@@ -1743,12 +1761,8 @@
             ],
             "url": {
               "raw": "{{baseUrlStorage}}/files?entityType=USER_AVATAR&entityId={{userId}}",
-              "host": [
-                "{{baseUrlStorage}}"
-              ],
-              "path": [
-                "files"
-              ],
+              "host": ["{{baseUrlStorage}}"],
+              "path": ["files"],
               "query": [
                 {
                   "key": "entityType",
@@ -1775,13 +1789,8 @@
             ],
             "url": {
               "raw": "{{baseUrlStorage}}/files/1",
-              "host": [
-                "{{baseUrlStorage}}"
-              ],
-              "path": [
-                "files",
-                "1"
-              ]
+              "host": ["{{baseUrlStorage}}"],
+              "path": ["files", "1"]
             }
           },
           "response": []
@@ -1806,6 +1815,11 @@
       "type": "string"
     },
     {
+      "key": "baseUrlSelect",
+      "value": "http://localhost:9090/v1/api/select",
+      "type": "string"
+    },
+    {
       "key": "baseUrlNotification",
       "value": "http://localhost:9090/v1/api/notification",
       "type": "string"
@@ -1813,6 +1827,16 @@
     {
       "key": "baseUrlStorage",
       "value": "http://localhost:9090/v1/api/storage",
+      "type": "string"
+    },
+    {
+      "key": "baseUrlRrhh",
+      "value": "http://localhost:9090/v1/api/rrhh",
+      "type": "string"
+    },
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9090",
       "type": "string"
     }
   ]

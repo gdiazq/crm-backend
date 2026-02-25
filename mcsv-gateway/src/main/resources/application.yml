@@ -85,6 +85,13 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
+        - id: mcsv-rrhh
+          uri: lb://mcsv-rrhh
+          predicates:
+            - Path=/v1/api/rrhh/**
+          filters:
+            - StripPrefix=3
+            - AuthFilter
 
 server:
   port: 9090

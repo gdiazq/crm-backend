@@ -13,6 +13,7 @@
         <module>mcsv-eureka</module>
         <module>mcsv-config</module>
         <module>mcsv-user</module>
+        <module>mcsv-rrhh</module>
         <module>mcsv-auth</module>
         <module>mcsv-gateway</module>
         <module>mcsv-email</module>

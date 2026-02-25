@@ -1,0 +1,38 @@
+server:
+    port: 9096
+
+spring:
+    application:
+        name: mcsv-rrhh
+
+    config:
+        import: "configserver:"
+
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 5MB
+            max-request-size: 5MB
+
+    cloud:
+        config:
+            uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+info:
+  app:
+    name: rrhh Microservicio Server
+    description: Microservicio para manejar recursos humanos
+    version: 1.0.0
+
+# Configuración para Documentation swagger
+openapi:
+    service:
+        title: rrhh-service doc
+        version: 1.0.0
+        url: ${URLAPI:http://localhost:9090}/v1/api/rrhh
+
+springdoc:
+  api-docs:
+    path: /api/api-docs/rrhh
+  swagger-ui:
+    path: /api-docs/swagger-ui.html
