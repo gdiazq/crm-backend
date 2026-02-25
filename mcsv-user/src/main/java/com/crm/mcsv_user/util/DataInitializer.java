@@ -48,14 +48,14 @@ public class DataInitializer implements CommandLineRunner {
     private void initializePermissions() {
         log.info("Initializing permissions...");
 
-        createPermissionIfNotExists("USER:CREATE", "Create users");
-        createPermissionIfNotExists("USER:READ",   "Read users");
-        createPermissionIfNotExists("USER:UPDATE", "Update users");
-        createPermissionIfNotExists("USER:DELETE", "Delete users");
-        createPermissionIfNotExists("ROLE:CREATE", "Create roles");
-        createPermissionIfNotExists("ROLE:READ",   "Read roles");
-        createPermissionIfNotExists("ROLE:UPDATE", "Update roles");
-        createPermissionIfNotExists("ROLE:DELETE", "Delete roles");
+        createPermissionIfNotExists("USER:CREATE", "Crear nuevos usuarios en el sistema");
+        createPermissionIfNotExists("USER:READ",   "Ver y consultar información de usuarios");
+        createPermissionIfNotExists("USER:UPDATE", "Modificar información de usuarios existentes");
+        createPermissionIfNotExists("USER:DELETE", "Eliminar usuarios del sistema");
+        createPermissionIfNotExists("ROLE:CREATE", "Crear nuevos roles en el sistema");
+        createPermissionIfNotExists("ROLE:READ",   "Ver y consultar información de roles");
+        createPermissionIfNotExists("ROLE:UPDATE", "Modificar roles existentes");
+        createPermissionIfNotExists("ROLE:DELETE", "Eliminar roles del sistema");
 
         log.info("Permissions initialized.");
     }

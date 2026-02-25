@@ -101,6 +101,15 @@ public class RoleController {
         return ResponseEntity.ok(roleService.getAllPermissions());
     }
 
+    @GetMapping("/permissions/select")
+    @Operation(summary = "Get permissions for select", description = "Retrieve id and name only, for use in multiselect components")
+    public ResponseEntity<List<Map<String, Object>>> getPermissionsForSelect() {
+        List<Map<String, Object>> result = roleService.getAllPermissions().stream()
+                .map(p -> Map.<String, Object>of("id", p.getId(), "name", p.getName()))
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
     @PutMapping("/{id}/permissions")
     @Operation(summary = "Set permissions", description = "Replace all permissions of a role")
     public ResponseEntity<RoleDTO> setPermissions(@PathVariable Long id, @RequestBody Map<String, Set<Long>> body) {

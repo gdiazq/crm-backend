@@ -608,6 +608,12 @@ public class AuthServiceImpl implements AuthService {
                 .map(UserDTO.RoleDTO::getName)
                 .collect(Collectors.toSet());
 
+        Set<String> permissions = user.getRoles().stream()
+                .filter(r -> r.getPermissions() != null)
+                .flatMap(r -> r.getPermissions().stream())
+                .map(UserDTO.PermissionDTO::getName)
+                .collect(Collectors.toSet());
+
         return AuthResponse.UserInfo.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -617,6 +623,7 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(user.getPhoneNumber())
                 .avatarUrl(extractAvatarUrl(user))
                 .roles(roles)
+                .permissions(permissions)
                 .build();
     }
 
