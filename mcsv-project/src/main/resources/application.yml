@@ -1,0 +1,32 @@
+server:
+  port: 9097
+
+spring:
+  application:
+    name: mcsv-project
+
+  config:
+    import: "configserver:"
+
+  cloud:
+    config:
+      uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+info:
+  app:
+    name: project Microservicio Server
+    description: Microservicio para gestión de proyectos
+    version: 1.0.0
+
+# Configuración para Documentation swagger
+openapi:
+  service:
+    title: project-service doc
+    version: 1.0.0
+    url: ${URLAPI:http://localhost:9090}/v1/api/project
+
+springdoc:
+  api-docs:
+    path: /api/api-docs/project
+  swagger-ui:
+    path: /api-docs/swagger-ui.html
