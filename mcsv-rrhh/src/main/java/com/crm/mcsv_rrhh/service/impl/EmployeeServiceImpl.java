@@ -3,6 +3,7 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
+import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.entity.Employee;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,14 +32,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponse createEmployee(CreateEmployeeRequest request) {
-        if (employeeRepository.existsByUserId(request.getUserId())) {
-            throw new DuplicateResourceException("Ya existe un empleado vinculado al usuario con id: " + request.getUserId());
-        }
+        UserDTO user = null;
 
-        // Validar que el User existe en mcsv-user
-        UserDTO user = userClient.getUserById(request.getUserId());
-        if (user == null) {
-            throw new ResourceNotFoundException("Usuario no encontrado con id: " + request.getUserId());
+        if (request.getUserId() != null) {
+            if (employeeRepository.existsByUserId(request.getUserId())) {
+                throw new DuplicateResourceException("Ya existe un empleado vinculado al usuario con id: " + request.getUserId());
+            }
+            user = userClient.getUserById(request.getUserId());
+            if (user == null) {
+                throw new ResourceNotFoundException("Usuario no encontrado con id: " + request.getUserId());
+            }
         }
 
         Employee employee = Employee.builder()
@@ -96,6 +100,27 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee saved = employeeRepository.save(employee);
         return toResponse(saved, user);
+    }
+
+    @Override
+    public void linkUser(Long id, Long userId) {
+        Employee employee = findOrThrow(id);
+        if (employeeRepository.existsByUserId(userId)) {
+            throw new DuplicateResourceException("El usuario ya está vinculado a otro empleado");
+        }
+        UserDTO user = userClient.getUserById(userId);
+        if (user == null) {
+            throw new ResourceNotFoundException("Usuario no encontrado con id: " + userId);
+        }
+        employee.setUserId(userId);
+        employeeRepository.save(employee);
+    }
+
+    @Override
+    public void unlinkUser(Long id) {
+        Employee employee = findOrThrow(id);
+        employee.setUserId(null);
+        employeeRepository.save(employee);
     }
 
     @Override
@@ -194,6 +219,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.save(employee);
     }
 
+    @Override
+    public PagedResponse<UserDTO> getAvailableUsersForEmployee(String search, int page, int size) {
+        List<Long> linkedUserIds = employeeRepository.findAllUserIds();
+        return userClient.getAvailableForEmployee(search, linkedUserIds, page, size);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private Employee findOrThrow(Long id) {
@@ -202,6 +233,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private UserDTO fetchUser(Long userId) {
+        if (userId == null) return null;
         try {
             return userClient.getUserById(userId);
         } catch (Exception e) {

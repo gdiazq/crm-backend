@@ -4,6 +4,7 @@ import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -79,10 +80,33 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.updateEmployee(request.getId(), request));
     }
 
+    @GetMapping("/select/available-users")
+    @Operation(summary = "Usuarios disponibles para vincular a empleado", description = "Retorna usuarios paginados excluyendo los ya vinculados a un empleado")
+    public ResponseEntity<PagedResponse<UserDTO>> getAvailableUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(employeeService.getAvailableUsersForEmployee(search, page, size));
+    }
+
     @PutMapping("/{id}/status")
     @Operation(summary = "Activar o desactivar empleado")
     public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         employeeService.updateStatus(id, body.get("active"));
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/link-user")
+    @Operation(summary = "Vincular usuario del sistema a un empleado")
+    public ResponseEntity<Void> linkUser(@PathVariable Long id, @RequestBody Map<String, Long> body) {
+        employeeService.linkUser(id, body.get("userId"));
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/link-user")
+    @Operation(summary = "Desvincular usuario del sistema de un empleado")
+    public ResponseEntity<Void> unlinkUser(@PathVariable Long id) {
+        employeeService.unlinkUser(id);
         return ResponseEntity.ok().build();
     }
 }

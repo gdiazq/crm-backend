@@ -28,7 +28,7 @@ public class Employee {
     /**
      * ID del User en mcsv-user. Garantiza la relación 1:1 con la restricción UNIQUE.
      */
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private Long userId;
 
     // ─── Datos Personales ─────────────────────────────────────────────────────

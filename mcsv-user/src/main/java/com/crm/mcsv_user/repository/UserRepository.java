@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,6 +82,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
                         "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<User> searchUsersSortedByRoleDesc(@Param("search") String search, Pageable pageable);
+
+    @Query(value = "SELECT u FROM User u WHERE " +
+            "('' = :search OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "(:excludeEmpty = true OR u.id NOT IN :excludeIds)",
+           countQuery = "SELECT COUNT(u) FROM User u WHERE " +
+            "('' = :search OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "(:excludeEmpty = true OR u.id NOT IN :excludeIds)")
+    Page<User> findAvailableForEmployee(@Param("search") String search,
+                                        @Param("excludeIds") Collection<Long> excludeIds,
+                                        @Param("excludeEmpty") boolean excludeEmpty,
+                                        Pageable pageable);
 
     List<User> findAllByRolesId(Long roleId);
 

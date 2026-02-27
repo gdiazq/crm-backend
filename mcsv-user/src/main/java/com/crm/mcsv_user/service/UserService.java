@@ -19,6 +19,8 @@ public interface UserService {
 
     List<UserResponse> getAllUsersForSelect();
 
+    Page<UserResponse> getAvailableUsersForEmployee(String search, List<Long> excludeIds, Pageable pageable);
+
     UserDTO getUserById(Long id);
 
     UserDTO getUserByUsername(String username);

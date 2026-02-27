@@ -1,6 +1,5 @@
 package com.crm.mcsv_rrhh.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -9,8 +8,7 @@ import java.time.LocalDate;
 public class CreateEmployeeRequest {
 
     // ─── Vínculo con mcsv-user ────────────────────────────────────────────────
-    @NotNull(message = "userId es requerido")
-    private Long userId;
+    private Long userId;   // opcional — se puede vincular después con PUT /{id}/link-user
 
     // ─── Datos Personales ─────────────────────────────────────────────────────
     private String identification;

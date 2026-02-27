@@ -2,7 +2,9 @@ package com.crm.mcsv_rrhh.service;
 
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
+import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.UserDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -23,4 +25,10 @@ public interface EmployeeService {
     Map<String, Long> getEmployeeStats();
 
     void updateStatus(Long id, Boolean active);
+
+    void linkUser(Long id, Long userId);
+
+    void unlinkUser(Long id);
+
+    PagedResponse<UserDTO> getAvailableUsersForEmployee(String search, int page, int size);
 }
