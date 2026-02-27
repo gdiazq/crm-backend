@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
@@ -41,8 +42,6 @@ public class EmployeeController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) Long statusId,
-            @RequestParam(required = false) Long companyId,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
@@ -50,7 +49,7 @@ public class EmployeeController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<EmployeeResponse> result = employeeService.filterEmployees(search, active, statusId, companyId, pageable);
+        Page<EmployeeResponse> result = employeeService.filterEmployees(search, active, pageable);
         Map<String, Long> stats = employeeService.getEmployeeStats();
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
@@ -58,25 +57,25 @@ public class EmployeeController {
 
     @GetMapping("/detail/{id}")
     @Operation(summary = "Obtener empleado por ID")
-    public ResponseEntity<EmployeeResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<EmployeeDetailResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(employeeService.getEmployeeById(id));
     }
 
     @GetMapping("/detail/user/{userId}")
     @Operation(summary = "Obtener empleado por userId (mcsv-user)")
-    public ResponseEntity<EmployeeResponse> getByUserId(@PathVariable Long userId) {
+    public ResponseEntity<EmployeeDetailResponse> getByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(employeeService.getEmployeeByUserId(userId));
     }
 
     @PostMapping("/create")
     @Operation(summary = "Crear empleado")
-    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody CreateEmployeeRequest request) {
+    public ResponseEntity<EmployeeDetailResponse> create(@Valid @RequestBody CreateEmployeeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(request));
     }
 
     @PutMapping("/update")
     @Operation(summary = "Actualizar empleado")
-    public ResponseEntity<EmployeeResponse> update(@Valid @RequestBody UpdateEmployeeRequest request) {
+    public ResponseEntity<EmployeeDetailResponse> update(@Valid @RequestBody UpdateEmployeeRequest request) {
         return ResponseEntity.ok(employeeService.updateEmployee(request.getId(), request));
     }
 

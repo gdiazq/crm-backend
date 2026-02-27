@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.service;
 
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
@@ -12,15 +13,15 @@ import java.util.Map;
 
 public interface EmployeeService {
 
-    EmployeeResponse createEmployee(CreateEmployeeRequest request);
+    EmployeeDetailResponse createEmployee(CreateEmployeeRequest request);
 
-    EmployeeResponse updateEmployee(Long id, UpdateEmployeeRequest request);
+    EmployeeDetailResponse updateEmployee(Long id, UpdateEmployeeRequest request);
 
-    EmployeeResponse getEmployeeById(Long id);
+    EmployeeDetailResponse getEmployeeById(Long id);
 
-    EmployeeResponse getEmployeeByUserId(Long userId);
+    EmployeeDetailResponse getEmployeeByUserId(Long userId);
 
-    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId, Long companyId, Pageable pageable);
+    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Pageable pageable);
 
     Map<String, Long> getEmployeeStats();
 

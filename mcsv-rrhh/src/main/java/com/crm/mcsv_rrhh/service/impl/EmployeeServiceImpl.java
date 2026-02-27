@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
@@ -31,7 +32,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final UserClient userClient;
 
     @Override
-    public EmployeeResponse createEmployee(CreateEmployeeRequest request) {
+    public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
         UserDTO user = null;
 
         if (request.getUserId() != null) {
@@ -88,8 +89,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .paymentMethodId(request.getPaymentMethodId())
                 .bankId(request.getBankId())
                 .bankAccount(request.getBankAccount())
-                .companyId(request.getCompanyId())
-                .statusId(request.getStatusId())
                 .clothingSize(request.getClothingSize())
                 .shoeSize(request.getShoeSize())
                 .pantSize(request.getPantSize())
@@ -99,7 +98,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        return toResponse(saved, user);
+        return toDetailResponse(saved, user);
     }
 
     @Override
@@ -124,7 +123,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeResponse updateEmployee(Long id, UpdateEmployeeRequest request) {
+    public EmployeeDetailResponse updateEmployee(Long id, UpdateEmployeeRequest request) {
         Employee employee = findOrThrow(id);
 
         if (request.getIdentification() != null)              employee.setIdentification(request.getIdentification());
@@ -169,8 +168,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (request.getPaymentMethodId() != null)             employee.setPaymentMethodId(request.getPaymentMethodId());
         if (request.getBankId() != null)                      employee.setBankId(request.getBankId());
         if (request.getBankAccount() != null)                 employee.setBankAccount(request.getBankAccount());
-        if (request.getCompanyId() != null)                   employee.setCompanyId(request.getCompanyId());
-        if (request.getStatusId() != null)                    employee.setStatusId(request.getStatusId());
         if (request.getClothingSize() != null)                employee.setClothingSize(request.getClothingSize());
         if (request.getShoeSize() != null)                    employee.setShoeSize(request.getShoeSize());
         if (request.getPantSize() != null)                    employee.setPantSize(request.getPantSize());
@@ -180,28 +177,28 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee saved = employeeRepository.save(employee);
         UserDTO user = fetchUser(saved.getUserId());
-        return toResponse(saved, user);
+        return toDetailResponse(saved, user);
     }
 
     @Override
-    public EmployeeResponse getEmployeeById(Long id) {
+    public EmployeeDetailResponse getEmployeeById(Long id) {
         Employee employee = findOrThrow(id);
         UserDTO user = fetchUser(employee.getUserId());
-        return toResponse(employee, user);
+        return toDetailResponse(employee, user);
     }
 
     @Override
-    public EmployeeResponse getEmployeeByUserId(Long userId) {
+    public EmployeeDetailResponse getEmployeeByUserId(Long userId) {
         Employee employee = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado para userId: " + userId));
         UserDTO user = fetchUser(userId);
-        return toResponse(employee, user);
+        return toDetailResponse(employee, user);
     }
 
     @Override
-    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId, Long companyId, Pageable pageable) {
-        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, statusId, companyId);
-        return employeeRepository.findAll(spec, pageable).map(e -> toResponse(e, null));
+    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Pageable pageable) {
+        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active);
+        return employeeRepository.findAll(spec, pageable).map(this::toResponse);
     }
 
     @Override
@@ -242,8 +239,24 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    private EmployeeResponse toResponse(Employee e, UserDTO user) {
-        EmployeeResponse.EmployeeResponseBuilder builder = EmployeeResponse.builder()
+    private EmployeeResponse toResponse(Employee e) {
+        return EmployeeResponse.builder()
+                .id(e.getId())
+                .identification(e.getIdentification())
+                .firstName(e.getFirstName())
+                .paternalLastName(e.getPaternalLastName())
+                .maternalLastName(e.getMaternalLastName())
+                .corporateEmail(e.getCorporateEmail())
+                .phone(e.getPhone())
+                .active(e.getActive())
+                .rehireEligible(e.getRehireEligible())
+                .createdAt(e.getCreatedAt())
+                .updatedAt(e.getUpdatedAt())
+                .build();
+    }
+
+    private EmployeeDetailResponse toDetailResponse(Employee e, UserDTO user) {
+        EmployeeDetailResponse.EmployeeDetailResponseBuilder builder = EmployeeDetailResponse.builder()
                 .id(e.getId())
                 .userId(e.getUserId())
                 .identification(e.getIdentification())
@@ -253,9 +266,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .corporateEmail(e.getCorporateEmail())
                 .personalEmail(e.getPersonalEmail())
                 .phone(e.getPhone())
-                .companyId(e.getCompanyId())
                 .active(e.getActive())
-                .statusId(e.getStatusId())
                 .rehireEligible(e.getRehireEligible())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt());

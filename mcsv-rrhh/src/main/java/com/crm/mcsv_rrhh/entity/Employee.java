@@ -90,9 +90,6 @@ public class Employee {
     private Long bankId;
     private String bankAccount;
 
-    // ─── Datos Organizacionales ───────────────────────────────────────────────
-    private Long companyId;
-
     // ─── Otros Datos ─────────────────────────────────────────────────────────
     private String clothingSize;
     private String shoeSize;
@@ -105,12 +102,6 @@ public class Employee {
      */
     @Builder.Default
     private Boolean active = true;
-
-    /**
-     * ID del estado en el flujo de aprobación RRHH.
-     * Estados: Pendiente aprobación, Aprobado, Rechazado, etc.
-     */
-    private Long statusId;
 
     /**
      * Indica si es elegible para recontratación según su historial.

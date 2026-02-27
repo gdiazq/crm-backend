@@ -11,9 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EmployeeResponse {
+public class EmployeeDetailResponse {
 
     private Long id;
+    private Long userId;
 
     // Datos de identificación
     private String identification;
@@ -25,6 +26,7 @@ public class EmployeeResponse {
 
     // Contacto
     private String corporateEmail;
+    private String personalEmail;
     private String phone;
 
     // Estado
@@ -34,4 +36,9 @@ public class EmployeeResponse {
     // Auditoría
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Datos del User vinculado (mcsv-user via Feign)
+    private String username;
+    private String userEmail;
+    private Boolean userEnabled;
 }
