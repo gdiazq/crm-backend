@@ -20,9 +20,7 @@ public class EmployeeSpecification {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("firstName")), pattern),
                         cb.like(cb.lower(root.get("paternalLastName")), pattern),
-                        cb.like(cb.lower(root.get("maternalLastName")), pattern),
-                        cb.like(cb.lower(root.get("identification")), pattern),
-                        cb.like(cb.lower(root.get("corporateEmail")), pattern)
+                        cb.like(cb.lower(root.get("maternalLastName")), pattern)
                 ));
             }
 

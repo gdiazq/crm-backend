@@ -39,16 +39,23 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private static final Map<String, String> PERMISSION_MAP = Map.ofEntries(
-            Map.entry("POST:/v1/api/user/create",  "USER:CREATE"),
-            Map.entry("GET:/v1/api/user/paged",    "USER:READ"),
-            Map.entry("GET:/v1/api/user/detail",   "USER:READ"),
-            Map.entry("PUT:/v1/api/user/update",   "USER:UPDATE"),
-            Map.entry("PUT:/v1/api/user/status",   "USER:UPDATE"),
-            Map.entry("GET:/v1/api/role/paged",    "ROLE:READ"),
-            Map.entry("POST:/v1/api/role/create",  "ROLE:CREATE"),
-            Map.entry("PUT:/v1/api/role/update",   "ROLE:UPDATE"),
-            Map.entry("PUT:/v1/api/role/status",   "ROLE:UPDATE"),
-            Map.entry("DELETE:/v1/api/role",       "ROLE:DELETE")
+            Map.entry("POST:/v1/api/user/create",       "USER:CREATE"),
+            Map.entry("GET:/v1/api/user/paged",         "USER:READ"),
+            Map.entry("GET:/v1/api/user/detail",        "USER:READ"),
+            Map.entry("PUT:/v1/api/user/update",        "USER:UPDATE"),
+            Map.entry("PUT:/v1/api/user/status",        "USER:UPDATE"),
+            Map.entry("GET:/v1/api/role/paged",         "ROLE:READ"),
+            Map.entry("POST:/v1/api/role/create",       "ROLE:CREATE"),
+            Map.entry("PUT:/v1/api/role/update",        "ROLE:UPDATE"),
+            Map.entry("PUT:/v1/api/role/status",        "ROLE:UPDATE"),
+            Map.entry("DELETE:/v1/api/role",            "ROLE:DELETE"),
+            Map.entry("POST:/v1/api/rrhh/employee/create",          "EMPLOYEE:CREATE"),
+            Map.entry("GET:/v1/api/rrhh/employee/paged",            "EMPLOYEE:READ"),
+            Map.entry("GET:/v1/api/rrhh/employee/detail",           "EMPLOYEE:READ"),
+            Map.entry("GET:/v1/api/rrhh/employee/select",           "EMPLOYEE:READ"),
+            Map.entry("PUT:/v1/api/rrhh/employee/update",           "EMPLOYEE:UPDATE"),
+            Map.entry("PUT:/v1/api/rrhh/employee",                  "EMPLOYEE:UPDATE"),
+            Map.entry("DELETE:/v1/api/rrhh/employee",               "EMPLOYEE:DELETE")
     );
 
     private final WebClient.Builder webClient;

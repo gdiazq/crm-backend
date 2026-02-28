@@ -56,6 +56,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("ROLE:READ",   "Ver y consultar información de roles");
         createPermissionIfNotExists("ROLE:UPDATE", "Modificar roles existentes");
         createPermissionIfNotExists("ROLE:DELETE", "Eliminar roles del sistema");
+        createPermissionIfNotExists("EMPLOYEE:CREATE", "Crear nuevos empleados en el sistema");
+        createPermissionIfNotExists("EMPLOYEE:READ",   "Ver y consultar información de empleados");
+        createPermissionIfNotExists("EMPLOYEE:UPDATE", "Modificar información de empleados existentes");
+        createPermissionIfNotExists("EMPLOYEE:DELETE", "Deshabilitar empleados del sistema");
 
         log.info("Permissions initialized.");
     }
@@ -109,13 +113,21 @@ public class DataInitializer implements CommandLineRunner {
         Permission roleUpdate = permissionRepository.findByName("ROLE:UPDATE").orElseThrow();
         Permission roleDelete = permissionRepository.findByName("ROLE:DELETE").orElseThrow();
 
+        Permission employeeCreate = permissionRepository.findByName("EMPLOYEE:CREATE").orElseThrow();
+        Permission employeeRead   = permissionRepository.findByName("EMPLOYEE:READ").orElseThrow();
+        Permission employeeUpdate = permissionRepository.findByName("EMPLOYEE:UPDATE").orElseThrow();
+        Permission employeeDelete = permissionRepository.findByName("EMPLOYEE:DELETE").orElseThrow();
+
         assignToRole("ROLE_ADMIN", new HashSet<>(Set.of(
                 userCreate, userRead, userUpdate, userDelete,
-                roleCreate, roleRead, roleUpdate, roleDelete)));
+                roleCreate, roleRead, roleUpdate, roleDelete,
+                employeeCreate, employeeRead, employeeUpdate, employeeDelete)));
 
-        assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(userRead, userUpdate)));
+        assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(
+                userRead, userUpdate,
+                employeeCreate, employeeRead, employeeUpdate)));
 
-        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead)));
+        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead)));
 
         log.info("Permissions assigned to roles.");
     }
