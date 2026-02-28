@@ -7,9 +7,6 @@ import java.time.LocalDate;
 @Data
 public class CreateEmployeeRequest {
 
-    // ─── Vínculo con mcsv-user ────────────────────────────────────────────────
-    private Long userId;   // opcional — se puede vincular después con PUT /{id}/link-user
-
     // ─── Datos Personales ─────────────────────────────────────────────────────
     private String identification;
     private Long identificationTypeId;

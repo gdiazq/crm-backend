@@ -33,20 +33,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
-        UserDTO user = null;
-
-        if (request.getUserId() != null) {
-            if (employeeRepository.existsByUserId(request.getUserId())) {
-                throw new DuplicateResourceException("Ya existe un empleado vinculado al usuario con id: " + request.getUserId());
-            }
-            user = userClient.getUserById(request.getUserId());
-            if (user == null) {
-                throw new ResourceNotFoundException("Usuario no encontrado con id: " + request.getUserId());
-            }
-        }
-
         Employee employee = Employee.builder()
-                .userId(request.getUserId())
                 .identification(request.getIdentification())
                 .identificationTypeId(request.getIdentificationTypeId())
                 .firstName(request.getFirstName())
@@ -98,7 +85,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        return toDetailResponse(saved, user);
+        return toDetailResponse(saved, null);
     }
 
     @Override
