@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.repository.IdentificationTypeRepository;
+import com.crm.mcsv_rrhh.repository.GenderRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -12,18 +12,18 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/select/identification-types")
+@RequestMapping("/select/genders")
 @RequiredArgsConstructor
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
-public class IdentificationTypeController {
+public class GenderController {
 
-    private final IdentificationTypeRepository identificationTypeRepository;
+    private final GenderRepository genderRepository;
 
     @GetMapping
-    @Operation(summary = "Tipos de identificación activos")
+    @Operation(summary = "Géneros")
     public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = identificationTypeRepository.findByStatusTrue().stream()
-                .map(t -> new Item(t.getId(), t.getName()))
+        List<Item> result = genderRepository.findAll().stream()
+                .map(g -> new Item(g.getId(), g.getName()))
                 .toList();
         return ResponseEntity.ok(result);
     }
