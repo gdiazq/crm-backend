@@ -69,7 +69,6 @@ public class UpdateEmployeeRequest {
     private String bankAccount;
 
     // ─── Datos Organizacionales ───────────────────────────────────────────────
-    private Long companyId;
     private Long statusId;
 
     // ─── Otros Datos ──────────────────────────────────────────────────────────

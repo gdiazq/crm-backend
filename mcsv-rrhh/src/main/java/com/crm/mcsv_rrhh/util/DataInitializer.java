@@ -1,25 +1,7 @@
 package com.crm.mcsv_rrhh.util;
 
-import com.crm.mcsv_rrhh.entity.DriverLicense;
-import com.crm.mcsv_rrhh.entity.EducationLevel;
-import com.crm.mcsv_rrhh.entity.Gender;
-import com.crm.mcsv_rrhh.entity.IdentificationType;
-import com.crm.mcsv_rrhh.entity.MaritalStatus;
-import com.crm.mcsv_rrhh.entity.EmergencyContactRelationship;
-import com.crm.mcsv_rrhh.entity.Profession;
-import com.crm.mcsv_rrhh.entity.City;
-import com.crm.mcsv_rrhh.entity.Commune;
-import com.crm.mcsv_rrhh.entity.Region;
-import com.crm.mcsv_rrhh.repository.CityRepository;
-import com.crm.mcsv_rrhh.repository.CommuneRepository;
-import com.crm.mcsv_rrhh.repository.DriverLicenseRepository;
-import com.crm.mcsv_rrhh.repository.EmergencyContactRelationshipRepository;
-import com.crm.mcsv_rrhh.repository.RegionRepository;
-import com.crm.mcsv_rrhh.repository.EducationLevelRepository;
-import com.crm.mcsv_rrhh.repository.GenderRepository;
-import com.crm.mcsv_rrhh.repository.IdentificationTypeRepository;
-import com.crm.mcsv_rrhh.repository.MaritalStatusRepository;
-import com.crm.mcsv_rrhh.repository.ProfessionRepository;
+import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -40,6 +22,17 @@ public class DataInitializer implements CommandLineRunner {
     private final RegionRepository regionRepository;
     private final CommuneRepository communeRepository;
     private final CityRepository cityRepository;
+    private final NationalityRepository nationalityRepository;
+    private final ExpatRepository expatRepository;
+    private final FamilyAllowanceTierRepository familyAllowanceTierRepository;
+    private final RetirementStatusRepository retirementStatusRepository;
+    private final PensionStatusRepository pensionStatusRepository;
+    private final AfpRepository afpRepository;
+    private final HealthInsuranceRepository healthInsuranceRepository;
+    private final HealthInsuranceTariffRepository healthInsuranceTariffRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
+    private final BankRepository bankRepository;
+    private final EmployeeStatusRepository employeeStatusRepository;
 
     @Override
     public void run(String... args) {
@@ -53,6 +46,17 @@ public class DataInitializer implements CommandLineRunner {
         initializeRegions();
         initializeCommunes();
         initializeCities();
+        initializeNationalities();
+        initializeExpats();
+        initializeFamilyAllowanceTiers();
+        initializeRetirementStatuses();
+        initializePensionStatuses();
+        initializeAfps();
+        initializeHealthInsurances();
+        initializeHealthInsuranceTariffs();
+        initializePaymentMethods();
+        initializeBanks();
+        initializeEmployeeStatuses();
     }
 
     private void initializeIdentificationTypes() {
@@ -409,5 +413,103 @@ public class DataInitializer implements CommandLineRunner {
                 }
             })
         );
+    }
+
+    // ─── Nuevos catálogos ────────────────────────────────────────────────────
+
+    private void initializeNationalities() {
+        String[] names = {"Chilena", "Argentina", "Peruana", "Boliviana", "Colombiana",
+                "Venezolana", "Ecuatoriana", "Brasileña", "Uruguaya", "Paraguaya",
+                "Española", "Italiana", "Alemana", "Francesa", "Estadounidense",
+                "Haitiana", "Cubana", "Mexicana", "Dominicana", "China", "Otra"};
+        for (String name : names)
+            if (nationalityRepository.findByName(name).isEmpty())
+                nationalityRepository.save(Nationality.builder().name(name).build());
+        log.info("Nationalities initialized.");
+    }
+
+    private void initializeExpats() {
+        String[] names = {"No aplica", "Expatriado", "Inmigrante"};
+        for (String name : names)
+            if (expatRepository.findByName(name).isEmpty())
+                expatRepository.save(Expat.builder().name(name).build());
+        log.info("Expats initialized.");
+    }
+
+    private void initializeFamilyAllowanceTiers() {
+        String[] names = {"Tramo A", "Tramo B", "Tramo C", "Tramo D", "Sin carga familiar"};
+        for (String name : names)
+            if (familyAllowanceTierRepository.findByName(name).isEmpty())
+                familyAllowanceTierRepository.save(FamilyAllowanceTier.builder().name(name).build());
+        log.info("Family allowance tiers initialized.");
+    }
+
+    private void initializeRetirementStatuses() {
+        String[] names = {"No jubilado", "Jubilado por vejez", "Pensionado por invalidez"};
+        for (String name : names)
+            if (retirementStatusRepository.findByName(name).isEmpty())
+                retirementStatusRepository.save(RetirementStatus.builder().name(name).build());
+        log.info("Retirement statuses initialized.");
+    }
+
+    private void initializePensionStatuses() {
+        String[] names = {"AFP", "IPS (ex INP)", "Imponente voluntario", "Pensionado", "No cotizante"};
+        for (String name : names)
+            if (pensionStatusRepository.findByName(name).isEmpty())
+                pensionStatusRepository.save(PensionStatus.builder().name(name).build());
+        log.info("Pension statuses initialized.");
+    }
+
+    private void initializeAfps() {
+        String[] names = {"Capital", "Cuprum", "Habitat", "Modelo", "PlanVital", "Provida", "Uno"};
+        for (String name : names)
+            if (afpRepository.findByName(name).isEmpty())
+                afpRepository.save(Afp.builder().name(name).build());
+        log.info("AFPs initialized.");
+    }
+
+    private void initializeHealthInsurances() {
+        String[] names = {"Fonasa", "Banmédica", "Colmena Golden Cross", "Consalud",
+                "Cruz Blanca", "Esencial", "MasVida", "Vida Tres"};
+        for (String name : names)
+            if (healthInsuranceRepository.findByName(name).isEmpty())
+                healthInsuranceRepository.save(HealthInsurance.builder().name(name).build());
+        log.info("Health insurances initialized.");
+    }
+
+    private void initializeHealthInsuranceTariffs() {
+        String[] names = {"UF", "Pesos"};
+        for (String name : names)
+            if (healthInsuranceTariffRepository.findByName(name).isEmpty())
+                healthInsuranceTariffRepository.save(HealthInsuranceTariff.builder().name(name).build());
+        log.info("Health insurance tariffs initialized.");
+    }
+
+    private void initializePaymentMethods() {
+        String[] names = {"Transferencia bancaria", "Cheque", "Efectivo", "Vale vista"};
+        for (String name : names)
+            if (paymentMethodRepository.findByName(name).isEmpty())
+                paymentMethodRepository.save(PaymentMethod.builder().name(name).build());
+        log.info("Payment methods initialized.");
+    }
+
+    private void initializeBanks() {
+        String[] names = {"BancoEstado", "Banco de Chile", "Banco Santander", "Banco BCI",
+                "Banco Itaú", "Banco Scotiabank", "Banco BICE", "Banco Internacional",
+                "Banco Falabella", "Banco Ripley", "Banco Security", "Banco Consorcio",
+                "HSBC Bank", "Banco do Brasil"};
+        for (String name : names)
+            if (bankRepository.findByName(name).isEmpty())
+                bankRepository.save(Bank.builder().name(name).build());
+        log.info("Banks initialized.");
+    }
+
+    private void initializeEmployeeStatuses() {
+        String[] names = {"Activo", "Inactivo", "En período de prueba",
+                "Con licencia médica", "De vacaciones", "Suspendido", "Finiquitado"};
+        for (String name : names)
+            if (employeeStatusRepository.findByName(name).isEmpty())
+                employeeStatusRepository.save(EmployeeStatus.builder().name(name).build());
+        log.info("Employee statuses initialized.");
     }
 }
