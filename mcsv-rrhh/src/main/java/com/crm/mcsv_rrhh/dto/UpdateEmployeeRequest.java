@@ -75,7 +75,6 @@ public class UpdateEmployeeRequest {
     private String clothingSize;
     private String shoeSize;
     private String pantSize;
-    private Integer flexlineId;
     private Boolean active;
     private Boolean rehireEligible;
 }

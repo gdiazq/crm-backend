@@ -27,6 +27,9 @@ public class EmployeeResponse {
     private String corporateEmail;
     private String phone;
 
+    // Estado RRHH
+    private String statusName;
+
     // Estado
     private Boolean active;
     private Boolean rehireEligible;

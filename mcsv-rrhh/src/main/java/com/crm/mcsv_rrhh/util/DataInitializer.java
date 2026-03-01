@@ -505,8 +505,13 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeEmployeeStatuses() {
-        String[] names = {"Activo", "Inactivo", "En período de prueba",
-                "Con licencia médica", "De vacaciones", "Suspendido", "Finiquitado"};
+        String[] names = {
+                "Pendiente de aprobación",
+                "Pendiente de revisión",
+                "Aprobado",
+                "Rechazado",
+                "Error de sincronización"
+        };
         for (String name : names)
             if (employeeStatusRepository.findByName(name).isEmpty())
                 employeeStatusRepository.save(EmployeeStatus.builder().name(name).build());

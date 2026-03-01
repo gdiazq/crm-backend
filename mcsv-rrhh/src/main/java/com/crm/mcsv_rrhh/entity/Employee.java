@@ -90,12 +90,13 @@ public class Employee {
     private Long bankId;
     private String bankAccount;
 
+    // ─── Datos Organizacionales ───────────────────────────────────────────────
+    private Long statusId;
+
     // ─── Otros Datos ─────────────────────────────────────────────────────────
     private String clothingSize;
     private String shoeSize;
     private String pantSize;
-
-    private Integer flexlineId;
 
     /**
      * Indica si el colaborador está activo (empleado actualmente).

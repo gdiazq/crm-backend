@@ -12,6 +12,7 @@ import com.crm.mcsv_rrhh.exception.DuplicateResourceException;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeSpecification;
+import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +31,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
+    private final EmployeeStatusRepository employeeStatusRepository;
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
+        Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
+                .map(s -> s.getId())
+                .orElse(null);
+
         Employee employee = Employee.builder()
                 .identification(request.getIdentification())
                 .identificationTypeId(request.getIdentificationTypeId())
@@ -79,7 +85,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .clothingSize(request.getClothingSize())
                 .shoeSize(request.getShoeSize())
                 .pantSize(request.getPantSize())
-                .flexlineId(request.getFlexlineId())
+                .statusId(pendingStatusId)
                 .rehireEligible(request.getRehireEligible() != null ? request.getRehireEligible() : true)
                 .active(true)
                 .build();
@@ -158,7 +164,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (request.getClothingSize() != null)                employee.setClothingSize(request.getClothingSize());
         if (request.getShoeSize() != null)                    employee.setShoeSize(request.getShoeSize());
         if (request.getPantSize() != null)                    employee.setPantSize(request.getPantSize());
-        if (request.getFlexlineId() != null)                  employee.setFlexlineId(request.getFlexlineId());
+        if (request.getStatusId() != null)                    employee.setStatusId(request.getStatusId());
         if (request.getActive() != null)                      employee.setActive(request.getActive());
         if (request.getRehireEligible() != null)              employee.setRehireEligible(request.getRehireEligible());
 
@@ -185,7 +191,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Pageable pageable) {
         Specification<Employee> spec = EmployeeSpecification.withFilters(search, active);
-        return employeeRepository.findAll(spec, pageable).map(this::toResponse);
+        Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        s -> s.getId(),
+                        s -> s.getName()
+                ));
+        return employeeRepository.findAll(spec, pageable).map(e -> toResponse(e, statusMap));
     }
 
     @Override
@@ -226,7 +237,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    private EmployeeResponse toResponse(Employee e) {
+    private EmployeeResponse toResponse(Employee e, Map<Long, String> statusMap) {
         return EmployeeResponse.builder()
                 .id(e.getId())
                 .identification(e.getIdentification())
@@ -235,6 +246,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .maternalLastName(e.getMaternalLastName())
                 .corporateEmail(e.getCorporateEmail())
                 .phone(e.getPhone())
+                .statusName(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : null)
                 .active(e.getActive())
                 .rehireEligible(e.getRehireEligible())
                 .createdAt(e.getCreatedAt())
@@ -247,12 +259,51 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .id(e.getId())
                 .userId(e.getUserId())
                 .identification(e.getIdentification())
+                .identificationTypeId(e.getIdentificationTypeId())
                 .firstName(e.getFirstName())
                 .paternalLastName(e.getPaternalLastName())
                 .maternalLastName(e.getMaternalLastName())
-                .corporateEmail(e.getCorporateEmail())
+                .birthDate(e.getBirthDate())
+                .genderId(e.getGenderId())
+                .maritalStatusId(e.getMaritalStatusId())
+                .educationLevelId(e.getEducationLevelId())
+                .driverLicenseId(e.getDriverLicenseId())
+                .professionId(e.getProfessionId())
                 .personalEmail(e.getPersonalEmail())
+                .corporateEmail(e.getCorporateEmail())
                 .phone(e.getPhone())
+                .phone2(e.getPhone2())
+                .emergencyContactName(e.getEmergencyContactName())
+                .emergencyContactRelationshipId(e.getEmergencyContactRelationshipId())
+                .emergencyContactPhone(e.getEmergencyContactPhone())
+                .emergencyContactPhone2(e.getEmergencyContactPhone2())
+                .streetName(e.getStreetName())
+                .streetNumber(e.getStreetNumber())
+                .postalCode(e.getPostalCode())
+                .department(e.getDepartment())
+                .village(e.getVillage())
+                .block(e.getBlock())
+                .regionId(e.getRegionId())
+                .cityId(e.getCityId())
+                .communeId(e.getCommuneId())
+                .expatId(e.getExpatId())
+                .nationalityId(e.getNationalityId())
+                .familyAllowanceTierId(e.getFamilyAllowanceTierId())
+                .retirementStatusId(e.getRetirementStatusId())
+                .isapreFun(e.getIsapreFun())
+                .pensionStatusId(e.getPensionStatusId())
+                .afpId(e.getAfpId())
+                .healthInsuranceId(e.getHealthInsuranceId())
+                .healthInsuranceTariffId(e.getHealthInsuranceTariffId())
+                .healthInsuranceUF(e.getHealthInsuranceUF())
+                .healthInsurancePesos(e.getHealthInsurancePesos())
+                .paymentMethodId(e.getPaymentMethodId())
+                .bankId(e.getBankId())
+                .bankAccount(e.getBankAccount())
+                .statusId(e.getStatusId())
+                .clothingSize(e.getClothingSize())
+                .shoeSize(e.getShoeSize())
+                .pantSize(e.getPantSize())
                 .active(e.getActive())
                 .rehireEligible(e.getRehireEligible())
                 .createdAt(e.getCreatedAt())

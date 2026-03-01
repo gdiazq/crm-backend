@@ -68,6 +68,5 @@ public class CreateEmployeeRequest {
     private String clothingSize;
     private String shoeSize;
     private String pantSize;
-    private Integer flexlineId;
     private Boolean rehireEligible;
 }
