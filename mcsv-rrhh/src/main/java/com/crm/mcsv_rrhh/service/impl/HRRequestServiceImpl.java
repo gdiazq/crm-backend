@@ -155,7 +155,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElse(null);
         String statusName = resolveStatusName(hr.getStatusId());
 
-        return HRRequestResponse.builder()
+        HRRequestResponse.HRRequestResponseBuilder builder = HRRequestResponse.builder()
                 .id(hr.getId())
                 .idModule(hr.getIdModule())
                 .requestTypeId(hr.getRequestTypeId())
@@ -169,7 +169,14 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .hhrrApprovalDate(hr.getHhrrApprovalDate())
                 .rejectionDetail(hr.getRejectionDetail())
                 .createdAt(hr.getCreatedAt())
-                .updatedAt(hr.getUpdatedAt())
-                .build();
+                .updatedAt(hr.getUpdatedAt());
+
+        employeeRepository.findById(hr.getIdModule()).ifPresent(e -> builder
+                .identification(e.getIdentification())
+                .firstName(e.getFirstName())
+                .paternalLastName(e.getPaternalLastName())
+                .maternalLastName(e.getMaternalLastName()));
+
+        return builder.build();
     }
 }

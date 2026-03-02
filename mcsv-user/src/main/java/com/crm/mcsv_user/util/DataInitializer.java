@@ -60,6 +60,9 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("EMPLOYEE:READ",   "Ver y consultar información de empleados");
         createPermissionIfNotExists("EMPLOYEE:UPDATE", "Modificar información de empleados existentes");
         createPermissionIfNotExists("EMPLOYEE:DELETE", "Deshabilitar empleados del sistema");
+        createPermissionIfNotExists("HR_REQUEST:READ",    "Ver y consultar solicitudes RRHH");
+        createPermissionIfNotExists("HR_REQUEST:APPROVE", "Aprobar solicitudes RRHH");
+        createPermissionIfNotExists("HR_REQUEST:REJECT",  "Rechazar solicitudes RRHH");
 
         log.info("Permissions initialized.");
     }
@@ -117,17 +120,22 @@ public class DataInitializer implements CommandLineRunner {
         Permission employeeRead   = permissionRepository.findByName("EMPLOYEE:READ").orElseThrow();
         Permission employeeUpdate = permissionRepository.findByName("EMPLOYEE:UPDATE").orElseThrow();
         Permission employeeDelete = permissionRepository.findByName("EMPLOYEE:DELETE").orElseThrow();
+        Permission hrRequestRead    = permissionRepository.findByName("HR_REQUEST:READ").orElseThrow();
+        Permission hrRequestApprove = permissionRepository.findByName("HR_REQUEST:APPROVE").orElseThrow();
+        Permission hrRequestReject  = permissionRepository.findByName("HR_REQUEST:REJECT").orElseThrow();
 
         assignToRole("ROLE_ADMIN", new HashSet<>(Set.of(
                 userCreate, userRead, userUpdate, userDelete,
                 roleCreate, roleRead, roleUpdate, roleDelete,
-                employeeCreate, employeeRead, employeeUpdate, employeeDelete)));
+                employeeCreate, employeeRead, employeeUpdate, employeeDelete,
+                hrRequestRead, hrRequestApprove, hrRequestReject)));
 
         assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(
                 userRead, userUpdate,
-                employeeCreate, employeeRead, employeeUpdate)));
+                employeeCreate, employeeRead, employeeUpdate,
+                hrRequestRead, hrRequestApprove, hrRequestReject)));
 
-        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead)));
+        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead, hrRequestRead)));
 
         log.info("Permissions assigned to roles.");
     }
