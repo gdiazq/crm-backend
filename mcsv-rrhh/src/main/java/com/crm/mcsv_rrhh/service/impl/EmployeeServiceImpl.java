@@ -96,7 +96,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Contrato");
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador");
         return toDetailResponse(saved, null, req.getId());
     }
 

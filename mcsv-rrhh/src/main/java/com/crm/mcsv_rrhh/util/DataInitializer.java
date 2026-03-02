@@ -511,6 +511,7 @@ public class DataInitializer implements CommandLineRunner {
     private void initializeHRRequestTypes() {
         record TypeDef(String name, Boolean req) {}
         List<TypeDef> types = List.of(
+                new TypeDef("Trabajador", true),
                 new TypeDef("Contrato", true),
                 new TypeDef("Finiquito", true),
                 new TypeDef("Anexo", true),
