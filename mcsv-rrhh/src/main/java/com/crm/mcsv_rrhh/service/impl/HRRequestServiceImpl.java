@@ -38,8 +38,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: " + requestTypeName));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de aprobación"
-                : "Pendiente de revisión";
+                ? "Pendiente de revisión"
+                : "Pendiente de aprobación";
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -75,24 +75,14 @@ public class HRRequestServiceImpl implements HRRequestService {
         HRRequest hr = findOrThrow(id);
         String currentStatus = resolveStatusName(hr.getStatusId());
 
-        if ("Pendiente de aprobación".equals(currentStatus)) {
+        if ("Pendiente de revisión".equals(currentStatus)) {
             hr.setApproverId(req.getApproverId());
             hr.setApprovalDate(LocalDateTime.now());
-            Long approvedStatusId = resolveStatusId("Aprobado");
-            hr.setStatusId(approvedStatusId);
+            hr.setStatusId(resolveStatusId("Pendiente de aprobación"));
             hrRequestRepository.save(hr);
+            return toResponse(hr);
 
-            Long pendingReviewStatusId = resolveStatusId("Pendiente de revisión");
-            HRRequest next = HRRequest.builder()
-                    .requestTypeId(hr.getRequestTypeId())
-                    .statusId(pendingReviewStatusId)
-                    .requireApproval(hr.getRequireApproval())
-                    .idModule(hr.getIdModule())
-                    .build();
-            HRRequest saved = hrRequestRepository.save(next);
-            return toResponse(saved);
-
-        } else if ("Pendiente de revisión".equals(currentStatus)) {
+        } else if ("Pendiente de aprobación".equals(currentStatus)) {
             hr.setHhrrApproverId(req.getApproverId());
             hr.setHhrrApprovalDate(LocalDateTime.now());
             Long approvedStatusId = resolveStatusId("Aprobado");
