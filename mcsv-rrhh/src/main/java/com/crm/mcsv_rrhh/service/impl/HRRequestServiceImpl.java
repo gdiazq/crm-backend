@@ -56,9 +56,11 @@ public class HRRequestServiceImpl implements HRRequestService {
     }
 
     @Override
-    public Page<HRRequestResponse> listByEmployee(Long idModule, Pageable pageable) {
-        return hrRequestRepository.findByIdModule(idModule, pageable)
-                .map(this::toResponse);
+    public Page<HRRequestResponse> list(Long idModule, Pageable pageable) {
+        if (idModule != null) {
+            return hrRequestRepository.findByIdModule(idModule, pageable).map(this::toResponse);
+        }
+        return hrRequestRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override

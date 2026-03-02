@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface HRRequestService {
     HRRequest createForEmployee(Long employeeId, String requestTypeName);
-    Page<HRRequestResponse> listByEmployee(Long idModule, Pageable pageable);
+    Page<HRRequestResponse> list(Long idModule, Pageable pageable);
     HRRequestResponse getById(Long id);
     HRRequestResponse approve(Long id, ApproveHRRequestRequest req);
     HRRequestResponse reject(Long id, RejectHRRequestRequest req);
