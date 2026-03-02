@@ -2,6 +2,8 @@ package com.crm.mcsv_rrhh.util;
 
 import com.crm.mcsv_rrhh.entity.*;
 import com.crm.mcsv_rrhh.repository.*;
+
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -33,6 +35,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PaymentMethodRepository paymentMethodRepository;
     private final BankRepository bankRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
+    private final HRRequestTypeRepository hrRequestTypeRepository;
 
     @Override
     public void run(String... args) {
@@ -57,6 +60,7 @@ public class DataInitializer implements CommandLineRunner {
         initializePaymentMethods();
         initializeBanks();
         initializeEmployeeStatuses();
+        initializeHRRequestTypes();
     }
 
     private void initializeIdentificationTypes() {
@@ -502,6 +506,22 @@ public class DataInitializer implements CommandLineRunner {
             if (bankRepository.findByName(name).isEmpty())
                 bankRepository.save(Bank.builder().name(name).build());
         log.info("Banks initialized.");
+    }
+
+    private void initializeHRRequestTypes() {
+        record TypeDef(String name, Boolean req) {}
+        List<TypeDef> types = List.of(
+                new TypeDef("Contrato", true),
+                new TypeDef("Finiquito", true),
+                new TypeDef("Anexo", true),
+                new TypeDef("Traspaso", true),
+                new TypeDef("Permiso", false)
+        );
+        for (TypeDef t : types)
+            if (hrRequestTypeRepository.findByName(t.name()).isEmpty())
+                hrRequestTypeRepository.save(HRRequestType.builder()
+                        .name(t.name()).requireApproval(t.req()).build());
+        log.info("HR request types initialized.");
     }
 
     private void initializeEmployeeStatuses() {

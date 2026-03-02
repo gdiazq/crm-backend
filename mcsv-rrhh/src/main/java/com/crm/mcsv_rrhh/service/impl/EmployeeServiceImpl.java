@@ -8,12 +8,15 @@ import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.exception.DuplicateResourceException;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeSpecification;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.repository.HRRequestRepository;
 import com.crm.mcsv_rrhh.service.EmployeeService;
+import com.crm.mcsv_rrhh.service.HRRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +35,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
     private final EmployeeStatusRepository employeeStatusRepository;
+    private final HRRequestRepository hrRequestRepository;
+    private final HRRequestService hrRequestService;
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
@@ -91,7 +96,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        return toDetailResponse(saved, null);
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Contrato");
+        return toDetailResponse(saved, null, req.getId());
     }
 
     @Override
@@ -170,14 +176,18 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee saved = employeeRepository.save(employee);
         UserDTO user = fetchUser(saved.getUserId());
-        return toDetailResponse(saved, user);
+        Long reqId = hrRequestRepository.findTopByIdModuleOrderByCreatedAtDesc(saved.getId())
+                .map(HRRequest::getId).orElse(null);
+        return toDetailResponse(saved, user, reqId);
     }
 
     @Override
     public EmployeeDetailResponse getEmployeeById(Long id) {
         Employee employee = findOrThrow(id);
         UserDTO user = fetchUser(employee.getUserId());
-        return toDetailResponse(employee, user);
+        Long reqId = hrRequestRepository.findTopByIdModuleOrderByCreatedAtDesc(id)
+                .map(HRRequest::getId).orElse(null);
+        return toDetailResponse(employee, user, reqId);
     }
 
     @Override
@@ -185,7 +195,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado para userId: " + userId));
         UserDTO user = fetchUser(userId);
-        return toDetailResponse(employee, user);
+        Long reqId = hrRequestRepository.findTopByIdModuleOrderByCreatedAtDesc(employee.getId())
+                .map(HRRequest::getId).orElse(null);
+        return toDetailResponse(employee, user, reqId);
     }
 
     @Override
@@ -254,7 +266,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
     }
 
-    private EmployeeDetailResponse toDetailResponse(Employee e, UserDTO user) {
+    private EmployeeDetailResponse toDetailResponse(Employee e, UserDTO user, Long requestId) {
         EmployeeDetailResponse.EmployeeDetailResponseBuilder builder = EmployeeDetailResponse.builder()
                 .id(e.getId())
                 .userId(e.getUserId())
@@ -314,6 +326,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                    .userEmail(user.getEmail())
                    .userEnabled(user.getEnabled());
         }
+
+        builder.requestId(requestId);
 
         return builder.build();
     }

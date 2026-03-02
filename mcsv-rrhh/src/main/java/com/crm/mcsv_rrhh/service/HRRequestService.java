@@ -1,0 +1,16 @@
+package com.crm.mcsv_rrhh.service;
+
+import com.crm.mcsv_rrhh.dto.ApproveHRRequestRequest;
+import com.crm.mcsv_rrhh.dto.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
+import com.crm.mcsv_rrhh.entity.HRRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface HRRequestService {
+    HRRequest createForEmployee(Long employeeId, String requestTypeName);
+    Page<HRRequestResponse> listByEmployee(Long idModule, Pageable pageable);
+    HRRequestResponse getById(Long id);
+    HRRequestResponse approve(Long id, ApproveHRRequestRequest req);
+    HRRequestResponse reject(Long id, RejectHRRequestRequest req);
+}
