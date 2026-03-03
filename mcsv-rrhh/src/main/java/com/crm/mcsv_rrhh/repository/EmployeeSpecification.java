@@ -11,7 +11,7 @@ public class EmployeeSpecification {
 
     private EmployeeSpecification() {}
 
-    public static Specification<Employee> withFilters(String search, Boolean active) {
+    public static Specification<Employee> withFilters(String search, Boolean active, Long excludeStatusId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -26,6 +26,13 @@ public class EmployeeSpecification {
 
             if (active != null) {
                 predicates.add(cb.equal(root.get("active"), active));
+            }
+
+            if (excludeStatusId != null) {
+                predicates.add(cb.or(
+                        cb.isNull(root.get("statusId")),
+                        cb.notEqual(root.get("statusId"), excludeStatusId)
+                ));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
