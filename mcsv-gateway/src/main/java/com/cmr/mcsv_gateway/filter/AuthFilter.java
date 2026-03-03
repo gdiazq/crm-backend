@@ -55,7 +55,9 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("GET:/v1/api/rrhh/employee/select",           "EMPLOYEE:READ"),
             Map.entry("PUT:/v1/api/rrhh/employee/update",           "EMPLOYEE:UPDATE"),
             Map.entry("PUT:/v1/api/rrhh/employee",                  "EMPLOYEE:UPDATE"),
-            Map.entry("DELETE:/v1/api/rrhh/employee",               "EMPLOYEE:DELETE")
+            Map.entry("DELETE:/v1/api/rrhh/employee",               "EMPLOYEE:DELETE"),
+            Map.entry("GET:/v1/api/rrhh/hr-request",                "HR_REQUEST:READ"),
+            Map.entry("PUT:/v1/api/rrhh/hr-request",                "HR_REQUEST:APPROVE")
     );
 
     private final WebClient.Builder webClient;

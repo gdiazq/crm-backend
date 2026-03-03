@@ -1,7 +1,8 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.dto.ApproveHRRequestRequest;
+import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
@@ -30,6 +31,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final HRRequestTypeRepository hrRequestTypeRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final EmployeeRepository employeeRepository;
+    private final UserClient userClient;
 
     @Override
     @Transactional
@@ -71,19 +73,19 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     @Transactional
-    public HRRequestResponse approve(Long id, ApproveHRRequestRequest req) {
+    public HRRequestResponse approve(Long id, Long approverId) {
         HRRequest hr = findOrThrow(id);
         String currentStatus = resolveStatusName(hr.getStatusId());
 
         if ("Pendiente de revisión".equals(currentStatus)) {
-            hr.setApproverId(req.getApproverId());
+            hr.setApproverId(approverId);
             hr.setApprovalDate(LocalDateTime.now());
             hr.setStatusId(resolveStatusId("Pendiente de aprobación"));
             hrRequestRepository.save(hr);
             return toResponse(hr);
 
         } else if ("Pendiente de aprobación".equals(currentStatus)) {
-            hr.setHhrrApproverId(req.getApproverId());
+            hr.setHhrrApproverId(approverId);
             hr.setHhrrApprovalDate(LocalDateTime.now());
             Long approvedStatusId = resolveStatusId("Aprobado");
             hr.setStatusId(approvedStatusId);
@@ -167,6 +169,23 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .paternalLastName(e.getPaternalLastName())
                 .maternalLastName(e.getMaternalLastName()));
 
+        if (hr.getApproverId() != null) {
+            builder.approverFullName(fetchFullName(hr.getApproverId()));
+        }
+        if (hr.getHhrrApproverId() != null) {
+            builder.hhrrApproverFullName(fetchFullName(hr.getHhrrApproverId()));
+        }
+
         return builder.build();
+    }
+
+    private String fetchFullName(Long userId) {
+        try {
+            UserDTO user = userClient.getUserById(userId);
+            if (user != null) return user.getFirstName() + " " + user.getLastName();
+        } catch (Exception e) {
+            log.warn("No se pudo obtener el usuario con id {}: {}", userId, e.getMessage());
+        }
+        return null;
     }
 }

@@ -29,9 +29,11 @@ public class HRRequestResponse {
     private Boolean requireApproval;
 
     private Long approverId;
+    private String approverFullName;
     private LocalDateTime approvalDate;
 
     private Long hhrrApproverId;
+    private String hhrrApproverFullName;
     private LocalDateTime hhrrApprovalDate;
 
     private String rejectionDetail;

@@ -1,6 +1,5 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.dto.ApproveHRRequestRequest;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.crm.mcsv_rrhh.service.HRRequestService;
@@ -43,8 +42,8 @@ public class HRRequestController {
     @Operation(summary = "Aprobar solicitud (paso supervisor o RRHH)")
     public ResponseEntity<HRRequestResponse> approve(
             @PathVariable Long id,
-            @RequestBody(required = false) ApproveHRRequestRequest req) {
-        return ResponseEntity.ok(hrRequestService.approve(id, req != null ? req : new ApproveHRRequestRequest()));
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(hrRequestService.approve(id, userId));
     }
 
     @PutMapping("/{id}/reject")
