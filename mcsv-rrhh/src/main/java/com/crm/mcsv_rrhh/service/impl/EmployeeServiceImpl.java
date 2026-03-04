@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -266,6 +267,41 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
+    }
+
+    @Override
+    public byte[] exportCsv() {
+        Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(s -> s.getId(), s -> s.getName()));
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,RUT,Nombre,Apellido Paterno,Apellido Materno,Email Corporativo,Teléfono,Estado,Activo,Fecha Creación\n");
+
+        employeeRepository.findAll().forEach(e -> csv
+                .append(e.getId()).append(",")
+                .append(escape(e.getIdentification())).append(",")
+                .append(escape(e.getFirstName())).append(",")
+                .append(escape(e.getPaternalLastName())).append(",")
+                .append(escape(e.getMaternalLastName())).append(",")
+                .append(escape(e.getCorporateEmail())).append(",")
+                .append(escape(e.getPhone())).append(",")
+                .append(escape(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : "")).append(",")
+                .append(e.getActive()).append(",")
+                .append(formatDate(e.getCreatedAt())).append("\n"));
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String formatDate(java.time.LocalDateTime dt) {
+        if (dt == null) return "";
+        return dt.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    private String escape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        return value;
     }
 
     private EmployeeDetailResponse toDetailResponse(Employee e, UserDTO user, Long requestId) {

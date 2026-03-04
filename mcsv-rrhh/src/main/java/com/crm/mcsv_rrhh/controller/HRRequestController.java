@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,5 +54,14 @@ public class HRRequestController {
             @PathVariable Long id,
             @Valid @RequestBody RejectHRRequestRequest req) {
         return ResponseEntity.ok(hrRequestService.reject(id, req));
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar solicitudes RRHH a CSV")
+    public ResponseEntity<byte[]> exportCsv() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"hr-requests.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(hrRequestService.exportCsv());
     }
 }

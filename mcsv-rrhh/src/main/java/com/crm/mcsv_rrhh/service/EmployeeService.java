@@ -24,6 +24,7 @@ public interface EmployeeService {
     Page<EmployeeResponse> filterEmployees(String search, Boolean active, Pageable pageable);
 
     Map<String, Long> getEmployeeStats();
+    byte[] exportCsv();
 
     void updateStatus(Long id, Boolean active);
 

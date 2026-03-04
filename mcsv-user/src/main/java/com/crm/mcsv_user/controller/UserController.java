@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -170,6 +171,15 @@ public class UserController {
             @RequestParam("file") MultipartFile file) {
         Map<String, String> response = userService.uploadAvatar(id, file);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar usuarios a CSV")
+    public ResponseEntity<byte[]> exportCsv() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(userService.exportCsv());
     }
 
     public static class CredentialsRequest {

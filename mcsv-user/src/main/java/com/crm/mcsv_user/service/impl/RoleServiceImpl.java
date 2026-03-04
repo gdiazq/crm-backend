@@ -201,4 +201,27 @@ public class RoleServiceImpl implements RoleService {
         role.getPermissions().removeIf(p -> permissionIds.contains(p.getId()));
         return userMapper.roleToDTO(roleRepository.save(role));
     }
+
+    @Override
+    public byte[] exportCsv() {
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Nombre,Descripción,Habilitado,Permisos\n");
+        roleRepository.findAll().forEach(r -> {
+            String permissions = r.getPermissions().stream()
+                    .map(p -> p.getName()).reduce("", (a, b) -> a.isEmpty() ? b : a + "|" + b);
+            csv.append(r.getId()).append(",")
+               .append(escape(r.getName())).append(",")
+               .append(escape(r.getDescription())).append(",")
+               .append(r.getEnabled()).append(",")
+               .append(escape(permissions)).append("\n");
+        });
+        return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private String escape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        return value;
+    }
 }

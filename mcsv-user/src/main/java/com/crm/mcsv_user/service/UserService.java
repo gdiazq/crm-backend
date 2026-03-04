@@ -54,4 +54,5 @@ public interface UserService {
     boolean validateAndConsumeCode(Long userId, String code);
 
     Map<String, Long> getUserStats();
+    byte[] exportCsv();
 }

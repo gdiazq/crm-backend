@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 @Service
@@ -119,6 +120,52 @@ public class HRRequestServiceImpl implements HRRequestService {
         employeeRepository.save(employee);
 
         return toResponse(hr);
+    }
+
+    @Override
+    public byte[] exportCsv() {
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,RUT,Nombre,Apellido Paterno,Tipo Solicitud,Estado,Aprobador,Fecha Aprobación,Aprobador RRHH,Fecha Aprobación RRHH,Detalle Rechazo,Fecha Creación\n");
+
+        hrRequestRepository.findAll().forEach(hr -> {
+            String typeName = hrRequestTypeRepository.findById(hr.getRequestTypeId()).map(t -> t.getName()).orElse("");
+            String statusName = resolveStatusName(hr.getStatusId());
+            String approverName = hr.getApproverId() != null ? fetchFullName(hr.getApproverId()) : "";
+            String hhrrApproverName = hr.getHhrrApproverId() != null ? fetchFullName(hr.getHhrrApproverId()) : "";
+            String identification = "", firstName = "", paternalLastName = "";
+            var empOpt = employeeRepository.findById(hr.getIdModule());
+            if (empOpt.isPresent()) {
+                identification = empOpt.get().getIdentification();
+                firstName = empOpt.get().getFirstName();
+                paternalLastName = empOpt.get().getPaternalLastName();
+            }
+            csv.append(hr.getId()).append(",")
+               .append(escape(identification)).append(",")
+               .append(escape(firstName)).append(",")
+               .append(escape(paternalLastName)).append(",")
+               .append(escape(typeName)).append(",")
+               .append(escape(statusName)).append(",")
+               .append(escape(approverName)).append(",")
+               .append(formatDate(hr.getApprovalDate())).append(",")
+               .append(escape(hhrrApproverName)).append(",")
+               .append(formatDate(hr.getHhrrApprovalDate())).append(",")
+               .append(escape(hr.getRejectionDetail())).append(",")
+               .append(formatDate(hr.getCreatedAt())).append("\n");
+        });
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String formatDate(java.time.LocalDateTime dt) {
+        if (dt == null) return "";
+        return dt.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    private String escape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        return value;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

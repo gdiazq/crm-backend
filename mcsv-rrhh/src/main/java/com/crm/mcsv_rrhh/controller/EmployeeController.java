@@ -15,7 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -107,5 +109,14 @@ public class EmployeeController {
     public ResponseEntity<Void> unlinkUser(@PathVariable Long id) {
         employeeService.unlinkUser(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar empleados a CSV")
+    public ResponseEntity<byte[]> exportCsv() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"employees.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(employeeService.exportCsv());
     }
 }

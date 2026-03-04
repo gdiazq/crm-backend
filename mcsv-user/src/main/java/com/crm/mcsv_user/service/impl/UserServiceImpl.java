@@ -418,6 +418,34 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public byte[] exportCsv() {
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Username,Nombre,Apellido,Email,Teléfono,Habilitado,Fecha Creación\n");
+        userRepository.findAll().forEach(u -> csv
+                .append(u.getId()).append(",")
+                .append(escape(u.getUsername())).append(",")
+                .append(escape(u.getFirstName())).append(",")
+                .append(escape(u.getLastName())).append(",")
+                .append(escape(u.getEmail())).append(",")
+                .append(escape(u.getPhoneNumber())).append(",")
+                .append(u.getEnabled()).append(",")
+                .append(formatDate(u.getCreatedAt())).append("\n"));
+        return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private String formatDate(java.time.LocalDateTime dt) {
+        if (dt == null) return "";
+        return dt.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    private String escape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        return value;
+    }
+
+    @Override
     @Transactional
     public boolean validateAndConsumeCode(Long userId, String code) {
         log.info("Validating admin verification code for user id: {}", userId);

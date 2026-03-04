@@ -17,7 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -126,5 +128,14 @@ public class RoleController {
     @Operation(summary = "Remove permissions", description = "Remove permissions from a role")
     public ResponseEntity<RoleDTO> removePermissions(@PathVariable Long id, @RequestBody Map<String, Set<Long>> body) {
         return ResponseEntity.ok(roleService.removePermissions(id, body.get("permissionIds")));
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar roles a CSV")
+    public ResponseEntity<byte[]> exportCsv() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"roles.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(roleService.exportCsv());
     }
 }

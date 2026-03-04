@@ -11,5 +11,6 @@ public interface HRRequestService {
     Page<HRRequestResponse> list(Long idModule, Pageable pageable);
     HRRequestResponse getById(Long id);
     HRRequestResponse approve(Long id, Long approverId);
+    byte[] exportCsv();
     HRRequestResponse reject(Long id, RejectHRRequestRequest req);
 }
