@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.service.impl;
 
+import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
@@ -21,6 +22,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -200,6 +207,101 @@ public class RoleServiceImpl implements RoleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         role.getPermissions().removeIf(p -> permissionIds.contains(p.getId()));
         return userMapper.roleToDTO(roleRepository.save(role));
+    }
+
+    @Override
+    public BulkImportResult importRolesFromCsv(MultipartFile file) {
+        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        int total = 0;
+        int success = 0;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
+            }
+            String[] headers = parseCsvLine(headerLine);
+            Map<String, Integer> idx = buildHeaderIndex(headers);
+
+            int iName = idx.getOrDefault("nombre", -1);
+            int iDesc = idx.getOrDefault("descripción", idx.getOrDefault("descripcion", -1));
+
+            if (iName < 0) {
+                errors.add(new BulkImportResult.RowError(1, "Falta columna obligatoria: Nombre"));
+                return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
+            }
+
+            String line;
+            int row = 1;
+            while ((line = reader.readLine()) != null) {
+                row++;
+                if (line.isBlank()) continue;
+                total++;
+                try {
+                    String[] cols = parseCsvLine(line);
+                    String name        = col(cols, iName);
+                    String description = col(cols, iDesc);
+
+                    CreateRoleRequest request = CreateRoleRequest.builder()
+                            .name(name)
+                            .description(description.isEmpty() ? null : description)
+                            .build();
+
+                    createRole(request);
+                    success++;
+                } catch (Exception e) {
+                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error reading CSV file for roles", e);
+            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+        }
+
+        return BulkImportResult.builder()
+                .total(total)
+                .success(success)
+                .failed(errors.size())
+                .errors(errors)
+                .build();
+    }
+
+    private String[] parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    sb.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                fields.add(sb.toString());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        fields.add(sb.toString());
+        return fields.toArray(new String[0]);
+    }
+
+    private Map<String, Integer> buildHeaderIndex(String[] headers) {
+        Map<String, Integer> idx = new java.util.HashMap<>();
+        for (int i = 0; i < headers.length; i++) {
+            idx.put(headers[i].trim().toLowerCase(), i);
+        }
+        return idx;
+    }
+
+    private String col(String[] cols, int index) {
+        if (index < 0 || index >= cols.length) return "";
+        return cols[index].trim();
     }
 
     @Override

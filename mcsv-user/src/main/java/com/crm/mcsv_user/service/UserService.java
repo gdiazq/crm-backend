@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.service;
 
+import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
@@ -55,4 +56,5 @@ public interface UserService {
 
     Map<String, Long> getUserStats();
     byte[] exportCsv();
+    BulkImportResult importUsersFromCsv(MultipartFile file);
 }

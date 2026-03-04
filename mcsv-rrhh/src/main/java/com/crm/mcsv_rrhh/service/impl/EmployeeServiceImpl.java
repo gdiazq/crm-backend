@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
+import com.crm.mcsv_rrhh.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
@@ -24,7 +25,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -267,6 +273,106 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
+    }
+
+    @Override
+    public BulkImportResult importFromCsv(MultipartFile file) {
+        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        int total = 0;
+        int success = 0;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
+            }
+            String[] headers = parseCsvLine(headerLine);
+            Map<String, Integer> idx = buildHeaderIndex(headers);
+
+            int iRut      = idx.getOrDefault("rut", -1);
+            int iFirst    = idx.getOrDefault("nombre", -1);
+            int iPat      = idx.getOrDefault("apellido paterno", -1);
+            int iMat      = idx.getOrDefault("apellido materno", -1);
+            int iEmail    = idx.getOrDefault("email corporativo", -1);
+            int iPhone    = idx.getOrDefault("teléfono", idx.getOrDefault("telefono", -1));
+
+            if (iRut < 0 && iFirst < 0) {
+                errors.add(new BulkImportResult.RowError(1, "No se encontraron columnas reconocidas en el header"));
+                return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
+            }
+
+            String line;
+            int row = 1;
+            while ((line = reader.readLine()) != null) {
+                row++;
+                if (line.isBlank()) continue;
+                total++;
+                try {
+                    String[] cols = parseCsvLine(line);
+
+                    CreateEmployeeRequest request = new CreateEmployeeRequest();
+                    request.setIdentification(col(cols, iRut).isEmpty() ? null : col(cols, iRut));
+                    request.setFirstName(col(cols, iFirst).isEmpty() ? null : col(cols, iFirst));
+                    request.setPaternalLastName(col(cols, iPat).isEmpty() ? null : col(cols, iPat));
+                    request.setMaternalLastName(col(cols, iMat).isEmpty() ? null : col(cols, iMat));
+                    request.setCorporateEmail(col(cols, iEmail).isEmpty() ? null : col(cols, iEmail));
+                    request.setPhone(col(cols, iPhone).isEmpty() ? null : col(cols, iPhone));
+
+                    createEmployee(request);
+                    success++;
+                } catch (Exception e) {
+                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error reading CSV file for employees", e);
+            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+        }
+
+        return BulkImportResult.builder()
+                .total(total)
+                .success(success)
+                .failed(errors.size())
+                .errors(errors)
+                .build();
+    }
+
+    private String[] parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    sb.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                fields.add(sb.toString());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        fields.add(sb.toString());
+        return fields.toArray(new String[0]);
+    }
+
+    private Map<String, Integer> buildHeaderIndex(String[] headers) {
+        Map<String, Integer> idx = new java.util.HashMap<>();
+        for (int i = 0; i < headers.length; i++) {
+            idx.put(headers[i].trim().toLowerCase(), i);
+        }
+        return idx;
+    }
+
+    private String col(String[] cols, int index) {
+        if (index < 0 || index >= cols.length) return "";
+        return cols[index].trim();
     }
 
     @Override

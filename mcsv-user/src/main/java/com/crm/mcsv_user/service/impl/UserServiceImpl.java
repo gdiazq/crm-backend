@@ -2,6 +2,7 @@ package com.crm.mcsv_user.service.impl;
 
 import com.crm.mcsv_user.client.EmailClient;
 import com.crm.mcsv_user.client.StorageClient;
+import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.EmailRequest;
 import com.crm.mcsv_user.dto.FileMetadataResponse;
@@ -30,10 +31,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -420,16 +424,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public byte[] exportCsv() {
         StringBuilder csv = new StringBuilder();
-        csv.append("ID,Username,Nombre,Apellido,Email,Teléfono,Habilitado,Fecha Creación\n");
-        userRepository.findAll().forEach(u -> csv
-                .append(u.getId()).append(",")
-                .append(escape(u.getUsername())).append(",")
-                .append(escape(u.getFirstName())).append(",")
-                .append(escape(u.getLastName())).append(",")
-                .append(escape(u.getEmail())).append(",")
-                .append(escape(u.getPhoneNumber())).append(",")
-                .append(u.getEnabled()).append(",")
-                .append(formatDate(u.getCreatedAt())).append("\n"));
+        csv.append("ID,Username,Nombre,Apellido,Email,Teléfono,Rol,Habilitado,Fecha Creación\n");
+        userRepository.findAll().forEach(u -> {
+            String roleName = u.getRoles().stream()
+                    .findFirst()
+                    .map(r -> r.getName())
+                    .orElse("");
+            csv.append(u.getId()).append(",")
+               .append(escape(u.getUsername())).append(",")
+               .append(escape(u.getFirstName())).append(",")
+               .append(escape(u.getLastName())).append(",")
+               .append(escape(u.getEmail())).append(",")
+               .append(escape(u.getPhoneNumber())).append(",")
+               .append(escape(roleName)).append(",")
+               .append(u.getEnabled()).append(",")
+               .append(formatDate(u.getCreatedAt())).append("\n");
+        });
         return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
@@ -443,6 +453,118 @@ public class UserServiceImpl implements UserService {
         if (value.contains(",") || value.contains("\"") || value.contains("\n"))
             return "\"" + value.replace("\"", "\"\"") + "\"";
         return value;
+    }
+
+    @Override
+    public BulkImportResult importUsersFromCsv(MultipartFile file) {
+        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        int total = 0;
+        int success = 0;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
+            }
+            String[] headers = parseCsvLine(headerLine);
+            Map<String, Integer> idx = buildHeaderIndex(headers);
+
+            int iUsername  = idx.getOrDefault("username", -1);
+            int iFirstName = idx.getOrDefault("nombre", -1);
+            int iLastName  = idx.getOrDefault("apellido", -1);
+            int iEmail     = idx.getOrDefault("email", -1);
+            int iPhone     = idx.getOrDefault("teléfono", idx.getOrDefault("telefono", -1));
+            int iRole      = idx.getOrDefault("rol", -1);
+
+            if (iUsername < 0 || iEmail < 0) {
+                errors.add(new BulkImportResult.RowError(1, "Faltan columnas obligatorias: Username, Email"));
+                return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
+            }
+
+            String line;
+            int row = 1;
+            while ((line = reader.readLine()) != null) {
+                row++;
+                if (line.isBlank()) continue;
+                total++;
+                try {
+                    String[] cols = parseCsvLine(line);
+                    String username  = col(cols, iUsername);
+                    String firstName = col(cols, iFirstName);
+                    String lastName  = col(cols, iLastName);
+                    String email     = col(cols, iEmail);
+                    String phone     = col(cols, iPhone);
+                    String roleName  = col(cols, iRole);
+
+                    Long roleId = (!roleName.isEmpty())
+                            ? roleRepository.findByName(roleName).map(r -> r.getId()).orElse(null)
+                            : null;
+
+                    CreateUserRequest request = CreateUserRequest.builder()
+                            .username(username)
+                            .firstName(firstName.isEmpty() ? null : firstName)
+                            .lastName(lastName.isEmpty() ? null : lastName)
+                            .email(email)
+                            .phoneNumber(phone.isEmpty() ? null : phone)
+                            .roleId(roleId)
+                            .build();
+
+                    UserResponse created = createUser(request);
+                    sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
+                    success++;
+                } catch (Exception e) {
+                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error reading CSV file for users", e);
+            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+        }
+
+        return BulkImportResult.builder()
+                .total(total)
+                .success(success)
+                .failed(errors.size())
+                .errors(errors)
+                .build();
+    }
+
+    private String[] parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    sb.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                fields.add(sb.toString());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        fields.add(sb.toString());
+        return fields.toArray(new String[0]);
+    }
+
+    private Map<String, Integer> buildHeaderIndex(String[] headers) {
+        Map<String, Integer> idx = new java.util.HashMap<>();
+        for (int i = 0; i < headers.length; i++) {
+            idx.put(headers[i].trim().toLowerCase(), i);
+        }
+        return idx;
+    }
+
+    private String col(String[] cols, int index) {
+        if (index < 0 || index >= cols.length) return "";
+        return cols[index].trim();
     }
 
     @Override

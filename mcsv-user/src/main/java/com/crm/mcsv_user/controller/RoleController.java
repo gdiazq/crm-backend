@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.controller;
 
+import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PagedResponse;
 import com.crm.mcsv_user.dto.PermissionDTO;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/role")
@@ -137,5 +139,11 @@ public class RoleController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"roles.csv\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(roleService.exportCsv());
+    }
+
+    @PostMapping(value = "/import/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Importar roles desde CSV")
+    public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(roleService.importRolesFromCsv(file));
     }
 }

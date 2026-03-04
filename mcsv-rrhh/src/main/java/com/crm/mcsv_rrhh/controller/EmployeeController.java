@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
+import com.crm.mcsv_rrhh.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.Set;
@@ -118,5 +120,11 @@ public class EmployeeController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"employees.csv\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(employeeService.exportCsv());
+    }
+
+    @PostMapping(value = "/import/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Importar empleados desde CSV")
+    public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(employeeService.importFromCsv(file));
     }
 }

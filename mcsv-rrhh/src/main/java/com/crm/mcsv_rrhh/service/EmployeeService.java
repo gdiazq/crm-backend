@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.service;
 
+import com.crm.mcsv_rrhh.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
@@ -8,6 +9,7 @@ import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -25,6 +27,7 @@ public interface EmployeeService {
 
     Map<String, Long> getEmployeeStats();
     byte[] exportCsv();
+    BulkImportResult importFromCsv(MultipartFile file);
 
     void updateStatus(Long id, Boolean active);
 

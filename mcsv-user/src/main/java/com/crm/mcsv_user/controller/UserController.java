@@ -1,5 +1,6 @@
 package com.crm.mcsv_user.controller;
 
+import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.PagedResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
@@ -180,6 +181,12 @@ public class UserController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(userService.exportCsv());
+    }
+
+    @PostMapping(value = "/import/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Importar usuarios desde CSV")
+    public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.importUsersFromCsv(file));
     }
 
     public static class CredentialsRequest {

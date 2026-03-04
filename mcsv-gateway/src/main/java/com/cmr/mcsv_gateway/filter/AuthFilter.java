@@ -39,6 +39,9 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private static final Map<String, String> PERMISSION_MAP = Map.ofEntries(
+            Map.entry("POST:/v1/api/user/import",          "USER:CREATE"),
+            Map.entry("POST:/v1/api/role/import",          "ROLE:CREATE"),
+            Map.entry("POST:/v1/api/rrhh/employee/import", "EMPLOYEE:CREATE"),
             Map.entry("POST:/v1/api/user/create",       "USER:CREATE"),
             Map.entry("GET:/v1/api/user/paged",         "USER:READ"),
             Map.entry("GET:/v1/api/user/detail",        "USER:READ"),

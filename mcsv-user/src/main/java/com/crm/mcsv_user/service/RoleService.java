@@ -1,11 +1,13 @@
 package com.crm.mcsv_user.service;
 
+import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ public interface RoleService {
 
     List<PermissionDTO> getAllPermissions();
     byte[] exportCsv();
+    BulkImportResult importRolesFromCsv(MultipartFile file);
 
     RoleDTO setPermissions(Long roleId, Set<Long> permissionIds);
 
