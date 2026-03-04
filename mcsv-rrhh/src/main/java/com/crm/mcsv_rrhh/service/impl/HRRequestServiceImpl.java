@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -120,6 +122,20 @@ public class HRRequestServiceImpl implements HRRequestService {
         employeeRepository.save(employee);
 
         return toResponse(hr);
+    }
+
+    @Override
+    public Map<String, Long> getStats(Long idModule) {
+        List<Long> pendingIds = List.of(
+                resolveStatusId("Pendiente de revisión"),
+                resolveStatusId("Pendiente de aprobación")
+        );
+        Long approvedId = resolveStatusId("Aprobado");
+
+        long total   = idModule != null ? hrRequestRepository.countByIdModule(idModule)                              : hrRequestRepository.count();
+        long pending = idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)     : hrRequestRepository.countByStatusIdIn(pendingIds);
+        long active  = idModule != null ? hrRequestRepository.countByIdModuleAndStatusId(idModule, approvedId)       : hrRequestRepository.countByStatusId(approvedId);
+        return Map.of("total", total, "active", active, "pending", pending);
     }
 
     @Override

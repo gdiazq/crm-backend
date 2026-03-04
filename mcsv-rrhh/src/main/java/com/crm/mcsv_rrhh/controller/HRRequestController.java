@@ -1,13 +1,13 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,12 +26,14 @@ public class HRRequestController {
 
     @GetMapping("/paged")
     @Operation(summary = "Listar solicitudes (paginado). idModule opcional para filtrar por empleado.")
-    public ResponseEntity<Page<HRRequestResponse>> list(
+    public ResponseEntity<PagedResponse<HRRequestResponse>> list(
             @RequestParam(required = false) Long idModule,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return ResponseEntity.ok(hrRequestService.list(idModule, pageable));
+        var result  = hrRequestService.list(idModule, pageable);
+        var stats   = hrRequestService.getStats(idModule);
+        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
     }
 
     @GetMapping("/{id}")

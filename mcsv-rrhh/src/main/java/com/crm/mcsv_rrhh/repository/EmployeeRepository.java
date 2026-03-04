@@ -16,6 +16,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     long countByActiveTrue();
 
+    long countByActiveTrueAndStatusIdNot(Long statusId);
+
+    long countByStatusIdNot(Long statusId);
+
     @Query("SELECT e.userId FROM Employee e WHERE e.userId IS NOT NULL")
     List<Long> findAllUserIds();
 }

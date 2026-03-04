@@ -222,10 +222,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Map<String, Long> getEmployeeStats() {
-        return Map.of(
-                "total", employeeRepository.count(),
-                "active", employeeRepository.countByActiveTrue()
-        );
+        Long rejectedStatusId = employeeStatusRepository.findByName("Rechazado")
+                .map(s -> s.getId()).orElse(null);
+        long total  = rejectedStatusId != null
+                ? employeeRepository.countByStatusIdNot(rejectedStatusId)
+                : employeeRepository.count();
+        long active = rejectedStatusId != null
+                ? employeeRepository.countByActiveTrueAndStatusIdNot(rejectedStatusId)
+                : employeeRepository.countByActiveTrue();
+        return Map.of("total", total, "active", active);
     }
 
     @Override
