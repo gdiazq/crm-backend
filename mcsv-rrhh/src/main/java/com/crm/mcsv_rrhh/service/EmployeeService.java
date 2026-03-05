@@ -23,7 +23,9 @@ public interface EmployeeService {
 
     EmployeeDetailResponse getEmployeeByUserId(Long userId);
 
-    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Pageable pageable);
+    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
+                                           java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
+                                           Pageable pageable);
 
     Map<String, Long> getEmployeeStats();
     byte[] exportCsv();

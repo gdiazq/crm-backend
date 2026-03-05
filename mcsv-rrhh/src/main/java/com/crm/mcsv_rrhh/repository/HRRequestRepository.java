@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface HRRequestRepository extends JpaRepository<HRRequest, Long> {
     List<HRRequest> findByIdModule(Long idModule);
     Page<HRRequest> findByIdModule(Long idModule, Pageable pageable);
+    Page<HRRequest> findByStatusId(Long statusId, Pageable pageable);
+    Page<HRRequest> findByIdModuleAndStatusId(Long idModule, Long statusId, Pageable pageable);
     Optional<HRRequest> findTopByIdModuleOrderByCreatedAtDesc(Long idModule);
     long countByIdModule(Long idModule);
     long countByStatusId(Long statusId);

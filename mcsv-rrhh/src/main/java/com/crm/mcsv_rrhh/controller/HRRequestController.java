@@ -25,13 +25,14 @@ public class HRRequestController {
     private final HRRequestService hrRequestService;
 
     @GetMapping("/paged")
-    @Operation(summary = "Listar solicitudes (paginado). idModule opcional para filtrar por empleado.")
+    @Operation(summary = "Listar solicitudes (paginado). idModule y statusId opcionales para filtrar.")
     public ResponseEntity<PagedResponse<HRRequestResponse>> list(
             @RequestParam(required = false) Long idModule,
+            @RequestParam(required = false) Long statusId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        var result  = hrRequestService.list(idModule, pageable);
+        var result  = hrRequestService.list(idModule, statusId, pageable);
         var stats   = hrRequestService.getStats(idModule);
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
     }

@@ -10,7 +10,7 @@ import java.util.Map;
 
 public interface HRRequestService {
     HRRequest createForEmployee(Long employeeId, String requestTypeName);
-    Page<HRRequestResponse> list(Long idModule, Pageable pageable);
+    Page<HRRequestResponse> list(Long idModule, Long statusId, Pageable pageable);
     HRRequestResponse getById(Long id);
     HRRequestResponse approve(Long id, Long approverId);
     byte[] exportCsv();

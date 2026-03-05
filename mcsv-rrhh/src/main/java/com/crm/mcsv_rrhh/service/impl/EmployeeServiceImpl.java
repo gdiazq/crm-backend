@@ -208,10 +208,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Pageable pageable) {
+    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
+                                                   java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
+                                                   Pageable pageable) {
         Long rejectedStatusId = employeeStatusRepository.findByName("Rechazado")
                 .map(s -> s.getId()).orElse(null);
-        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId);
+        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, createdFrom, createdTo);
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         s -> s.getId(),
