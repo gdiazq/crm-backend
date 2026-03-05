@@ -11,6 +11,7 @@ import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestRepository;
+import com.crm.mcsv_rrhh.repository.HRRequestSpecification;
 import com.crm.mcsv_rrhh.repository.HRRequestTypeRepository;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -61,17 +63,14 @@ public class HRRequestServiceImpl implements HRRequestService {
     }
 
     @Override
-    public Page<HRRequestResponse> list(Long idModule, Long statusId, Pageable pageable) {
-        if (idModule != null && statusId != null) {
-            return hrRequestRepository.findByIdModuleAndStatusId(idModule, statusId, pageable).map(this::toResponse);
-        }
-        if (idModule != null) {
-            return hrRequestRepository.findByIdModule(idModule, pageable).map(this::toResponse);
-        }
-        if (statusId != null) {
-            return hrRequestRepository.findByStatusId(statusId, pageable).map(this::toResponse);
-        }
-        return hrRequestRepository.findAll(pageable).map(this::toResponse);
+    public Page<HRRequestResponse> list(Long idModule, Long statusId,
+                                         LocalDate createdFrom, LocalDate createdTo,
+                                         LocalDate approvalFrom, LocalDate approvalTo,
+                                         Pageable pageable) {
+        return hrRequestRepository.findAll(
+                HRRequestSpecification.withFilters(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo),
+                pageable
+        ).map(this::toResponse);
     }
 
     @Override

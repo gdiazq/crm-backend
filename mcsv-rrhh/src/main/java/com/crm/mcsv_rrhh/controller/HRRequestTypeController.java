@@ -23,10 +23,10 @@ public class HRRequestTypeController {
     @Operation(summary = "Tipos de solicitud RRHH")
     public ResponseEntity<List<Item>> getAll() {
         List<Item> result = hrRequestTypeRepository.findAll().stream()
-                .map(t -> new Item(t.getId(), t.getName(), t.getRequireApproval()))
+                .map(t -> new Item(t.getId(), t.getName()))
                 .toList();
         return ResponseEntity.ok(result);
     }
 
-    record Item(Long id, String name, Boolean requireApproval) {}
+    record Item(Long id, String name) {}
 }

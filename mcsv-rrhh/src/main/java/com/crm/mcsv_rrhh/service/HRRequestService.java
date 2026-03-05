@@ -6,11 +6,15 @@ import com.crm.mcsv_rrhh.entity.HRRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 public interface HRRequestService {
     HRRequest createForEmployee(Long employeeId, String requestTypeName);
-    Page<HRRequestResponse> list(Long idModule, Long statusId, Pageable pageable);
+    Page<HRRequestResponse> list(Long idModule, Long statusId,
+                                  LocalDate createdFrom, LocalDate createdTo,
+                                  LocalDate approvalFrom, LocalDate approvalTo,
+                                  Pageable pageable);
     HRRequestResponse getById(Long id);
     HRRequestResponse approve(Long id, Long approverId);
     byte[] exportCsv();
