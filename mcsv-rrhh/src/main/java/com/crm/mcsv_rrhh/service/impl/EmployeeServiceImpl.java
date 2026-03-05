@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.EmployeeResponse;
@@ -12,10 +13,7 @@ import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.exception.DuplicateResourceException;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.repository.EmployeeRepository;
-import com.crm.mcsv_rrhh.repository.EmployeeSpecification;
-import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
-import com.crm.mcsv_rrhh.repository.HRRequestRepository;
+import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.EmployeeService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +43,26 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeStatusRepository employeeStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
+    private final IdentificationTypeRepository identificationTypeRepository;
+    private final GenderRepository genderRepository;
+    private final MaritalStatusRepository maritalStatusRepository;
+    private final EducationLevelRepository educationLevelRepository;
+    private final DriverLicenseRepository driverLicenseRepository;
+    private final ProfessionRepository professionRepository;
+    private final EmergencyContactRelationshipRepository emergencyContactRelationshipRepository;
+    private final RegionRepository regionRepository;
+    private final CityRepository cityRepository;
+    private final CommuneRepository communeRepository;
+    private final ExpatRepository expatRepository;
+    private final NationalityRepository nationalityRepository;
+    private final FamilyAllowanceTierRepository familyAllowanceTierRepository;
+    private final RetirementStatusRepository retirementStatusRepository;
+    private final PensionStatusRepository pensionStatusRepository;
+    private final AfpRepository afpRepository;
+    private final HealthInsuranceRepository healthInsuranceRepository;
+    private final HealthInsuranceTariffRepository healthInsuranceTariffRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
+    private final BankRepository bankRepository;
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
@@ -422,22 +441,22 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .id(e.getId())
                 .userId(e.getUserId())
                 .identification(e.getIdentification())
-                .identificationTypeId(e.getIdentificationTypeId())
+                .identificationType(resolve(e.getIdentificationTypeId(), identificationTypeRepository))
                 .firstName(e.getFirstName())
                 .paternalLastName(e.getPaternalLastName())
                 .maternalLastName(e.getMaternalLastName())
                 .birthDate(e.getBirthDate())
-                .genderId(e.getGenderId())
-                .maritalStatusId(e.getMaritalStatusId())
-                .educationLevelId(e.getEducationLevelId())
-                .driverLicenseId(e.getDriverLicenseId())
-                .professionId(e.getProfessionId())
+                .gender(resolve(e.getGenderId(), genderRepository))
+                .maritalStatus(resolve(e.getMaritalStatusId(), maritalStatusRepository))
+                .educationLevel(resolve(e.getEducationLevelId(), educationLevelRepository))
+                .driverLicense(resolve(e.getDriverLicenseId(), driverLicenseRepository))
+                .profession(resolve(e.getProfessionId(), professionRepository))
                 .personalEmail(e.getPersonalEmail())
                 .corporateEmail(e.getCorporateEmail())
                 .phone(e.getPhone())
                 .phone2(e.getPhone2())
                 .emergencyContactName(e.getEmergencyContactName())
-                .emergencyContactRelationshipId(e.getEmergencyContactRelationshipId())
+                .emergencyContactRelationship(resolve(e.getEmergencyContactRelationshipId(), emergencyContactRelationshipRepository))
                 .emergencyContactPhone(e.getEmergencyContactPhone())
                 .emergencyContactPhone2(e.getEmergencyContactPhone2())
                 .streetName(e.getStreetName())
@@ -446,24 +465,24 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .department(e.getDepartment())
                 .village(e.getVillage())
                 .block(e.getBlock())
-                .regionId(e.getRegionId())
-                .cityId(e.getCityId())
-                .communeId(e.getCommuneId())
-                .expatId(e.getExpatId())
-                .nationalityId(e.getNationalityId())
-                .familyAllowanceTierId(e.getFamilyAllowanceTierId())
-                .retirementStatusId(e.getRetirementStatusId())
+                .region(resolve(e.getRegionId(), regionRepository))
+                .city(resolve(e.getCityId(), cityRepository))
+                .commune(resolve(e.getCommuneId(), communeRepository))
+                .expat(resolve(e.getExpatId(), expatRepository))
+                .nationality(resolve(e.getNationalityId(), nationalityRepository))
+                .familyAllowanceTier(resolve(e.getFamilyAllowanceTierId(), familyAllowanceTierRepository))
+                .retirementStatus(resolve(e.getRetirementStatusId(), retirementStatusRepository))
                 .isapreFun(e.getIsapreFun())
-                .pensionStatusId(e.getPensionStatusId())
-                .afpId(e.getAfpId())
-                .healthInsuranceId(e.getHealthInsuranceId())
-                .healthInsuranceTariffId(e.getHealthInsuranceTariffId())
+                .pensionStatus(resolve(e.getPensionStatusId(), pensionStatusRepository))
+                .afp(resolve(e.getAfpId(), afpRepository))
+                .healthInsurance(resolve(e.getHealthInsuranceId(), healthInsuranceRepository))
+                .healthInsuranceTariff(resolve(e.getHealthInsuranceTariffId(), healthInsuranceTariffRepository))
                 .healthInsuranceUF(e.getHealthInsuranceUF())
                 .healthInsurancePesos(e.getHealthInsurancePesos())
-                .paymentMethodId(e.getPaymentMethodId())
-                .bankId(e.getBankId())
+                .paymentMethod(resolve(e.getPaymentMethodId(), paymentMethodRepository))
+                .bank(resolve(e.getBankId(), bankRepository))
                 .bankAccount(e.getBankAccount())
-                .statusId(e.getStatusId())
+                .status(resolve(e.getStatusId(), employeeStatusRepository))
                 .clothingSize(e.getClothingSize())
                 .shoeSize(e.getShoeSize())
                 .pantSize(e.getPantSize())
@@ -481,5 +500,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         builder.requestId(requestId);
 
         return builder.build();
+    }
+
+    private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {
+        if (id == null) return null;
+        return repo.findById(id)
+                .map(e -> {
+                    try {
+                        var getName = e.getClass().getMethod("getName");
+                        return new CatalogItem(id, (String) getName.invoke(e));
+                    } catch (Exception ex) {
+                        return new CatalogItem(id, null);
+                    }
+                })
+                .orElse(null);
     }
 }

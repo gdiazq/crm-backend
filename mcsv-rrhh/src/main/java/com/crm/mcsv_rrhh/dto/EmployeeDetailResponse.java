@@ -19,7 +19,7 @@ public class EmployeeDetailResponse {
 
     // ─── Datos Personales ─────────────────────────────────────────────────────
     private String identification;
-    private Long identificationTypeId;
+    private CatalogItem identificationType;
 
     private String firstName;
     private String paternalLastName;
@@ -27,11 +27,11 @@ public class EmployeeDetailResponse {
 
     private LocalDate birthDate;
 
-    private Long genderId;
-    private Long maritalStatusId;
-    private Long educationLevelId;
-    private Long driverLicenseId;
-    private Long professionId;
+    private CatalogItem gender;
+    private CatalogItem maritalStatus;
+    private CatalogItem educationLevel;
+    private CatalogItem driverLicense;
+    private CatalogItem profession;
 
     // ─── Datos de Contacto ────────────────────────────────────────────────────
     private String personalEmail;
@@ -41,7 +41,7 @@ public class EmployeeDetailResponse {
 
     // ─── Contacto de Emergencia ───────────────────────────────────────────────
     private String emergencyContactName;
-    private Long emergencyContactRelationshipId;
+    private CatalogItem emergencyContactRelationship;
     private String emergencyContactPhone;
     private String emergencyContactPhone2;
 
@@ -52,30 +52,30 @@ public class EmployeeDetailResponse {
     private String department;
     private String village;
     private String block;
-    private Long regionId;
-    private Long cityId;
-    private Long communeId;
+    private CatalogItem region;
+    private CatalogItem city;
+    private CatalogItem commune;
 
     // ─── Previsión y Salud ────────────────────────────────────────────────────
-    private Long expatId;
-    private Long nationalityId;
-    private Long familyAllowanceTierId;
-    private Long retirementStatusId;
+    private CatalogItem expat;
+    private CatalogItem nationality;
+    private CatalogItem familyAllowanceTier;
+    private CatalogItem retirementStatus;
     private String isapreFun;
-    private Long pensionStatusId;
-    private Long afpId;
-    private Long healthInsuranceId;
-    private Long healthInsuranceTariffId;
+    private CatalogItem pensionStatus;
+    private CatalogItem afp;
+    private CatalogItem healthInsurance;
+    private CatalogItem healthInsuranceTariff;
     private String healthInsuranceUF;
     private String healthInsurancePesos;
 
     // ─── Forma de Pago ────────────────────────────────────────────────────────
-    private Long paymentMethodId;
-    private Long bankId;
+    private CatalogItem paymentMethod;
+    private CatalogItem bank;
     private String bankAccount;
 
     // ─── Datos Organizacionales ───────────────────────────────────────────────
-    private Long statusId;
+    private CatalogItem status;
 
     // ─── Otros Datos ─────────────────────────────────────────────────────────
     private String clothingSize;

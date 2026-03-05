@@ -2,6 +2,7 @@ package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.dto.PagedResponse;
 import com.crm.mcsv_user.dto.UserResponse;
+import com.crm.mcsv_user.repository.PermissionRepository;
 import com.crm.mcsv_user.service.RoleService;
 import com.crm.mcsv_user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +27,7 @@ public class SelectController {
 
     private final RoleService roleService;
     private final UserService userService;
+    private final PermissionRepository permissionRepository;
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles for selector", description = "Retrieve id and name of all roles")
@@ -85,4 +87,15 @@ public class SelectController {
     }
 
     record StatusSelectItem(Boolean id, String name) {}
+
+    @GetMapping("/permissions")
+    @Operation(summary = "Get permissions for selector", description = "Retrieve id and name of all permissions")
+    public ResponseEntity<List<PermissionSelectItem>> getPermissions() {
+        List<PermissionSelectItem> permissions = permissionRepository.findAll().stream()
+                .map(p -> new PermissionSelectItem(p.getId(), p.getName()))
+                .toList();
+        return ResponseEntity.ok(permissions);
+    }
+
+    record PermissionSelectItem(Long id, String name) {}
 }
