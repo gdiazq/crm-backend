@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
+import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
@@ -44,9 +45,9 @@ public class HRRequestController {
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/detail/{id}")
     @Operation(summary = "Obtener detalle de una solicitud")
-    public ResponseEntity<HRRequestResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<HRRequestDetailResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(hrRequestService.getById(id));
     }
 

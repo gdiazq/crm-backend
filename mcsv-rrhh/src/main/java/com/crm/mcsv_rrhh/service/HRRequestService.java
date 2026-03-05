@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.service;
 
+import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.crm.mcsv_rrhh.entity.HRRequest;
@@ -15,7 +16,7 @@ public interface HRRequestService {
                                   LocalDate createdFrom, LocalDate createdTo,
                                   LocalDate approvalFrom, LocalDate approvalTo,
                                   Pageable pageable);
-    HRRequestResponse getById(Long id);
+    HRRequestDetailResponse getById(Long id);
     HRRequestResponse approve(Long id, Long approverId);
     byte[] exportCsv();
     HRRequestResponse reject(Long id, RejectHRRequestRequest req);
