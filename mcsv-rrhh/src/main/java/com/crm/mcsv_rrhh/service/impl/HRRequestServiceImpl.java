@@ -42,7 +42,7 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     @Transactional
-    public HRRequest createForEmployee(Long employeeId, String requestTypeName) {
+    public HRRequest createForEmployee(Long employeeId, String requestTypeName, String action) {
         HRRequestType type = hrRequestTypeRepository.findByName(requestTypeName)
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: " + requestTypeName));
 
@@ -59,6 +59,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .statusId(statusId)
                 .requireApproval(type.getRequireApproval())
                 .idModule(employeeId)
+                .action(action)
                 .build();
 
         return hrRequestRepository.save(request);
@@ -90,6 +91,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .requestType(requestType)
                 .status(status)
                 .requireApproval(hr.getRequireApproval())
+                .action(hr.getAction())
                 .approvalDate(hr.getApprovalDate())
                 .hhrrApprovalDate(hr.getHhrrApprovalDate())
                 .rejectionDetail(hr.getRejectionDetail())
@@ -154,10 +156,12 @@ public class HRRequestServiceImpl implements HRRequestService {
         hr.setStatusId(rejectedStatusId);
         hrRequestRepository.save(hr);
 
-        Employee employee = employeeRepository.findById(hr.getIdModule())
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
-        employee.setStatusId(rejectedStatusId);
-        employeeRepository.save(employee);
+        if ("CREATE".equals(hr.getAction())) {
+            Employee employee = employeeRepository.findById(hr.getIdModule())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
+            employee.setStatusId(rejectedStatusId);
+            employeeRepository.save(employee);
+        }
 
         return toResponse(hr);
     }
@@ -255,7 +259,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .requestTypeName(typeName)
                 .statusId(hr.getStatusId())
                 .statusName(statusName)
-                .requireApproval(hr.getRequireApproval())
+                .action(hr.getAction())
                 .approverId(hr.getApproverId())
                 .approvalDate(hr.getApprovalDate())
                 .hhrrApproverId(hr.getHhrrApproverId())

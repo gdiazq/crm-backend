@@ -26,8 +26,6 @@ public class HRRequestResponse {
     private Long statusId;
     private String statusName;
 
-    private Boolean requireApproval;
-
     private Long approverId;
     private String approverFullName;
     private LocalDateTime approvalDate;
@@ -35,6 +33,8 @@ public class HRRequestResponse {
     private Long hhrrApproverId;
     private String hhrrApproverFullName;
     private LocalDateTime hhrrApprovalDate;
+
+    private String action;
 
     private String rejectionDetail;
 

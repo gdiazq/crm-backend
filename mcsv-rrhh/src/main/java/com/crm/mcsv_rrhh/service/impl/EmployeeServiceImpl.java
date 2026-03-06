@@ -122,7 +122,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador");
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador", "CREATE");
         return toDetailResponse(saved, null, req.getId());
     }
 
@@ -201,7 +201,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setRehireEligible(request.getRehireEligible());
 
         Employee saved = employeeRepository.save(employee);
-        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador");
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador", "UPDATE");
         UserDTO user = fetchUser(saved.getUserId());
         return toDetailResponse(saved, user, req.getId());
     }

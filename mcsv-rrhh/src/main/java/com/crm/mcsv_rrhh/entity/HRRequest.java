@@ -38,6 +38,9 @@ public class HRRequest {
     private LocalDateTime hhrrApprovalDate;
 
     @Column
+    private String action;
+
+    @Column
     private String rejectionDetail;
 
     @Column(nullable = false, updatable = false)

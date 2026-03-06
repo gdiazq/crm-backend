@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 public interface HRRequestService {
-    HRRequest createForEmployee(Long employeeId, String requestTypeName);
+    HRRequest createForEmployee(Long employeeId, String requestTypeName, String action);
     Page<HRRequestResponse> list(Long idModule, Long statusId,
                                   LocalDate createdFrom, LocalDate createdTo,
                                   LocalDate approvalFrom, LocalDate approvalTo,

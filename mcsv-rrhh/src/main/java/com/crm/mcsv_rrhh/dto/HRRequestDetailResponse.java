@@ -31,6 +31,8 @@ public class HRRequestDetailResponse {
     private CatalogItem hhrrApprover;
     private LocalDateTime hhrrApprovalDate;
 
+    private String action;
+
     private String rejectionDetail;
 
     private LocalDateTime createdAt;
