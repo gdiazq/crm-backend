@@ -201,10 +201,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setRehireEligible(request.getRehireEligible());
 
         Employee saved = employeeRepository.save(employee);
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador");
         UserDTO user = fetchUser(saved.getUserId());
-        Long reqId = hrRequestRepository.findTopByIdModuleOrderByCreatedAtDesc(saved.getId())
-                .map(HRRequest::getId).orElse(null);
-        return toDetailResponse(saved, user, reqId);
+        return toDetailResponse(saved, user, req.getId());
     }
 
     @Override
