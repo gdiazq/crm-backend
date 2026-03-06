@@ -4,8 +4,10 @@ import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
@@ -39,10 +41,11 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final EmployeeStatusRepository employeeStatusRepository;
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
-    public HRRequest createForEmployee(Long employeeId, String requestTypeName, String action) {
+    public HRRequest createForEmployee(Long employeeId, String requestTypeName, String action, String proposedData) {
         HRRequestType type = hrRequestTypeRepository.findByName(requestTypeName)
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: " + requestTypeName));
 
@@ -60,6 +63,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .requireApproval(type.getRequireApproval())
                 .idModule(employeeId)
                 .action(action)
+                .proposedData(proposedData)
                 .build();
 
         return hrRequestRepository.save(request);
@@ -136,9 +140,65 @@ public class HRRequestServiceImpl implements HRRequestService {
 
             Employee employee = employeeRepository.findById(hr.getIdModule())
                     .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
-            employee.setStatusId(approvedStatusId);
-            employeeRepository.save(employee);
 
+            if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                try {
+                    UpdateEmployeeRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeRequest.class);
+                    employee.setIdentification(proposed.getIdentification());
+                    employee.setIdentificationTypeId(proposed.getIdentificationTypeId());
+                    employee.setFirstName(proposed.getFirstName());
+                    employee.setPaternalLastName(proposed.getPaternalLastName());
+                    employee.setMaternalLastName(proposed.getMaternalLastName());
+                    employee.setBirthDate(proposed.getBirthDate());
+                    employee.setGenderId(proposed.getGenderId());
+                    employee.setMaritalStatusId(proposed.getMaritalStatusId());
+                    employee.setEducationLevelId(proposed.getEducationLevelId());
+                    employee.setDriverLicenseId(proposed.getDriverLicenseId());
+                    employee.setProfessionId(proposed.getProfessionId());
+                    employee.setPersonalEmail(proposed.getPersonalEmail());
+                    employee.setCorporateEmail(proposed.getCorporateEmail());
+                    employee.setPhone(proposed.getPhone());
+                    employee.setPhone2(proposed.getPhone2());
+                    employee.setEmergencyContactName(proposed.getEmergencyContactName());
+                    employee.setEmergencyContactRelationshipId(proposed.getEmergencyContactRelationshipId());
+                    employee.setEmergencyContactPhone(proposed.getEmergencyContactPhone());
+                    employee.setEmergencyContactPhone2(proposed.getEmergencyContactPhone2());
+                    employee.setStreetName(proposed.getStreetName());
+                    employee.setStreetNumber(proposed.getStreetNumber());
+                    employee.setPostalCode(proposed.getPostalCode());
+                    employee.setDepartment(proposed.getDepartment());
+                    employee.setVillage(proposed.getVillage());
+                    employee.setBlock(proposed.getBlock());
+                    employee.setRegionId(proposed.getRegionId());
+                    employee.setCityId(proposed.getCityId());
+                    employee.setCommuneId(proposed.getCommuneId());
+                    employee.setExpatId(proposed.getExpatId());
+                    employee.setNationalityId(proposed.getNationalityId());
+                    employee.setFamilyAllowanceTierId(proposed.getFamilyAllowanceTierId());
+                    employee.setRetirementStatusId(proposed.getRetirementStatusId());
+                    employee.setIsapreFun(proposed.getIsapreFun());
+                    employee.setPensionStatusId(proposed.getPensionStatusId());
+                    employee.setAfpId(proposed.getAfpId());
+                    employee.setHealthInsuranceId(proposed.getHealthInsuranceId());
+                    employee.setHealthInsuranceTariffId(proposed.getHealthInsuranceTariffId());
+                    employee.setHealthInsuranceUF(proposed.getHealthInsuranceUF());
+                    employee.setHealthInsurancePesos(proposed.getHealthInsurancePesos());
+                    employee.setPaymentMethodId(proposed.getPaymentMethodId());
+                    employee.setBankId(proposed.getBankId());
+                    employee.setBankAccount(proposed.getBankAccount());
+                    employee.setClothingSize(proposed.getClothingSize());
+                    employee.setShoeSize(proposed.getShoeSize());
+                    employee.setPantSize(proposed.getPantSize());
+                    employee.setActive(proposed.getActive());
+                    employee.setRehireEligible(proposed.getRehireEligible());
+                } catch (Exception e) {
+                    log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                }
+            } else {
+                employee.setStatusId(approvedStatusId);
+            }
+
+            employeeRepository.save(employee);
             return toResponse(hr);
 
         } else {

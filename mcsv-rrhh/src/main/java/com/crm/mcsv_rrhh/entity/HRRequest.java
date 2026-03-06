@@ -40,6 +40,9 @@ public class HRRequest {
     @Column
     private String action;
 
+    @Column(columnDefinition = "TEXT")
+    private String proposedData;
+
     @Column
     private String rejectionDetail;
 

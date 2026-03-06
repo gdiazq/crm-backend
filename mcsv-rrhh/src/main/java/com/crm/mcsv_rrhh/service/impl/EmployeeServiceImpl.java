@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
@@ -43,6 +44,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeStatusRepository employeeStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
+    private final ObjectMapper objectMapper;
     private final IdentificationTypeRepository identificationTypeRepository;
     private final GenderRepository genderRepository;
     private final MaritalStatusRepository maritalStatusRepository;
@@ -122,7 +124,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador", "CREATE");
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador", "CREATE", null);
         return toDetailResponse(saved, null, req.getId());
     }
 
@@ -150,60 +152,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public EmployeeDetailResponse updateEmployee(Long id, UpdateEmployeeRequest request) {
         Employee employee = findOrThrow(id);
-
-        employee.setIdentification(request.getIdentification());
-        employee.setIdentificationTypeId(request.getIdentificationTypeId());
-        employee.setFirstName(request.getFirstName());
-        employee.setPaternalLastName(request.getPaternalLastName());
-        employee.setMaternalLastName(request.getMaternalLastName());
-        employee.setBirthDate(request.getBirthDate());
-        employee.setGenderId(request.getGenderId());
-        employee.setMaritalStatusId(request.getMaritalStatusId());
-        employee.setEducationLevelId(request.getEducationLevelId());
-        employee.setDriverLicenseId(request.getDriverLicenseId());
-        employee.setProfessionId(request.getProfessionId());
-        employee.setPersonalEmail(request.getPersonalEmail());
-        employee.setCorporateEmail(request.getCorporateEmail());
-        employee.setPhone(request.getPhone());
-        employee.setPhone2(request.getPhone2());
-        employee.setEmergencyContactName(request.getEmergencyContactName());
-        employee.setEmergencyContactRelationshipId(request.getEmergencyContactRelationshipId());
-        employee.setEmergencyContactPhone(request.getEmergencyContactPhone());
-        employee.setEmergencyContactPhone2(request.getEmergencyContactPhone2());
-        employee.setStreetName(request.getStreetName());
-        employee.setStreetNumber(request.getStreetNumber());
-        employee.setPostalCode(request.getPostalCode());
-        employee.setDepartment(request.getDepartment());
-        employee.setVillage(request.getVillage());
-        employee.setBlock(request.getBlock());
-        employee.setRegionId(request.getRegionId());
-        employee.setCityId(request.getCityId());
-        employee.setCommuneId(request.getCommuneId());
-        employee.setExpatId(request.getExpatId());
-        employee.setNationalityId(request.getNationalityId());
-        employee.setFamilyAllowanceTierId(request.getFamilyAllowanceTierId());
-        employee.setRetirementStatusId(request.getRetirementStatusId());
-        employee.setIsapreFun(request.getIsapreFun());
-        employee.setPensionStatusId(request.getPensionStatusId());
-        employee.setAfpId(request.getAfpId());
-        employee.setHealthInsuranceId(request.getHealthInsuranceId());
-        employee.setHealthInsuranceTariffId(request.getHealthInsuranceTariffId());
-        employee.setHealthInsuranceUF(request.getHealthInsuranceUF());
-        employee.setHealthInsurancePesos(request.getHealthInsurancePesos());
-        employee.setPaymentMethodId(request.getPaymentMethodId());
-        employee.setBankId(request.getBankId());
-        employee.setBankAccount(request.getBankAccount());
-        employee.setClothingSize(request.getClothingSize());
-        employee.setShoeSize(request.getShoeSize());
-        employee.setPantSize(request.getPantSize());
-        employee.setStatusId(request.getStatusId());
-        employee.setActive(request.getActive());
-        employee.setRehireEligible(request.getRehireEligible());
-
-        Employee saved = employeeRepository.save(employee);
-        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador", "UPDATE");
-        UserDTO user = fetchUser(saved.getUserId());
-        return toDetailResponse(saved, user, req.getId());
+        try {
+            String proposedData = objectMapper.writeValueAsString(request);
+            HRRequest req = hrRequestService.createForEmployee(employee.getId(), "Trabajador", "UPDATE", proposedData);
+            UserDTO user = fetchUser(employee.getUserId());
+            return toDetailResponse(employee, user, req.getId());
+        } catch (Exception e) {
+            throw new RuntimeException("Error al procesar la solicitud de actualización", e);
+        }
     }
 
     @Override
