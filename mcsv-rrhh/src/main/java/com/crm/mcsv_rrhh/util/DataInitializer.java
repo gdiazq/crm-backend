@@ -36,6 +36,10 @@ public class DataInitializer implements CommandLineRunner {
     private final BankRepository bankRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final HRRequestTypeRepository hrRequestTypeRepository;
+    private final ContractTypeRepository contractTypeRepository;
+    private final ContractStatusRepository contractStatusRepository;
+    private final MealTypeRepository mealTypeRepository;
+    private final TransportTypeRepository transportTypeRepository;
 
     @Override
     public void run(String... args) {
@@ -61,6 +65,10 @@ public class DataInitializer implements CommandLineRunner {
         initializeBanks();
         initializeEmployeeStatuses();
         initializeHRRequestTypes();
+        initializeContractTypes();
+        initializeContractStatuses();
+        initializeMealTypes();
+        initializeTransportTypes();
     }
 
     private void initializeIdentificationTypes() {
@@ -523,6 +531,38 @@ public class DataInitializer implements CommandLineRunner {
                 hrRequestTypeRepository.save(HRRequestType.builder()
                         .name(t.name()).requireApproval(t.req()).build());
         log.info("HR request types initialized.");
+    }
+
+    private void initializeContractTypes() {
+        String[] names = {"Indefinido", "Plazo fijo", "Por obra o faena", "A honorarios", "Part-time"};
+        for (String name : names)
+            if (contractTypeRepository.findByName(name).isEmpty())
+                contractTypeRepository.save(ContractType.builder().name(name).build());
+        log.info("Contract types initialized.");
+    }
+
+    private void initializeContractStatuses() {
+        String[] names = {"Activo", "Vencido", "Terminado", "Suspendido"};
+        for (String name : names)
+            if (contractStatusRepository.findByName(name).isEmpty())
+                contractStatusRepository.save(ContractStatus.builder().name(name).build());
+        log.info("Contract statuses initialized.");
+    }
+
+    private void initializeMealTypes() {
+        String[] names = {"Sin colación", "Desayuno", "Almuerzo", "Cena", "Colación completa"};
+        for (String name : names)
+            if (mealTypeRepository.findByName(name).isEmpty())
+                mealTypeRepository.save(MealType.builder().name(name).build());
+        log.info("Meal types initialized.");
+    }
+
+    private void initializeTransportTypes() {
+        String[] names = {"Sin movilización", "Bus", "Metro", "Taxi", "Vehículo propio", "Movilización empresa"};
+        for (String name : names)
+            if (transportTypeRepository.findByName(name).isEmpty())
+                transportTypeRepository.save(TransportType.builder().name(name).build());
+        log.info("Transport types initialized.");
     }
 
     private void initializeEmployeeStatuses() {

@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,6 +85,12 @@ public class EmployeeController {
     @Operation(summary = "Actualizar empleado")
     public ResponseEntity<EmployeeDetailResponse> update(@Valid @RequestBody UpdateEmployeeRequest request) {
         return ResponseEntity.ok(employeeService.updateEmployee(request.getId(), request));
+    }
+
+    @GetMapping("/select/without-contract")
+    @Operation(summary = "Empleados sin contrato", description = "Retorna empleados activos y aprobados que aún no tienen contrato")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithoutContract() {
+        return ResponseEntity.ok(employeeService.getEmployeesWithoutContract());
     }
 
     @GetMapping("/select/available-users")

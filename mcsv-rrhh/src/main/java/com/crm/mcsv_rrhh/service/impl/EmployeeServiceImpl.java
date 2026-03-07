@@ -65,6 +65,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final HealthInsuranceTariffRepository healthInsuranceTariffRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final BankRepository bankRepository;
+    private final ContractRepository contractRepository;
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
@@ -220,6 +221,28 @@ public class EmployeeServiceImpl implements EmployeeService {
     public PagedResponse<UserDTO> getAvailableUsersForEmployee(String search, int page, int size) {
         List<Long> linkedUserIds = employeeRepository.findAllUserIds();
         return userClient.getAvailableForEmployee(search, linkedUserIds, page, size);
+    }
+
+    @Override
+    public List<EmployeeService.EmployeeSelectItem> getEmployeesWithoutContract() {
+        Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
+
+        List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
+                .map(c -> c.getEmployeeId())
+                .distinct()
+                .toList();
+
+        List<Employee> employees = employeeIdsWithContract.isEmpty()
+                ? employeeRepository.findByActiveTrueAndStatusId(approvedStatusId)
+                : employeeRepository.findByActiveTrueAndStatusIdAndIdNotIn(approvedStatusId, employeeIdsWithContract);
+
+        return employees.stream()
+                .map(e -> new EmployeeService.EmployeeSelectItem(
+                        e.getId(),
+                        e.getFirstName() + " " + e.getPaternalLastName()))
+                .toList();
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

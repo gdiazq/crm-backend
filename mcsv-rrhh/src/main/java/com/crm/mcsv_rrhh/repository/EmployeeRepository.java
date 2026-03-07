@@ -22,4 +22,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     @Query("SELECT e.userId FROM Employee e WHERE e.userId IS NOT NULL")
     List<Long> findAllUserIds();
+
+    List<Employee> findByActiveTrueAndStatusIdAndIdNotIn(Long statusId, List<Long> excludedIds);
+
+    List<Employee> findByActiveTrueAndStatusId(Long statusId);
 }
