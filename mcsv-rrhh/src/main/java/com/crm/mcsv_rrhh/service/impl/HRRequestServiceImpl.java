@@ -70,6 +70,33 @@ public class HRRequestServiceImpl implements HRRequestService {
     }
 
     @Override
+    @Transactional
+    public HRRequest createForContract(Long contractId, Long employeeId, String action, String proposedData) {
+        HRRequestType type = hrRequestTypeRepository.findByName("Contrato")
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Contrato"));
+
+        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
+                ? "Pendiente de revisión"
+                : "Pendiente de aprobación";
+
+        Long statusId = employeeStatusRepository.findByName(initialStatusName)
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
+
+        HRRequest request = HRRequest.builder()
+                .requestTypeId(type.getId())
+                .statusId(statusId)
+                .requireApproval(type.getRequireApproval())
+                .idModule(employeeId)
+                .contractId(contractId)
+                .action(action)
+                .proposedData(proposedData)
+                .build();
+
+        return hrRequestRepository.save(request);
+    }
+
+    @Override
     public Page<HRRequestResponse> list(Long idModule, Long statusId,
                                          LocalDate createdFrom, LocalDate createdTo,
                                          LocalDate approvalFrom, LocalDate approvalTo,
