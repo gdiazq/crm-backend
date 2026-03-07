@@ -38,6 +38,9 @@ public class HRRequest {
     private LocalDateTime hhrrApprovalDate;
 
     @Column
+    private Long contractId;
+
+    @Column
     private String action;
 
     @Column(columnDefinition = "TEXT")
