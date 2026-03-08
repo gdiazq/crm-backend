@@ -63,6 +63,9 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("HR_REQUEST:READ",    "Ver y consultar solicitudes RRHH");
         createPermissionIfNotExists("HR_REQUEST:APPROVE", "Aprobar solicitudes RRHH");
         createPermissionIfNotExists("HR_REQUEST:REJECT",  "Rechazar solicitudes RRHH");
+        createPermissionIfNotExists("CONTRACT:CREATE", "Crear contratos laborales");
+        createPermissionIfNotExists("CONTRACT:READ",   "Ver y consultar contratos laborales");
+        createPermissionIfNotExists("CONTRACT:UPDATE", "Modificar contratos laborales");
 
         log.info("Permissions initialized.");
     }
