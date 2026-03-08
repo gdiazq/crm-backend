@@ -2,17 +2,27 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
+import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
 import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
+import com.crm.mcsv_rrhh.repository.ContractSpecification;
 import com.crm.mcsv_rrhh.service.ContractService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ContractServiceImpl implements ContractService {
 
     private final ContractRepository contractRepository;
+    private final EmployeeRepository employeeRepository;
     private final HRRequestService hrRequestService;
     private final EmployeeStatusRepository employeeStatusRepository;
-    private final ContractTypeRepository contractTypeRepository;
     private final ContractStatusRepository contractStatusRepository;
+    private final ContractTypeRepository contractTypeRepository;
     private final SafetyGroupRepository safetyGroupRepository;
     private final CompanyRepository companyRepository;
     private final ZoneRepository zoneRepository;
@@ -72,7 +83,56 @@ public class ContractServiceImpl implements ContractService {
         return toDetailResponse(saved);
     }
 
+    // ─── Listar ───────────────────────────────────────────────────────────────
+
+    @Override
+    public Page<ContractResponse> list(Long employeeId, Long statusId,
+                                       LocalDate createdFrom, LocalDate createdTo,
+                                       Pageable pageable) {
+        Specification<Contract> spec = ContractSpecification.withFilters(employeeId, statusId, createdFrom, createdTo);
+        return contractRepository.findAll(spec, pageable).map(this::toResponse);
+    }
+
+    @Override
+    public Map<String, Long> getStats(Long employeeId) {
+        Long pendingStatusId = contractStatusRepository.findByName("Pendiente de revisión")
+                .map(s -> s.getId()).orElse(-1L);
+
+        long total   = employeeId != null ? contractRepository.countByEmployeeId(employeeId)            : contractRepository.count();
+        long active  = employeeId != null ? contractRepository.countByEmployeeIdAndActiveTrue(employeeId) : contractRepository.countByActiveTrue();
+        long pending = employeeId != null ? contractRepository.countByEmployeeIdAndStatusId(employeeId, pendingStatusId) : contractRepository.countByStatusId(pendingStatusId);
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", total);
+        stats.put("active", active);
+        stats.put("pending", pending);
+        return stats;
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private ContractResponse toResponse(Contract c) {
+        String employeeName = employeeRepository.findById(c.getEmployeeId())
+                .map(e -> e.getFirstName() + " " + e.getPaternalLastName())
+                .orElse(null);
+
+        return ContractResponse.builder()
+                .id(c.getId())
+                .employeeId(c.getEmployeeId())
+                .employeeName(employeeName)
+                .name(c.getName())
+                .contractNumber(c.getContractNumber())
+                .contractType(resolveName(c.getContractTypeId(), contractTypeRepository))
+                .contractStatus(resolveName(c.getContractStatusId(), contractStatusRepository))
+                .company(resolveName(c.getCompanyId(), companyRepository))
+                .jobTitle(resolveName(c.getJobTitleId(), jobTitleRepository))
+                .baseSalary(c.getBaseSalary())
+                .startDate(c.getStartDate())
+                .endDate(c.getEndDate())
+                .active(c.getActive())
+                .createdAt(c.getCreatedAt())
+                .build();
+    }
 
     private ContractDetailResponse toDetailResponse(Contract c) {
         return ContractDetailResponse.builder()
@@ -103,6 +163,14 @@ public class ContractServiceImpl implements ContractService {
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
                 .build();
+    }
+
+    private <T> String resolveName(Long id, JpaRepository<T, Long> repo) {
+        if (id == null) return null;
+        return repo.findById(id).map(e -> {
+            try { return (String) e.getClass().getMethod("getName").invoke(e); }
+            catch (Exception ex) { return null; }
+        }).orElse(null);
     }
 
     private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {
