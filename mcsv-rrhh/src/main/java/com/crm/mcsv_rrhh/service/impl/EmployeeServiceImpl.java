@@ -274,6 +274,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .statusName(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : null)
                 .active(e.getActive())
                 .rehireEligible(e.getRehireEligible())
+                .hasContract(e.getHasContract())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
@@ -476,6 +477,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         builder.requestId(requestId);
+        builder.hasContract(e.getHasContract());
 
         return builder.build();
     }

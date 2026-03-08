@@ -93,6 +93,9 @@ public class EmployeeDetailResponse {
     private String userEmail;
     private Boolean userEnabled;
 
+    // ─── Contrato ─────────────────────────────────────────────────────────────
+    private Boolean hasContract;
+
     // ─── Solicitud RRHH ───────────────────────────────────────────────────────
     private Long requestId;
 }

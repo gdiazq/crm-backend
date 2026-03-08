@@ -33,6 +33,7 @@ public class EmployeeResponse {
     // Estado
     private Boolean active;
     private Boolean rehireEligible;
+    private Boolean hasContract;
 
     // Auditoría
     private LocalDateTime createdAt;

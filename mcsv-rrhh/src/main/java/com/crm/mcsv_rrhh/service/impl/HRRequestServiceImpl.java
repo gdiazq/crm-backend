@@ -204,6 +204,11 @@ public class HRRequestServiceImpl implements HRRequestService {
                     }
                 } else {
                     contract.setStatusId(approvedStatusId);
+                    Employee employee = employeeRepository.findById(contract.getEmployeeId()).orElse(null);
+                    if (employee != null) {
+                        employee.setHasContract(true);
+                        employeeRepository.save(employee);
+                    }
                 }
                 contractRepository.save(contract);
 

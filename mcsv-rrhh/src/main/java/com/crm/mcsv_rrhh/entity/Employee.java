@@ -110,6 +110,8 @@ public class Employee {
     @Builder.Default
     private Boolean rehireEligible = true;
 
+    private Boolean hasContract;
+
     // ─── Auditoría ────────────────────────────────────────────────────────────
     @Column(updatable = false)
     private LocalDateTime createdAt;
