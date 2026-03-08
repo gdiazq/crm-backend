@@ -4,14 +4,17 @@ import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
+import com.crm.mcsv_rrhh.repository.ContractRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestRepository;
@@ -40,6 +43,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final HRRequestTypeRepository hrRequestTypeRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final EmployeeRepository employeeRepository;
+    private final ContractRepository contractRepository;
     private final UserClient userClient;
     private final ObjectMapper objectMapper;
 
@@ -165,67 +169,107 @@ public class HRRequestServiceImpl implements HRRequestService {
             hr.setStatusId(approvedStatusId);
             hrRequestRepository.save(hr);
 
-            Employee employee = employeeRepository.findById(hr.getIdModule())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
+            String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
+                    .map(HRRequestType::getName).orElse(null);
 
-            if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                try {
-                    UpdateEmployeeRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeRequest.class);
-                    employee.setIdentification(proposed.getIdentification());
-                    employee.setIdentificationTypeId(proposed.getIdentificationTypeId());
-                    employee.setFirstName(proposed.getFirstName());
-                    employee.setPaternalLastName(proposed.getPaternalLastName());
-                    employee.setMaternalLastName(proposed.getMaternalLastName());
-                    employee.setBirthDate(proposed.getBirthDate());
-                    employee.setGenderId(proposed.getGenderId());
-                    employee.setMaritalStatusId(proposed.getMaritalStatusId());
-                    employee.setEducationLevelId(proposed.getEducationLevelId());
-                    employee.setDriverLicenseId(proposed.getDriverLicenseId());
-                    employee.setProfessionId(proposed.getProfessionId());
-                    employee.setPersonalEmail(proposed.getPersonalEmail());
-                    employee.setCorporateEmail(proposed.getCorporateEmail());
-                    employee.setPhone(proposed.getPhone());
-                    employee.setPhone2(proposed.getPhone2());
-                    employee.setEmergencyContactName(proposed.getEmergencyContactName());
-                    employee.setEmergencyContactRelationshipId(proposed.getEmergencyContactRelationshipId());
-                    employee.setEmergencyContactPhone(proposed.getEmergencyContactPhone());
-                    employee.setEmergencyContactPhone2(proposed.getEmergencyContactPhone2());
-                    employee.setStreetName(proposed.getStreetName());
-                    employee.setStreetNumber(proposed.getStreetNumber());
-                    employee.setPostalCode(proposed.getPostalCode());
-                    employee.setDepartment(proposed.getDepartment());
-                    employee.setVillage(proposed.getVillage());
-                    employee.setBlock(proposed.getBlock());
-                    employee.setRegionId(proposed.getRegionId());
-                    employee.setCityId(proposed.getCityId());
-                    employee.setCommuneId(proposed.getCommuneId());
-                    employee.setExpatId(proposed.getExpatId());
-                    employee.setNationalityId(proposed.getNationalityId());
-                    employee.setFamilyAllowanceTierId(proposed.getFamilyAllowanceTierId());
-                    employee.setRetirementStatusId(proposed.getRetirementStatusId());
-                    employee.setIsapreFun(proposed.getIsapreFun());
-                    employee.setPensionStatusId(proposed.getPensionStatusId());
-                    employee.setAfpId(proposed.getAfpId());
-                    employee.setHealthInsuranceId(proposed.getHealthInsuranceId());
-                    employee.setHealthInsuranceTariffId(proposed.getHealthInsuranceTariffId());
-                    employee.setHealthInsuranceUF(proposed.getHealthInsuranceUF());
-                    employee.setHealthInsurancePesos(proposed.getHealthInsurancePesos());
-                    employee.setPaymentMethodId(proposed.getPaymentMethodId());
-                    employee.setBankId(proposed.getBankId());
-                    employee.setBankAccount(proposed.getBankAccount());
-                    employee.setClothingSize(proposed.getClothingSize());
-                    employee.setShoeSize(proposed.getShoeSize());
-                    employee.setPantSize(proposed.getPantSize());
-                    employee.setActive(proposed.getActive());
-                    employee.setRehireEligible(proposed.getRehireEligible());
-                } catch (Exception e) {
-                    log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+            if ("Contrato".equals(requestTypeName)) {
+                Contract contract = contractRepository.findById(hr.getContractId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    try {
+                        UpdateContractRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractRequest.class);
+                        contract.setName(proposed.getName());
+                        contract.setContractNumber(proposed.getContractNumber());
+                        contract.setContractTypeId(proposed.getContractTypeId());
+                        contract.setContractStatusId(proposed.getContractStatusId());
+                        contract.setSafetyGroupId(proposed.getSafetyGroupId());
+                        contract.setContractDetail(proposed.getContractDetail());
+                        contract.setBaseSalary(proposed.getBaseSalary());
+                        contract.setAgreedSalary(proposed.getAgreedSalary());
+                        contract.setCompanyId(proposed.getCompanyId());
+                        contract.setZoneId(proposed.getZoneId());
+                        contract.setJobTitleId(proposed.getJobTitleId());
+                        contract.setSiteId(proposed.getSiteId());
+                        contract.setLaborUnionId(proposed.getLaborUnionId());
+                        contract.setWeeklyWorkHours(proposed.getWeeklyWorkHours());
+                        contract.setWorkDays(proposed.getWorkDays());
+                        contract.setStartDate(proposed.getStartDate());
+                        contract.setEndDate(proposed.getEndDate());
+                        contract.setVacationStartDate(proposed.getVacationStartDate());
+                        contract.setMealTypeId(proposed.getMealTypeId());
+                        contract.setTransportTypeId(proposed.getTransportTypeId());
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                    }
+                } else {
+                    contract.setStatusId(approvedStatusId);
                 }
+                contractRepository.save(contract);
+
             } else {
-                employee.setStatusId(approvedStatusId);
+                Employee employee = employeeRepository.findById(hr.getIdModule())
+                        .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    try {
+                        UpdateEmployeeRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeRequest.class);
+                        employee.setIdentification(proposed.getIdentification());
+                        employee.setIdentificationTypeId(proposed.getIdentificationTypeId());
+                        employee.setFirstName(proposed.getFirstName());
+                        employee.setPaternalLastName(proposed.getPaternalLastName());
+                        employee.setMaternalLastName(proposed.getMaternalLastName());
+                        employee.setBirthDate(proposed.getBirthDate());
+                        employee.setGenderId(proposed.getGenderId());
+                        employee.setMaritalStatusId(proposed.getMaritalStatusId());
+                        employee.setEducationLevelId(proposed.getEducationLevelId());
+                        employee.setDriverLicenseId(proposed.getDriverLicenseId());
+                        employee.setProfessionId(proposed.getProfessionId());
+                        employee.setPersonalEmail(proposed.getPersonalEmail());
+                        employee.setCorporateEmail(proposed.getCorporateEmail());
+                        employee.setPhone(proposed.getPhone());
+                        employee.setPhone2(proposed.getPhone2());
+                        employee.setEmergencyContactName(proposed.getEmergencyContactName());
+                        employee.setEmergencyContactRelationshipId(proposed.getEmergencyContactRelationshipId());
+                        employee.setEmergencyContactPhone(proposed.getEmergencyContactPhone());
+                        employee.setEmergencyContactPhone2(proposed.getEmergencyContactPhone2());
+                        employee.setStreetName(proposed.getStreetName());
+                        employee.setStreetNumber(proposed.getStreetNumber());
+                        employee.setPostalCode(proposed.getPostalCode());
+                        employee.setDepartment(proposed.getDepartment());
+                        employee.setVillage(proposed.getVillage());
+                        employee.setBlock(proposed.getBlock());
+                        employee.setRegionId(proposed.getRegionId());
+                        employee.setCityId(proposed.getCityId());
+                        employee.setCommuneId(proposed.getCommuneId());
+                        employee.setExpatId(proposed.getExpatId());
+                        employee.setNationalityId(proposed.getNationalityId());
+                        employee.setFamilyAllowanceTierId(proposed.getFamilyAllowanceTierId());
+                        employee.setRetirementStatusId(proposed.getRetirementStatusId());
+                        employee.setIsapreFun(proposed.getIsapreFun());
+                        employee.setPensionStatusId(proposed.getPensionStatusId());
+                        employee.setAfpId(proposed.getAfpId());
+                        employee.setHealthInsuranceId(proposed.getHealthInsuranceId());
+                        employee.setHealthInsuranceTariffId(proposed.getHealthInsuranceTariffId());
+                        employee.setHealthInsuranceUF(proposed.getHealthInsuranceUF());
+                        employee.setHealthInsurancePesos(proposed.getHealthInsurancePesos());
+                        employee.setPaymentMethodId(proposed.getPaymentMethodId());
+                        employee.setBankId(proposed.getBankId());
+                        employee.setBankAccount(proposed.getBankAccount());
+                        employee.setClothingSize(proposed.getClothingSize());
+                        employee.setShoeSize(proposed.getShoeSize());
+                        employee.setPantSize(proposed.getPantSize());
+                        employee.setActive(proposed.getActive());
+                        employee.setRehireEligible(proposed.getRehireEligible());
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                    }
+                } else {
+                    employee.setStatusId(approvedStatusId);
+                }
+                employeeRepository.save(employee);
             }
 
-            employeeRepository.save(employee);
             return toResponse(hr);
 
         } else {
@@ -244,11 +288,22 @@ public class HRRequestServiceImpl implements HRRequestService {
         hrRequestRepository.save(hr);
 
         if ("CREATE".equals(hr.getAction())) {
-            Employee employee = employeeRepository.findById(hr.getIdModule())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
-            employee.setStatusId(rejectedStatusId);
-            employeeRepository.save(employee);
+            String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
+                    .map(HRRequestType::getName).orElse(null);
+
+            if ("Contrato".equals(requestTypeName)) {
+                Contract contract = contractRepository.findById(hr.getContractId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
+                contract.setStatusId(rejectedStatusId);
+                contractRepository.save(contract);
+            } else {
+                Employee employee = employeeRepository.findById(hr.getIdModule())
+                        .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
+                employee.setStatusId(rejectedStatusId);
+                employeeRepository.save(employee);
+            }
         }
+        // action="UPDATE" → no tocar la entidad
 
         return toResponse(hr);
     }
