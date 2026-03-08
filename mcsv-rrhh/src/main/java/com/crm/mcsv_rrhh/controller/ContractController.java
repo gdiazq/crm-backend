@@ -34,6 +34,12 @@ public class ContractController {
         return ResponseEntity.ok(contractService.createContract(request));
     }
 
+    @GetMapping("/detail/{id}")
+    @Operation(summary = "Obtener detalle de contrato por ID")
+    public ResponseEntity<ContractDetailResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(contractService.getById(id));
+    }
+
     @GetMapping("/paged")
     @Operation(summary = "Listar contratos (paginado)")
     public ResponseEntity<PagedResponse<ContractResponse>> paged(

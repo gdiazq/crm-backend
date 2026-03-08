@@ -6,6 +6,7 @@ import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
 import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.repository.ContractSpecification;
@@ -31,6 +32,7 @@ public class ContractServiceImpl implements ContractService {
 
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
+    private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final ContractStatusRepository contractStatusRepository;
@@ -78,9 +80,20 @@ public class ContractServiceImpl implements ContractService {
                 .build();
 
         Contract saved = contractRepository.save(contract);
-        hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
+        HRRequest req = hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
 
-        return toDetailResponse(saved);
+        return toDetailResponse(saved, req.getId());
+    }
+
+    // ─── Detalle ──────────────────────────────────────────────────────────────
+
+    @Override
+    public ContractDetailResponse getById(Long id) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
+        Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
+                .map(r -> r.getId()).orElse(null);
+        return toDetailResponse(contract, requestId);
     }
 
     // ─── Listar ───────────────────────────────────────────────────────────────
@@ -134,7 +147,7 @@ public class ContractServiceImpl implements ContractService {
                 .build();
     }
 
-    private ContractDetailResponse toDetailResponse(Contract c) {
+    private ContractDetailResponse toDetailResponse(Contract c, Long requestId) {
         return ContractDetailResponse.builder()
                 .id(c.getId())
                 .employeeId(c.getEmployeeId())
@@ -162,6 +175,7 @@ public class ContractServiceImpl implements ContractService {
                 .active(c.getActive())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
+                .requestId(requestId)
                 .build();
     }
 

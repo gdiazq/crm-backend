@@ -54,4 +54,7 @@ public class ContractDetailResponse {
     // ─── Auditoría ────────────────────────────────────────────────────────────
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // ─── Solicitud RRHH ───────────────────────────────────────────────────────
+    private Long requestId;
 }

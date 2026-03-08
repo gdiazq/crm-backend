@@ -18,4 +18,6 @@ public interface ContractService {
                                 Pageable pageable);
 
     Map<String, Long> getStats(Long employeeId);
+
+    ContractDetailResponse getById(Long id);
 }
