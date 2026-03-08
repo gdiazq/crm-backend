@@ -4,6 +4,8 @@ import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
+import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
@@ -34,6 +36,7 @@ public class ContractServiceImpl implements ContractService {
     private final EmployeeRepository employeeRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
+    private final ObjectMapper objectMapper;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final ContractTypeRepository contractTypeRepository;
@@ -93,6 +96,29 @@ public class ContractServiceImpl implements ContractService {
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
                 .map(r -> r.getId()).orElse(null);
+        return toDetailResponse(contract, requestId);
+    }
+
+    // ─── Editar ───────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public ContractDetailResponse updateContract(Long id, UpdateContractRequest req) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
+
+        String proposedData;
+        try {
+            proposedData = objectMapper.writeValueAsString(req);
+        } catch (Exception e) {
+            throw new RuntimeException("Error serializando proposedData", e);
+        }
+
+        HRRequest hrReq = hrRequestService.createForContract(id, contract.getEmployeeId(), "UPDATE", proposedData);
+
+        Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
+                .map(r -> r.getId()).orElse(hrReq.getId());
+
         return toDetailResponse(contract, requestId);
     }
 

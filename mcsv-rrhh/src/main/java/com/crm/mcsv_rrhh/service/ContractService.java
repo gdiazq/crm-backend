@@ -3,6 +3,7 @@ package com.crm.mcsv_rrhh.service;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
+import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,4 +21,6 @@ public interface ContractService {
     Map<String, Long> getStats(Long employeeId);
 
     ContractDetailResponse getById(Long id);
+
+    ContractDetailResponse updateContract(Long id, UpdateContractRequest req);
 }

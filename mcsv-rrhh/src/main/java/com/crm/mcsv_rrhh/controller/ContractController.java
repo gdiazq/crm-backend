@@ -3,6 +3,7 @@ package com.crm.mcsv_rrhh.controller;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
+import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.service.ContractService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,12 @@ public class ContractController {
     @Operation(summary = "Crear contrato para un empleado")
     public ResponseEntity<ContractDetailResponse> create(@Valid @RequestBody CreateContractRequest request) {
         return ResponseEntity.ok(contractService.createContract(request));
+    }
+
+    @PutMapping("/update")
+    @Operation(summary = "Editar contrato (genera solicitud de aprobación)")
+    public ResponseEntity<ContractDetailResponse> update(@Valid @RequestBody UpdateContractRequest request) {
+        return ResponseEntity.ok(contractService.updateContract(request.getId(), request));
     }
 
     @GetMapping("/detail/{id}")
