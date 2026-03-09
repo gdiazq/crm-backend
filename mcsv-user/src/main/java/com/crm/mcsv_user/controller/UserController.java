@@ -1,13 +1,16 @@
 package com.crm.mcsv_user.controller;
 
+import com.crm.mcsv_user.client.NotificationClient;
 import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.PagedResponse;
+import com.crm.mcsv_user.dto.SendNotificationRequest;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UpdatePasswordRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -36,10 +39,12 @@ import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "User Management", description = "Endpoints for managing users")
 public class UserController {
 
     private final UserService userService;
+    private final NotificationClient notificationClient;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "username", "firstName", "lastName", "email", "phoneNumber",
@@ -106,6 +111,16 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUser(
             @Valid @RequestBody UpdateUserRequest request) {
         UserResponse updatedUser = userService.updateUser(request.getId(), request);
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(updatedUser.getId())
+                    .title("Perfil actualizado")
+                    .message("La información de tu perfil ha sido actualizada exitosamente.")
+                    .type("INFO")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send profile updated notification to userId: {}", updatedUser.getId(), e);
+        }
         return ResponseEntity.ok(updatedUser);
     }
 

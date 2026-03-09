@@ -459,6 +459,17 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         passwordResetTokenRepository.save(passwordToken);
 
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(userId)
+                    .title("Email verificado")
+                    .message("Tu dirección de correo ha sido verificada exitosamente. Ya puedes acceder a todas las funciones.")
+                    .type("SUCCESS")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send email verified notification to userId: {}", userId, e);
+        }
+
         return Map.of("message", "Email verified successfully", "token", token);
     }
 
@@ -563,6 +574,17 @@ public class AuthServiceImpl implements AuthService {
         passwordResetTokenRepository.save(resetToken);
 
         log.info("Password updated successfully for user ID: {}", resetToken.getUserId());
+
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(resetToken.getUserId())
+                    .title("Contraseña actualizada")
+                    .message("Tu contraseña ha sido actualizada exitosamente. Si no realizaste este cambio, contacta al administrador.")
+                    .type("WARNING")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send password updated notification to userId: {}", resetToken.getUserId(), e);
+        }
     }
 
     private String generatePlaceholderPassword() {

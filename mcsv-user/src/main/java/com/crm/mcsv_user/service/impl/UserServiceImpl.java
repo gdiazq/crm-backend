@@ -1,9 +1,11 @@
 package com.crm.mcsv_user.service.impl;
 
 import com.crm.mcsv_user.client.EmailClient;
+import com.crm.mcsv_user.client.NotificationClient;
 import com.crm.mcsv_user.client.StorageClient;
 import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
+import com.crm.mcsv_user.dto.SendNotificationRequest;
 import com.crm.mcsv_user.dto.EmailRequest;
 import com.crm.mcsv_user.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
@@ -57,6 +59,7 @@ public class UserServiceImpl implements UserService {
     private final StorageClient storageClient;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final EmailClient emailClient;
+    private final NotificationClient notificationClient;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -178,6 +181,17 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
         log.info("User created successfully with id: {}", savedUser.getId());
+
+        try {
+            notificationClient.send(SendNotificationRequest.builder()
+                    .userId(savedUser.getId())
+                    .title("Bienvenido a CRM")
+                    .message("Hola " + savedUser.getUsername() + ", tu cuenta ha sido creada. Verifica tu correo para comenzar.")
+                    .type("SUCCESS")
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send welcome notification to userId: {}", savedUser.getId(), e);
+        }
 
         return userMapper.toResponse(savedUser);
     }
@@ -513,6 +527,16 @@ public class UserServiceImpl implements UserService {
                     UserResponse created = createUser(request);
                     sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
                     success++;
+                    try {
+                        notificationClient.send(SendNotificationRequest.builder()
+                                .userId(created.getId())
+                                .title("Bienvenido a CRM")
+                                .message("Hola " + created.getUsername() + ", tu cuenta ha sido creada. Verifica tu correo para comenzar.")
+                                .type("SUCCESS")
+                                .build());
+                    } catch (Exception e) {
+                        log.warn("Failed to send welcome notification to userId: {}", created.getId(), e);
+                    }
                 } catch (Exception e) {
                     errors.add(new BulkImportResult.RowError(row, e.getMessage()));
                 }
