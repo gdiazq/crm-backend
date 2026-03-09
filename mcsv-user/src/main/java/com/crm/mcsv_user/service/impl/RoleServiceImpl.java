@@ -1,9 +1,11 @@
 package com.crm.mcsv_user.service.impl;
 
+import com.crm.mcsv_user.client.NotificationClient;
 import com.crm.mcsv_user.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
+import com.crm.mcsv_user.dto.SendNotificationRequest;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
@@ -43,6 +45,7 @@ public class RoleServiceImpl implements RoleService {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
     private final UserMapper userMapper;
+    private final NotificationClient notificationClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,6 +100,22 @@ public class RoleServiceImpl implements RoleService {
         Role savedRole = roleRepository.save(role);
         log.info("Role created successfully with id: {}", savedRole.getId());
 
+        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole -> {
+            List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
+            admins.forEach(admin -> {
+                try {
+                    notificationClient.send(SendNotificationRequest.builder()
+                            .userId(admin.getId())
+                            .title("Nuevo rol creado")
+                            .message("Se ha creado el rol \"" + savedRole.getName() + "\" en el sistema.")
+                            .type("INFO")
+                            .build());
+                } catch (Exception e) {
+                    log.warn("Failed to send new role notification to userId: {}", admin.getId(), e);
+                }
+            });
+        });
+
         return userMapper.roleToDTO(savedRole);
     }
 
@@ -121,6 +140,20 @@ public class RoleServiceImpl implements RoleService {
 
         Role updatedRole = roleRepository.save(role);
         log.info("Role updated successfully with id: {}", updatedRole.getId());
+
+        List<User> users = userRepository.findAllByRolesId(updatedRole.getId());
+        users.forEach(u -> {
+            try {
+                notificationClient.send(SendNotificationRequest.builder()
+                        .userId(u.getId())
+                        .title("Rol actualizado")
+                        .message("Tu rol \"" + updatedRole.getName() + "\" ha sido actualizado por un administrador.")
+                        .type("INFO")
+                        .build());
+            } catch (Exception e) {
+                log.warn("Failed to send role updated notification to userId: {}", u.getId(), e);
+            }
+        });
 
         return userMapper.roleToDTO(updatedRole);
     }
@@ -162,6 +195,44 @@ public class RoleServiceImpl implements RoleService {
         userRepository.saveAll(users);
 
         log.info("Role status updated to {}. Affected {} users.", enabled, users.size());
+
+        String statusLabel = Boolean.TRUE.equals(enabled) ? "activado" : "desactivado";
+        String userTitle   = Boolean.TRUE.equals(enabled) ? "Cuenta reactivada" : "Cuenta desactivada";
+        String userMessage = Boolean.TRUE.equals(enabled)
+                ? "Tu cuenta ha sido reactivada porque el rol \"" + role.getName() + "\" fue activado."
+                : "Tu cuenta ha sido desactivada porque el rol \"" + role.getName() + "\" fue desactivado.";
+        String userType = Boolean.TRUE.equals(enabled) ? "SUCCESS" : "WARNING";
+
+        // Notificar a los usuarios afectados
+        users.forEach(u -> {
+            try {
+                notificationClient.send(SendNotificationRequest.builder()
+                        .userId(u.getId())
+                        .title(userTitle)
+                        .message(userMessage)
+                        .type(userType)
+                        .build());
+            } catch (Exception e) {
+                log.warn("Failed to send status notification to userId: {}", u.getId(), e);
+            }
+        });
+
+        // Notificar a los admins
+        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole -> {
+            List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
+            admins.forEach(admin -> {
+                try {
+                    notificationClient.send(SendNotificationRequest.builder()
+                            .userId(admin.getId())
+                            .title("Rol " + statusLabel)
+                            .message("El rol \"" + role.getName() + "\" ha sido " + statusLabel + ". " + users.size() + " usuario(s) afectado(s).")
+                            .type("INFO")
+                            .build());
+                } catch (Exception e) {
+                    log.warn("Failed to send role status notification to admin userId: {}", admin.getId(), e);
+                }
+            });
+        });
     }
 
     @Override
@@ -185,7 +256,9 @@ public class RoleServiceImpl implements RoleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         List<Permission> permissions = permissionRepository.findAllByIdIn(permissionIds);
         role.setPermissions(new HashSet<>(permissions));
-        return userMapper.roleToDTO(roleRepository.save(role));
+        RoleDTO result = userMapper.roleToDTO(roleRepository.save(role));
+        notifyPermissionChange(role, "Los permisos de tu rol \"" + role.getName() + "\" han sido reemplazados por un administrador.");
+        return result;
     }
 
     @Override
@@ -196,7 +269,9 @@ public class RoleServiceImpl implements RoleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         List<Permission> permissions = permissionRepository.findAllByIdIn(permissionIds);
         role.getPermissions().addAll(permissions);
-        return userMapper.roleToDTO(roleRepository.save(role));
+        RoleDTO result = userMapper.roleToDTO(roleRepository.save(role));
+        notifyPermissionChange(role, "Se han agregado permisos a tu rol \"" + role.getName() + "\".");
+        return result;
     }
 
     @Override
@@ -206,7 +281,42 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         role.getPermissions().removeIf(p -> permissionIds.contains(p.getId()));
-        return userMapper.roleToDTO(roleRepository.save(role));
+        RoleDTO result = userMapper.roleToDTO(roleRepository.save(role));
+        notifyPermissionChange(role, "Se han eliminado permisos de tu rol \"" + role.getName() + "\".");
+        return result;
+    }
+
+    private void notifyPermissionChange(Role role, String userMessage) {
+        List<User> users = userRepository.findAllByRolesId(role.getId());
+
+        users.forEach(u -> {
+            try {
+                notificationClient.send(SendNotificationRequest.builder()
+                        .userId(u.getId())
+                        .title("Permisos actualizados")
+                        .message(userMessage)
+                        .type("INFO")
+                        .build());
+            } catch (Exception e) {
+                log.warn("Failed to send permission change notification to userId: {}", u.getId(), e);
+            }
+        });
+
+        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole -> {
+            List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
+            admins.forEach(admin -> {
+                try {
+                    notificationClient.send(SendNotificationRequest.builder()
+                            .userId(admin.getId())
+                            .title("Permisos de rol actualizados")
+                            .message("Los permisos del rol \"" + role.getName() + "\" han sido modificados. " + users.size() + " usuario(s) afectado(s).")
+                            .type("INFO")
+                            .build());
+                } catch (Exception e) {
+                    log.warn("Failed to send permission change notification to admin userId: {}", admin.getId(), e);
+                }
+            });
+        });
     }
 
     @Override
