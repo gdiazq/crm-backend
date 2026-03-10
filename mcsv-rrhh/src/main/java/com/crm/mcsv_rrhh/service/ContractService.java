@@ -7,12 +7,14 @@ import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 public interface ContractService {
-    ContractDetailResponse createContract(CreateContractRequest request);
+    ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files);
 
     Page<ContractResponse> list(Long employeeId, Long statusId,
                                 LocalDate createdFrom, LocalDate createdTo,
@@ -22,5 +24,7 @@ public interface ContractService {
 
     ContractDetailResponse getById(Long id);
 
-    ContractDetailResponse updateContract(Long id, UpdateContractRequest req);
+    ContractDetailResponse updateContract(Long id, UpdateContractRequest req, List<MultipartFile> files);
+
+    void deleteDocument(Long contractId, Long fileId, Long userId);
 }

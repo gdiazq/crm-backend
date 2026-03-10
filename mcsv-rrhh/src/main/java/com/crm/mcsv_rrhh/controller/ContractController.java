@@ -15,10 +15,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -29,22 +32,36 @@ public class ContractController {
 
     private final ContractService contractService;
 
-    @PostMapping("/create")
-    @Operation(summary = "Crear contrato para un empleado")
-    public ResponseEntity<ContractDetailResponse> create(@Valid @RequestBody CreateContractRequest request) {
-        return ResponseEntity.ok(contractService.createContract(request));
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Crear contrato para un empleado (con documentos opcionales, máx. 5, 10MB c/u)")
+    public ResponseEntity<ContractDetailResponse> create(
+            @RequestPart("data") @Valid CreateContractRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(contractService.createContract(request, files));
     }
 
-    @PutMapping("/update")
-    @Operation(summary = "Editar contrato (genera solicitud de aprobación)")
-    public ResponseEntity<ContractDetailResponse> update(@Valid @RequestBody UpdateContractRequest request) {
-        return ResponseEntity.ok(contractService.updateContract(request.getId(), request));
+    @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Editar contrato (genera solicitud de aprobación, con documentos opcionales)")
+    public ResponseEntity<ContractDetailResponse> update(
+            @RequestPart("data") @Valid UpdateContractRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(contractService.updateContract(request.getId(), request, files));
     }
 
     @GetMapping("/detail/{id}")
     @Operation(summary = "Obtener detalle de contrato por ID")
     public ResponseEntity<ContractDetailResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(contractService.getById(id));
+    }
+
+    @DeleteMapping("/{id}/documents/{fileId}")
+    @Operation(summary = "Eliminar documento adjunto del contrato")
+    public ResponseEntity<Void> deleteDocument(
+            @PathVariable Long id,
+            @PathVariable Long fileId,
+            @RequestParam("userId") Long userId) {
+        contractService.deleteDocument(id, fileId, userId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/paged")

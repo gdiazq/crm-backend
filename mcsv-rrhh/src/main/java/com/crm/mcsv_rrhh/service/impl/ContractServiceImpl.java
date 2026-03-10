@@ -1,9 +1,11 @@
 package com.crm.mcsv_rrhh.service.impl;
 
+import com.crm.mcsv_rrhh.client.StorageClient;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
+import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.entity.Contract;
@@ -20,11 +22,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -32,11 +39,18 @@ import java.util.Map;
 @Slf4j
 public class ContractServiceImpl implements ContractService {
 
+    private static final String ENTITY_TYPE = "CONTRACT";
+    private static final int MAX_DOCUMENTS = 5;
+    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10MB
+    private static final List<String> ALLOWED_TYPES = List.of(
+            "application/pdf", "image/jpeg", "image/png");
+
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ObjectMapper objectMapper;
+    private final StorageClient storageClient;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final ContractTypeRepository contractTypeRepository;
@@ -51,7 +65,7 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @Transactional
-    public ContractDetailResponse createContract(CreateContractRequest request) {
+    public ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files) {
         Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
                 .map(s -> s.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
@@ -94,7 +108,8 @@ public class ContractServiceImpl implements ContractService {
         Contract saved = contractRepository.save(contract);
         HRRequest req = hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
 
-        return toDetailResponse(saved, req.getId());
+        List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
+        return toDetailResponse(saved, req.getId(), documents);
     }
 
     // ─── Detalle ──────────────────────────────────────────────────────────────
@@ -105,14 +120,15 @@ public class ContractServiceImpl implements ContractService {
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
                 .map(r -> r.getId()).orElse(null);
-        return toDetailResponse(contract, requestId);
+        List<FileMetadataResponse> documents = fetchDocuments(id);
+        return toDetailResponse(contract, requestId, documents);
     }
 
     // ─── Editar ───────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
-    public ContractDetailResponse updateContract(Long id, UpdateContractRequest req) {
+    public ContractDetailResponse updateContract(Long id, UpdateContractRequest req, List<MultipartFile> files) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
 
@@ -128,7 +144,11 @@ public class ContractServiceImpl implements ContractService {
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
                 .map(r -> r.getId()).orElse(hrReq.getId());
 
-        return toDetailResponse(contract, requestId);
+        List<FileMetadataResponse> newUploads = uploadFiles(id, contract.getEmployeeId(), files);
+        List<FileMetadataResponse> existing = fetchDocuments(id);
+        List<FileMetadataResponse> documents = new ArrayList<>(existing);
+        documents.addAll(newUploads);
+        return toDetailResponse(contract, requestId, documents);
     }
 
     // ─── Listar ───────────────────────────────────────────────────────────────
@@ -157,6 +177,47 @@ public class ContractServiceImpl implements ContractService {
         return stats;
     }
 
+    // ─── Documentos ───────────────────────────────────────────────────────────
+
+    @Override
+    public void deleteDocument(Long contractId, Long fileId, Long userId) {
+        if (!contractRepository.existsById(contractId)) {
+            throw new ResourceNotFoundException("Contrato no encontrado: " + contractId);
+        }
+        storageClient.delete(fileId, userId);
+    }
+
+    private List<FileMetadataResponse> uploadFiles(Long contractId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<FileMetadataResponse> existing = fetchDocuments(contractId);
+        if (existing.size() + files.size() > MAX_DOCUMENTS) {
+            throw new IllegalArgumentException(
+                    "El contrato ya tiene " + existing.size() + " documento(s). " +
+                    "Máximo permitido: " + MAX_DOCUMENTS + ".");
+        }
+
+        List<FileMetadataResponse> uploaded = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file.getSize() > MAX_FILE_SIZE) {
+                throw new IllegalArgumentException(
+                        "El archivo '" + file.getOriginalFilename() + "' supera el límite de 10MB.");
+            }
+            if (!ALLOWED_TYPES.contains(file.getContentType())) {
+                throw new IllegalArgumentException(
+                        "El archivo '" + file.getOriginalFilename() + "' no es un formato permitido. Use PDF, JPG o PNG.");
+            }
+            ResponseEntity<FileMetadataResponse> response =
+                    storageClient.upload(file, uploadedBy, ENTITY_TYPE, contractId, false);
+            if (response.getBody() != null) {
+                uploaded.add(response.getBody());
+            }
+        }
+        return uploaded;
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private ContractResponse toResponse(Contract c) {
@@ -182,7 +243,18 @@ public class ContractServiceImpl implements ContractService {
                 .build();
     }
 
-    private ContractDetailResponse toDetailResponse(Contract c, Long requestId) {
+    private List<FileMetadataResponse> fetchDocuments(Long contractId) {
+        try {
+            ResponseEntity<List<FileMetadataResponse>> response =
+                    storageClient.listByEntity(ENTITY_TYPE, contractId);
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener documentos del contrato {}: {}", contractId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private ContractDetailResponse toDetailResponse(Contract c, Long requestId, List<FileMetadataResponse> documents) {
         return ContractDetailResponse.builder()
                 .id(c.getId())
                 .employeeId(c.getEmployeeId())
@@ -210,6 +282,7 @@ public class ContractServiceImpl implements ContractService {
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
                 .requestId(requestId)
+                .documents(documents)
                 .build();
     }
 
