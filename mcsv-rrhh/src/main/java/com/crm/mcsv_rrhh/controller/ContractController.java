@@ -54,6 +54,13 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
+    @PutMapping("/{id}/status")
+    @Operation(summary = "Activar o desactivar contrato")
+    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        contractService.updateStatus(id, body.get("active"));
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}/documents/{fileId}")
     @Operation(summary = "Eliminar documento adjunto del contrato")
     public ResponseEntity<Void> deleteDocument(

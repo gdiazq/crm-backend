@@ -180,6 +180,14 @@ public class ContractServiceImpl implements ContractService {
     // ─── Documentos ───────────────────────────────────────────────────────────
 
     @Override
+    public void updateStatus(Long id, Boolean active) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
+        contract.setActive(active);
+        contractRepository.save(contract);
+    }
+
+    @Override
     public void deleteDocument(Long contractId, Long fileId, Long userId) {
         if (!contractRepository.existsById(contractId)) {
             throw new ResourceNotFoundException("Contrato no encontrado: " + contractId);
