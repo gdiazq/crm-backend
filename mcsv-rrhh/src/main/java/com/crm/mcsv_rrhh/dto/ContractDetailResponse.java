@@ -41,7 +41,6 @@ public class ContractDetailResponse {
     // ─── Fechas ───────────────────────────────────────────────────────────────
     private LocalDate startDate;
     private LocalDate endDate;
-    private LocalDate vacationStartDate;
 
     // ─── Beneficios ───────────────────────────────────────────────────────────
     private CatalogItem mealType;

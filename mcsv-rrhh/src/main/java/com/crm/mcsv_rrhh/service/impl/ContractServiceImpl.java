@@ -56,12 +56,22 @@ public class ContractServiceImpl implements ContractService {
                 .map(s -> s.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
 
+        Long suspendedContractStatusId = contractStatusRepository.findByName("Suspendido")
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: Suspendido"));
+
+        Long contractTypeId = request.getEndDate() == null
+                ? contractTypeRepository.findByName("Indefinido")
+                        .map(t -> t.getId())
+                        .orElse(request.getContractTypeId())
+                : request.getContractTypeId();
+
         Contract contract = Contract.builder()
                 .employeeId(request.getEmployeeId())
                 .name(request.getName())
                 .contractNumber(request.getContractNumber())
-                .contractTypeId(request.getContractTypeId())
-                .contractStatusId(request.getContractStatusId())
+                .contractTypeId(contractTypeId)
+                .contractStatusId(suspendedContractStatusId)
                 .safetyGroupId(request.getSafetyGroupId())
                 .contractDetail(request.getContractDetail())
                 .baseSalary(request.getBaseSalary())
@@ -75,7 +85,6 @@ public class ContractServiceImpl implements ContractService {
                 .workDays(request.getWorkDays())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .vacationStartDate(request.getVacationStartDate())
                 .mealTypeId(request.getMealTypeId())
                 .transportTypeId(request.getTransportTypeId())
                 .statusId(pendingStatusId)
@@ -194,7 +203,6 @@ public class ContractServiceImpl implements ContractService {
                 .workDays(c.getWorkDays())
                 .startDate(c.getStartDate())
                 .endDate(c.getEndDate())
-                .vacationStartDate(c.getVacationStartDate())
                 .mealType(resolve(c.getMealTypeId(), mealTypeRepository))
                 .transportType(resolve(c.getTransportTypeId(), transportTypeRepository))
                 .status(resolve(c.getStatusId(), employeeStatusRepository))

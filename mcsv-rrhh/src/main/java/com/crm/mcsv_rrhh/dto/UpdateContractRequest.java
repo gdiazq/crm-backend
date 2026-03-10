@@ -38,7 +38,6 @@ public class UpdateContractRequest {
     // ─── Fechas ───────────────────────────────────────────────────────────────
     private LocalDate startDate;
     private LocalDate endDate;
-    private LocalDate vacationStartDate;
 
     // ─── Beneficios ───────────────────────────────────────────────────────────
     private Long mealTypeId;

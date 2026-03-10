@@ -35,7 +35,6 @@ public class CreateContractRequest {
     // ─── Fechas ───────────────────────────────────────────────────────────────
     private LocalDate startDate;
     private LocalDate endDate;
-    private LocalDate vacationStartDate;
 
     // ─── Beneficios ───────────────────────────────────────────────────────────
     private Long mealTypeId;

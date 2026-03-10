@@ -15,6 +15,7 @@ import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.ContractRepository;
+import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestRepository;
@@ -44,6 +45,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final EmployeeStatusRepository employeeStatusRepository;
     private final EmployeeRepository employeeRepository;
     private final ContractRepository contractRepository;
+    private final ContractStatusRepository contractStatusRepository;
     private final UserClient userClient;
     private final ObjectMapper objectMapper;
 
@@ -196,7 +198,6 @@ public class HRRequestServiceImpl implements HRRequestService {
                         contract.setWorkDays(proposed.getWorkDays());
                         contract.setStartDate(proposed.getStartDate());
                         contract.setEndDate(proposed.getEndDate());
-                        contract.setVacationStartDate(proposed.getVacationStartDate());
                         contract.setMealTypeId(proposed.getMealTypeId());
                         contract.setTransportTypeId(proposed.getTransportTypeId());
                     } catch (Exception e) {
@@ -204,6 +205,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                     }
                 } else {
                     contract.setStatusId(approvedStatusId);
+                    contractStatusRepository.findByName("Activo")
+                            .ifPresent(s -> contract.setContractStatusId(s.getId()));
                     Employee employee = employeeRepository.findById(contract.getEmployeeId()).orElse(null);
                     if (employee != null) {
                         employee.setHasContract(true);

@@ -38,6 +38,12 @@ public class DataInitializer implements CommandLineRunner {
     private final HRRequestTypeRepository hrRequestTypeRepository;
     private final ContractTypeRepository contractTypeRepository;
     private final ContractStatusRepository contractStatusRepository;
+    private final SafetyGroupRepository safetyGroupRepository;
+    private final CompanyRepository companyRepository;
+    private final ZoneRepository zoneRepository;
+    private final JobTitleRepository jobTitleRepository;
+    private final SiteRepository siteRepository;
+    private final LaborUnionRepository laborUnionRepository;
     private final MealTypeRepository mealTypeRepository;
     private final TransportTypeRepository transportTypeRepository;
 
@@ -67,6 +73,12 @@ public class DataInitializer implements CommandLineRunner {
         initializeHRRequestTypes();
         initializeContractTypes();
         initializeContractStatuses();
+        initializeSafetyGroups();
+        initializeCompanies();
+        initializeZones();
+        initializeJobTitles();
+        initializeSites();
+        initializeLaborUnions();
         initializeMealTypes();
         initializeTransportTypes();
     }
@@ -547,6 +559,57 @@ public class DataInitializer implements CommandLineRunner {
             if (contractStatusRepository.findByName(name).isEmpty())
                 contractStatusRepository.save(ContractStatus.builder().name(name).build());
         log.info("Contract statuses initialized.");
+    }
+
+    private void initializeSafetyGroups() {
+        String[] names = {"ACHS", "Mutual de Seguridad CChC", "IST", "ISL"};
+        for (String name : names)
+            if (safetyGroupRepository.findByName(name).isEmpty())
+                safetyGroupRepository.save(SafetyGroup.builder().name(name).build());
+        log.info("Safety groups initialized.");
+    }
+
+    private void initializeCompanies() {
+        String[] names = {"Empresa Principal S.A.", "Filial Norte Ltda.", "Filial Sur Ltda."};
+        for (String name : names)
+            if (companyRepository.findByName(name).isEmpty())
+                companyRepository.save(Company.builder().name(name).build());
+        log.info("Companies initialized.");
+    }
+
+    private void initializeZones() {
+        String[] names = {"Zona Norte", "Zona Centro", "Zona Sur", "Zona Oriente", "Zona Poniente"};
+        for (String name : names)
+            if (zoneRepository.findByName(name).isEmpty())
+                zoneRepository.save(Zone.builder().name(name).build());
+        log.info("Zones initialized.");
+    }
+
+    private void initializeJobTitles() {
+        String[] names = {
+            "Gerente General", "Gerente de RRHH", "Jefe de Operaciones",
+            "Analista", "Ingeniero", "Técnico", "Administrativo", "Operario", "Supervisor"
+        };
+        for (String name : names)
+            if (jobTitleRepository.findByName(name).isEmpty())
+                jobTitleRepository.save(JobTitle.builder().name(name).build());
+        log.info("Job titles initialized.");
+    }
+
+    private void initializeSites() {
+        String[] names = {"Casa Matriz", "Sucursal Norte", "Sucursal Sur", "Bodega Central"};
+        for (String name : names)
+            if (siteRepository.findByName(name).isEmpty())
+                siteRepository.save(Site.builder().name(name).build());
+        log.info("Sites initialized.");
+    }
+
+    private void initializeLaborUnions() {
+        String[] names = {"Sin sindicato", "Sindicato N°1", "Sindicato N°2", "Sindicato Interempresa"};
+        for (String name : names)
+            if (laborUnionRepository.findByName(name).isEmpty())
+                laborUnionRepository.save(LaborUnion.builder().name(name).build());
+        log.info("Labor unions initialized.");
     }
 
     private void initializeMealTypes() {
