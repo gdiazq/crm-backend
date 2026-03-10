@@ -16,7 +16,7 @@ public interface HRRequestService {
     Page<HRRequestResponse> list(Long idModule, Long statusId,
                                   LocalDate createdFrom, LocalDate createdTo,
                                   LocalDate approvalFrom, LocalDate approvalTo,
-                                  Pageable pageable);
+                                  Pageable pageable, String sortBy, String sortDir);
     HRRequestDetailResponse getById(Long id);
     HRRequestResponse approve(Long id, Long approverId);
     byte[] exportCsv();

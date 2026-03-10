@@ -16,13 +16,17 @@ public class HRRequest {
     @Column(nullable = false)
     private Long requestTypeId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_module", insertable = false, updatable = false)
+    private Employee employee;
+
     @Column(nullable = false)
     private Long statusId;
 
     @Column(nullable = false)
     private Boolean requireApproval;
 
-    @Column(nullable = false)
+    @Column(name = "id_module", nullable = false)
     private Long idModule;
 
     @Column

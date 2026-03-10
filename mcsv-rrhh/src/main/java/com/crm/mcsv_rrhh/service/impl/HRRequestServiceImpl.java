@@ -34,6 +34,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -102,14 +103,22 @@ public class HRRequestServiceImpl implements HRRequestService {
         return hrRequestRepository.save(request);
     }
 
+    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
+
     @Override
     public Page<HRRequestResponse> list(Long idModule, Long statusId,
                                          LocalDate createdFrom, LocalDate createdTo,
                                          LocalDate approvalFrom, LocalDate approvalTo,
-                                         Pageable pageable) {
+                                         Pageable pageable, String sortBy, String sortDir) {
+        // Para campos de empleado el sort se aplica dentro de la Specification via JOIN
+        // Se pasa un Pageable sin sort para evitar conflicto
+        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
+                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                : pageable;
+
         return hrRequestRepository.findAll(
-                HRRequestSpecification.withFilters(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo),
-                pageable
+                HRRequestSpecification.withFilters(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, sortBy, sortDir),
+                effectivePageable
         ).map(this::toResponse);
     }
 

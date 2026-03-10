@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/contract")
@@ -31,6 +32,10 @@ import java.util.Map;
 public class ContractController {
 
     private final ContractService contractService;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "name", "companyId", "contractTypeId", "contractStatusId", "startDate", "endDate", "createdAt"
+    );
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Crear contrato para un empleado (con documentos opcionales, máx. 5, 10MB c/u)")
@@ -79,9 +84,13 @@ public class ContractController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
         Page<ContractResponse> result = contractService.list(employeeId, statusId, createdFrom, createdTo, pageable);
         Map<String, Long> stats = contractService.getStats(employeeId);
 

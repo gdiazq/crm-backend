@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.Set;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,11 @@ public class HRRequestController {
 
     private final HRRequestService hrRequestService;
 
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "identification", "firstName", "paternalLastName",
+            "requestTypeId", "action", "statusId", "approverId", "approvalDate", "createdAt", "updatedAt"
+    );
+
     @GetMapping("/paged")
     @Operation(summary = "Listar solicitudes (paginado). idModule y statusId opcionales para filtrar.")
     public ResponseEntity<PagedResponse<HRRequestResponse>> list(
@@ -38,9 +44,13 @@ public class HRRequestController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate approvalFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate approvalTo,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        var result  = hrRequestService.list(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, pageable);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        var result  = hrRequestService.list(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, pageable, safeSortBy, sortDir);
         var stats   = hrRequestService.getStats(idModule);
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
     }
