@@ -28,11 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -141,24 +137,29 @@ public class ContractServiceImpl implements ContractService {
 
         HRRequest hrReq = hrRequestService.createForContract(id, contract.getEmployeeId(), "UPDATE", proposedData);
 
+        // Archivos pendientes de aprobación: se suben con CONTRACT_PENDING + hrRequestId
+        uploadPendingFiles(hrReq.getId(), contract.getEmployeeId(), files);
+
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
                 .map(r -> r.getId()).orElse(hrReq.getId());
 
-        List<FileMetadataResponse> newUploads = uploadFiles(id, contract.getEmployeeId(), files);
-        List<FileMetadataResponse> existing = fetchDocuments(id);
-        List<FileMetadataResponse> documents = new ArrayList<>(existing);
-        documents.addAll(newUploads);
+        List<FileMetadataResponse> documents = fetchDocuments(id);
         return toDetailResponse(contract, requestId, documents);
     }
 
     // ─── Listar ───────────────────────────────────────────────────────────────
 
+    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
+
     @Override
     public Page<ContractResponse> list(Long employeeId, Long statusId,
                                        LocalDate createdFrom, LocalDate createdTo,
-                                       Pageable pageable) {
-        Specification<Contract> spec = ContractSpecification.withFilters(employeeId, statusId, createdFrom, createdTo);
-        return contractRepository.findAll(spec, pageable).map(this::toResponse);
+                                       Pageable pageable, String sortBy, String sortDir) {
+        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
+                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                : pageable;
+        Specification<Contract> spec = ContractSpecification.withFilters(employeeId, statusId, createdFrom, createdTo, sortBy, sortDir);
+        return contractRepository.findAll(spec, effectivePageable).map(this::toResponse);
     }
 
     @Override
@@ -195,6 +196,21 @@ public class ContractServiceImpl implements ContractService {
         storageClient.delete(fileId, userId);
     }
 
+    private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return;
+        for (MultipartFile file : files) {
+            if (file.getSize() > MAX_FILE_SIZE) {
+                throw new IllegalArgumentException(
+                        "El archivo '" + file.getOriginalFilename() + "' supera el límite de 10MB.");
+            }
+            if (!ALLOWED_TYPES.contains(file.getContentType())) {
+                throw new IllegalArgumentException(
+                        "El archivo '" + file.getOriginalFilename() + "' no es un formato permitido. Use PDF, JPG o PNG.");
+            }
+            storageClient.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
+        }
+    }
+
     private List<FileMetadataResponse> uploadFiles(Long contractId, Long uploadedBy, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) {
             return Collections.emptyList();
@@ -229,14 +245,15 @@ public class ContractServiceImpl implements ContractService {
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private ContractResponse toResponse(Contract c) {
-        String employeeName = employeeRepository.findById(c.getEmployeeId())
-                .map(e -> e.getFirstName() + " " + e.getPaternalLastName())
-                .orElse(null);
+        var employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
+        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
+        String employeeIdentification = employee != null ? employee.getIdentification() : null;
 
         return ContractResponse.builder()
                 .id(c.getId())
                 .employeeId(c.getEmployeeId())
                 .employeeName(employeeName)
+                .employeeIdentification(employeeIdentification)
                 .name(c.getName())
                 .contractNumber(c.getContractNumber())
                 .contractType(resolveName(c.getContractTypeId(), contractTypeRepository))
@@ -263,9 +280,15 @@ public class ContractServiceImpl implements ContractService {
     }
 
     private ContractDetailResponse toDetailResponse(Contract c, Long requestId, List<FileMetadataResponse> documents) {
+        var employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
+        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
+        String employeeIdentification = employee != null ? employee.getIdentification() : null;
+
         return ContractDetailResponse.builder()
                 .id(c.getId())
                 .employeeId(c.getEmployeeId())
+                .employeeName(employeeName)
+                .employeeIdentification(employeeIdentification)
                 .name(c.getName())
                 .contractNumber(c.getContractNumber())
                 .contractType(resolve(c.getContractTypeId(), contractTypeRepository))

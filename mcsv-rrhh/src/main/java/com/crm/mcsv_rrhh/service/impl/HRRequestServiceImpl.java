@@ -1,6 +1,8 @@
 package com.crm.mcsv_rrhh.service.impl;
 
+import com.crm.mcsv_rrhh.client.StorageClient;
 import com.crm.mcsv_rrhh.client.UserClient;
+import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
@@ -48,6 +50,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final ContractRepository contractRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final UserClient userClient;
+    private final StorageClient storageClient;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -212,6 +215,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
+                    // Retag archivos pendientes a CONTRACT
+                    retagPendingFiles(hr.getId(), contract.getId());
                 } else {
                     contract.setStatusId(approvedStatusId);
                     contractStatusRepository.findByName("Activo")
@@ -304,10 +309,15 @@ public class HRRequestServiceImpl implements HRRequestService {
         hr.setStatusId(rejectedStatusId);
         hrRequestRepository.save(hr);
 
-        if ("CREATE".equals(hr.getAction())) {
-            String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
-                    .map(HRRequestType::getName).orElse(null);
+        String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
+                .map(HRRequestType::getName).orElse(null);
 
+        if ("UPDATE".equals(hr.getAction()) && "Contrato".equals(requestTypeName)) {
+            // Eliminar archivos pendientes que no se aprobaron
+            deletePendingFiles(hr.getId(), hr.getContractId());
+        }
+
+        if ("CREATE".equals(hr.getAction())) {
             if ("Contrato".equals(requestTypeName)) {
                 Contract contract = contractRepository.findById(hr.getContractId())
                         .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
@@ -441,6 +451,36 @@ public class HRRequestServiceImpl implements HRRequestService {
         }
 
         return builder.build();
+    }
+
+    private void retagPendingFiles(Long hrRequestId, Long contractId) {
+        try {
+            var response = storageClient.listByEntity("CONTRACT_PENDING", hrRequestId);
+            if (response.getBody() != null) {
+                for (FileMetadataResponse file : response.getBody()) {
+                    storageClient.retag(file.getId(), "CONTRACT", contractId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error retagging pending files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void deletePendingFiles(Long hrRequestId, Long contractId) {
+        try {
+            var response = storageClient.listByEntity("CONTRACT_PENDING", hrRequestId);
+            if (response.getBody() != null) {
+                Contract contract = contractRepository.findById(contractId).orElse(null);
+                Long uploadedBy = contract != null ? contract.getEmployeeId() : null;
+                if (uploadedBy != null) {
+                    for (FileMetadataResponse file : response.getBody()) {
+                        storageClient.delete(file.getId(), uploadedBy);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error deleting pending files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
     }
 
     private String fetchFullName(Long userId) {

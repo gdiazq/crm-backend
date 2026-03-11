@@ -148,6 +148,17 @@ public class StorageServiceImpl implements StorageService {
         return toResponse(metadata);
     }
 
+    @Override
+    @Transactional
+    public void retag(Long id, String newEntityType, Long newEntityId) {
+        FileMetadata metadata = fileMetadataRepository.findById(id)
+                .orElseThrow(() -> new StorageException("File not found with id: " + id));
+        metadata.setEntityType(newEntityType);
+        metadata.setEntityId(newEntityId);
+        fileMetadataRepository.save(metadata);
+        log.info("File {} retagged to entityType={}, entityId={}", id, newEntityType, newEntityId);
+    }
+
     private String buildS3Key(String entityType, Long entityId, String fileName) {
         String safeEntityType = entityType != null ? entityType : "general";
         String safeEntityId = entityId != null ? entityId.toString() : "0";

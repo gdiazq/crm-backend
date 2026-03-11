@@ -17,6 +17,8 @@ public class ContractDetailResponse {
 
     private Long id;
     private Long employeeId;
+    private String employeeName;
+    private String employeeIdentification;
 
     // ─── Datos del contrato ───────────────────────────────────────────────────
     private String name;

@@ -18,7 +18,7 @@ public interface ContractService {
 
     Page<ContractResponse> list(Long employeeId, Long statusId,
                                 LocalDate createdFrom, LocalDate createdTo,
-                                Pageable pageable);
+                                Pageable pageable, String sortBy, String sortDir);
 
     Map<String, Long> getStats(Long employeeId);
 

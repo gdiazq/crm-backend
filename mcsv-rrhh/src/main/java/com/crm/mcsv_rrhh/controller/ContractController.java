@@ -34,7 +34,8 @@ public class ContractController {
     private final ContractService contractService;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
-            "name", "companyId", "contractTypeId", "contractStatusId", "startDate", "endDate", "createdAt"
+            "identification", "firstName",
+            "name", "companyId", "contractTypeId", "contractStatusId", "statusId", "startDate", "endDate", "createdAt"
     );
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -91,7 +92,7 @@ public class ContractController {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ContractResponse> result = contractService.list(employeeId, statusId, createdFrom, createdTo, pageable);
+        Page<ContractResponse> result = contractService.list(employeeId, statusId, createdFrom, createdTo, pageable, safeSortBy, sortDir);
         Map<String, Long> stats = contractService.getStats(employeeId);
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));

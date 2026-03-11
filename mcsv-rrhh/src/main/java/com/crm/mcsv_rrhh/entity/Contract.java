@@ -14,8 +14,12 @@ public class Contract {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "employee_id", nullable = false)
     private Long employeeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", insertable = false, updatable = false)
+    private Employee employee;
 
     // ─── Datos del contrato ───────────────────────────────────────────────────
     private String name;

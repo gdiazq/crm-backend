@@ -8,12 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
@@ -70,5 +65,15 @@ public class StorageController {
     public ResponseEntity<FileMetadataResponse> getById(@PathVariable Long id) {
         FileMetadataResponse response = storageService.getById(id);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/files/{id}/entity")
+    @Operation(summary = "Retag file entity", description = "Update entityType and entityId of a file")
+    public ResponseEntity<Void> retag(
+            @PathVariable Long id,
+            @RequestParam("entityType") String entityType,
+            @RequestParam("entityId") Long entityId) {
+        storageService.retag(id, entityType, entityId);
+        return ResponseEntity.ok().build();
     }
 }

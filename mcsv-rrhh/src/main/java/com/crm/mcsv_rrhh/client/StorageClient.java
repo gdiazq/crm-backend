@@ -29,4 +29,10 @@ public interface StorageClient {
     ResponseEntity<List<FileMetadataResponse>> listByEntity(
             @RequestParam("entityType") String entityType,
             @RequestParam("entityId") Long entityId);
+
+    @PatchMapping("/files/{id}/entity")
+    ResponseEntity<Void> retag(
+            @PathVariable("id") Long id,
+            @RequestParam("entityType") String entityType,
+            @RequestParam("entityId") Long entityId);
 }

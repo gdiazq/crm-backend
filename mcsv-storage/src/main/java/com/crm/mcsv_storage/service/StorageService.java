@@ -16,4 +16,6 @@ public interface StorageService {
     List<FileMetadataResponse> listByEntity(String entityType, Long entityId);
 
     FileMetadataResponse getById(Long id);
+
+    void retag(Long id, String newEntityType, Long newEntityId);
 }

@@ -12,6 +12,7 @@ public class ContractResponse {
     private Long id;
     private Long employeeId;
     private String employeeName;
+    private String employeeIdentification;
     private String name;
     private String contractNumber;
     private String contractType;
