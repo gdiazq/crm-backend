@@ -18,7 +18,6 @@ public class UpdateContractRequest {
     private String name;
     private String contractNumber;
     private Long contractTypeId;
-    private Long contractStatusId;
     private Long safetyGroupId;
     private String contractDetail;
     private String baseSalary;

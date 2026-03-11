@@ -196,7 +196,6 @@ public class HRRequestServiceImpl implements HRRequestService {
                         contract.setName(proposed.getName());
                         contract.setContractNumber(proposed.getContractNumber());
                         contract.setContractTypeId(proposed.getContractTypeId());
-                        contract.setContractStatusId(proposed.getContractStatusId());
                         contract.setSafetyGroupId(proposed.getSafetyGroupId());
                         contract.setContractDetail(proposed.getContractDetail());
                         contract.setBaseSalary(proposed.getBaseSalary());
