@@ -51,7 +51,6 @@ public class ContractDetailResponse {
 
     // ─── Estado ───────────────────────────────────────────────────────────────
     private CatalogItem status;
-    private Boolean active;
 
     // ─── Auditoría ────────────────────────────────────────────────────────────
     private LocalDateTime createdAt;

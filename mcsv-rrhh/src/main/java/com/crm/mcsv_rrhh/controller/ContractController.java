@@ -60,13 +60,6 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
-    @PutMapping("/{id}/status")
-    @Operation(summary = "Activar o desactivar contrato")
-    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
-        contractService.updateStatus(id, body.get("active"));
-        return ResponseEntity.ok().build();
-    }
-
     @DeleteMapping("/{id}/documents/{fileId}")
     @Operation(summary = "Eliminar documento adjunto del contrato")
     public ResponseEntity<Void> deleteDocument(
@@ -95,6 +88,6 @@ public class ContractController {
         Page<ContractResponse> result = contractService.list(employeeId, statusId, createdFrom, createdTo, pageable, safeSortBy, sortDir);
         Map<String, Long> stats = contractService.getStats(employeeId);
 
-        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
+        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
     }
 }

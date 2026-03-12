@@ -12,6 +12,6 @@ public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSp
     long countByStatusId(Long statusId);
     long countByEmployeeIdAndStatusId(Long employeeId, Long statusId);
     long countByEmployeeId(Long employeeId);
-    long countByActiveTrue();
-    long countByEmployeeIdAndActiveTrue(Long employeeId);
+    long countByContractStatusId(Long contractStatusId);
+    long countByEmployeeIdAndContractStatusId(Long employeeId, Long contractStatusId);
 }

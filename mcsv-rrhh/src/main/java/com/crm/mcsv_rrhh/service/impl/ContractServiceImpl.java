@@ -98,7 +98,6 @@ public class ContractServiceImpl implements ContractService {
                 .mealTypeId(request.getMealTypeId())
                 .transportTypeId(request.getTransportTypeId())
                 .statusId(pendingStatusId)
-                .active(true)
                 .build();
 
         Contract saved = contractRepository.save(contract);
@@ -166,9 +165,11 @@ public class ContractServiceImpl implements ContractService {
     public Map<String, Long> getStats(Long employeeId) {
         Long pendingStatusId = contractStatusRepository.findByName("Pendiente de revisión")
                 .map(s -> s.getId()).orElse(-1L);
+        Long activeContractStatusId = contractStatusRepository.findByName("Activo")
+                .map(s -> s.getId()).orElse(-1L);
 
-        long total   = employeeId != null ? contractRepository.countByEmployeeId(employeeId)            : contractRepository.count();
-        long active  = employeeId != null ? contractRepository.countByEmployeeIdAndActiveTrue(employeeId) : contractRepository.countByActiveTrue();
+        long total   = employeeId != null ? contractRepository.countByEmployeeId(employeeId) : contractRepository.count();
+        long active  = employeeId != null ? contractRepository.countByEmployeeIdAndContractStatusId(employeeId, activeContractStatusId) : contractRepository.countByContractStatusId(activeContractStatusId);
         long pending = employeeId != null ? contractRepository.countByEmployeeIdAndStatusId(employeeId, pendingStatusId) : contractRepository.countByStatusId(pendingStatusId);
 
         Map<String, Long> stats = new HashMap<>();
@@ -179,14 +180,6 @@ public class ContractServiceImpl implements ContractService {
     }
 
     // ─── Documentos ───────────────────────────────────────────────────────────
-
-    @Override
-    public void updateStatus(Long id, Boolean active) {
-        Contract contract = contractRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
-        contract.setActive(active);
-        contractRepository.save(contract);
-    }
 
     @Override
     public void deleteDocument(Long contractId, Long fileId, Long userId) {
@@ -263,7 +256,6 @@ public class ContractServiceImpl implements ContractService {
                 .baseSalary(c.getBaseSalary())
                 .startDate(c.getStartDate())
                 .endDate(c.getEndDate())
-                .active(c.getActive())
                 .createdAt(c.getCreatedAt())
                 .build();
     }
@@ -309,7 +301,6 @@ public class ContractServiceImpl implements ContractService {
                 .mealType(resolve(c.getMealTypeId(), mealTypeRepository))
                 .transportType(resolve(c.getTransportTypeId(), transportTypeRepository))
                 .status(resolve(c.getStatusId(), employeeStatusRepository))
-                .active(c.getActive())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
                 .requestId(requestId)

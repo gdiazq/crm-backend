@@ -55,7 +55,6 @@ public class Contract {
 
     // ─── Estado ───────────────────────────────────────────────────────────────
     private Long statusId;
-    private Boolean active;
 
     // ─── Auditoría ────────────────────────────────────────────────────────────
     @Column(nullable = false, updatable = false)
