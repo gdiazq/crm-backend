@@ -14,6 +14,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     Optional<Employee> findByUserId(Long userId);
 
+    Optional<Employee> findByIdentification(String identification);
+
     long countByActiveTrue();
 
     long countByActiveTrueAndStatusIdNot(Long statusId);

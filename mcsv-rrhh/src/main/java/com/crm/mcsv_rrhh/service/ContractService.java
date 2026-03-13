@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.service;
 
+import com.crm.mcsv_rrhh.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
@@ -32,4 +33,8 @@ public interface ContractService {
     ContractDetailResponse updateContract(Long id, UpdateContractRequest req, List<MultipartFile> files);
 
     void deleteDocument(Long contractId, Long fileId, Long userId);
+
+    byte[] exportCsv();
+
+    BulkImportResult importFromCsv(MultipartFile file);
 }

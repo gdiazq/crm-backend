@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
+import com.crm.mcsv_rrhh.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -98,5 +100,20 @@ public class ContractController {
         Map<String, Long> stats = contractService.getStats(employeeId);
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar contratos a CSV")
+    public ResponseEntity<byte[]> exportCsv() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contracts.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(contractService.exportCsv());
+    }
+
+    @PostMapping(value = "/import/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Importar contratos desde CSV")
+    public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(contractService.importFromCsv(file));
     }
 }
