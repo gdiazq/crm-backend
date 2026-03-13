@@ -41,7 +41,7 @@ public class ProjectSpecialtyServiceImpl implements ProjectSpecialtyService {
         ProjectSpecialty entity = ProjectSpecialty.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .active(request.getActive() != null ? request.getActive() : true)
+                .active(true)
                 .build();
 
         return toResponse(repository.save(entity));
@@ -54,7 +54,6 @@ public class ProjectSpecialtyServiceImpl implements ProjectSpecialtyService {
 
         if (request.getName() != null) entity.setName(request.getName());
         if (request.getDescription() != null) entity.setDescription(request.getDescription());
-        if (request.getActive() != null) entity.setActive(request.getActive());
 
         return toResponse(repository.save(entity));
     }
@@ -75,8 +74,8 @@ public class ProjectSpecialtyServiceImpl implements ProjectSpecialtyService {
 
     @Override
     public PagedResponse<ProjectSpecialtyResponse> list(String search, Boolean active, Pageable pageable) {
-        Page<ProjectSpecialty> page = repository.findAllWithFilters(pageable, search, active);
-        long totalActive = repository.findAllWithFilters(Pageable.unpaged(), null, true).getTotalElements();
+        Page<ProjectSpecialty> page = repository.findAllWithFilters(pageable, search != null ? search : "", active);
+        long totalActive = repository.findAllWithFilters(Pageable.unpaged(), "", true).getTotalElements();
         return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), totalActive);
     }
 
@@ -113,7 +112,6 @@ public class ProjectSpecialtyServiceImpl implements ProjectSpecialtyService {
 
             int iName = idx.getOrDefault("nombre", -1);
             int iDesc = idx.getOrDefault("descripción", idx.getOrDefault("descripcion", -1));
-            int iActive = idx.getOrDefault("activo", -1);
 
             if (iName < 0) {
                 errors.add(new BulkImportResult.RowError(1, "No se encontró la columna 'nombre' en el header"));
@@ -133,13 +131,10 @@ public class ProjectSpecialtyServiceImpl implements ProjectSpecialtyService {
                     if (name.isEmpty()) throw new IllegalArgumentException("El nombre es obligatorio");
 
                     String description = col(cols, iDesc);
-                    String activeStr = col(cols, iActive);
-                    Boolean active = activeStr.isEmpty() ? true : Boolean.parseBoolean(activeStr);
 
                     ProjectSpecialtyRequest request = new ProjectSpecialtyRequest();
                     request.setName(name);
                     request.setDescription(description.isEmpty() ? null : description);
-                    request.setActive(active);
 
                     create(request);
                     success++;

@@ -15,7 +15,4 @@ public class ProjectTypeRequest {
 
     @Schema(description = "Descripción del tipo de proyecto")
     private String description;
-
-    @Schema(description = "Estado activo", example = "true")
-    private Boolean active = true;
 }

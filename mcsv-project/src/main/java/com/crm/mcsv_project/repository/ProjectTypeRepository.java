@@ -19,7 +19,7 @@ public interface ProjectTypeRepository extends JpaRepository<ProjectType, Long> 
     List<ProjectType> findByActiveTrue();
 
     @Query("SELECT p FROM ProjectType p WHERE " +
-           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%',:search,'%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%',:search,'%'))) AND " +
+           "('' = :search OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
            "(:active IS NULL OR p.active = :active)")
     Page<ProjectType> findAllWithFilters(Pageable pageable,
                                          @Param("search") String search,

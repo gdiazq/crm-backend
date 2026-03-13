@@ -15,7 +15,4 @@ public class ProjectStatusRequest {
 
     @Schema(description = "Descripción del estado de proyecto")
     private String description;
-
-    @Schema(description = "Estado activo", example = "true")
-    private Boolean active = true;
 }

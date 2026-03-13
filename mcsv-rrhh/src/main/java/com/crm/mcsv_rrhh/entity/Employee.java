@@ -12,7 +12,14 @@ import java.time.LocalDateTime;
  * Los catálogos se referencian por ID (Long) para mantener autonomía del microservicio.
  */
 @Entity
-@Table(name = "employees")
+@Table(name = "employees", indexes = {
+        @Index(name = "idx_employee_user_id",       columnList = "user_id"),
+        @Index(name = "idx_employee_status_id",     columnList = "status_id"),
+        @Index(name = "idx_employee_active",        columnList = "active"),
+        @Index(name = "idx_employee_identification",columnList = "identification"),
+        @Index(name = "idx_employee_created_at",    columnList = "created_at"),
+        @Index(name = "idx_employee_active_status", columnList = "active, status_id")
+})
 @Getter
 @Setter
 @AllArgsConstructor

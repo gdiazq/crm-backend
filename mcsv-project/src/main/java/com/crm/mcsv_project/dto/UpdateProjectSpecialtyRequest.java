@@ -18,7 +18,4 @@ public class UpdateProjectSpecialtyRequest {
 
     @Schema(description = "Descripción de la especialidad")
     private String description;
-
-    @Schema(description = "Estado activo")
-    private Boolean active;
 }

@@ -19,7 +19,7 @@ public interface ProjectStatusRepository extends JpaRepository<ProjectStatus, Lo
     List<ProjectStatus> findByActiveTrue();
 
     @Query("SELECT p FROM ProjectStatus p WHERE " +
-           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%',:search,'%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%',:search,'%'))) AND " +
+           "('' = :search OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
            "(:active IS NULL OR p.active = :active)")
     Page<ProjectStatus> findAllWithFilters(Pageable pageable,
                                            @Param("search") String search,

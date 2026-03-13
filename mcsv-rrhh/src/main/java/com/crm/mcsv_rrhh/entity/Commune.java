@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "communes")
+@Table(name = "communes", indexes = {
+        @Index(name = "idx_commune_region_id", columnList = "region_id")
+})
 @Getter
 @Setter
 @AllArgsConstructor
