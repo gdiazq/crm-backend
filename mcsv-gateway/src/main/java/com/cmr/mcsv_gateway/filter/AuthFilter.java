@@ -66,7 +66,19 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("PUT:/v1/api/rrhh/hr-request",                "HR_REQUEST:APPROVE"),
             Map.entry("POST:/v1/api/rrhh/contract",                 "CONTRACT:CREATE"),
             Map.entry("PUT:/v1/api/rrhh/contract",                  "CONTRACT:UPDATE"),
-            Map.entry("GET:/v1/api/rrhh/contract",                  "CONTRACT:READ")
+            Map.entry("GET:/v1/api/rrhh/contract",                  "CONTRACT:READ"),
+            Map.entry("POST:/v1/api/project/project-type/create",       "PROJECT_TYPE:CREATE"),
+            Map.entry("PUT:/v1/api/project/project-type/update",         "PROJECT_TYPE:UPDATE"),
+            Map.entry("POST:/v1/api/project/project-type/updateStatus",  "PROJECT_TYPE:UPDATE"),
+            Map.entry("GET:/v1/api/project/project-type",                "PROJECT_TYPE:READ"),
+            Map.entry("POST:/v1/api/project/project-status/create",      "PROJECT_STATUS:CREATE"),
+            Map.entry("PUT:/v1/api/project/project-status/update",       "PROJECT_STATUS:UPDATE"),
+            Map.entry("POST:/v1/api/project/project-status/updateStatus","PROJECT_STATUS:UPDATE"),
+            Map.entry("GET:/v1/api/project/project-status",              "PROJECT_STATUS:READ"),
+            Map.entry("POST:/v1/api/project/project-specialty/create",      "PROJECT_SPECIALTY:CREATE"),
+            Map.entry("PUT:/v1/api/project/project-specialty/update",        "PROJECT_SPECIALTY:UPDATE"),
+            Map.entry("POST:/v1/api/project/project-specialty/updateStatus", "PROJECT_SPECIALTY:UPDATE"),
+            Map.entry("GET:/v1/api/project/project-specialty",               "PROJECT_SPECIALTY:READ")
     );
 
     private final WebClient.Builder webClient;
