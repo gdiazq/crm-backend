@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ProjectTypeRepository extends JpaRepository<ProjectType, Long> {
@@ -14,6 +15,8 @@ public interface ProjectTypeRepository extends JpaRepository<ProjectType, Long> 
     Optional<ProjectType> findByName(String name);
 
     boolean existsByName(String name);
+
+    List<ProjectType> findByActiveTrue();
 
     @Query("SELECT p FROM ProjectType p WHERE " +
            "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%',:search,'%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%',:search,'%'))) AND " +
