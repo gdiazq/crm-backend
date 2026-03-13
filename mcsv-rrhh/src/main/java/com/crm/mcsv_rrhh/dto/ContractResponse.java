@@ -23,4 +23,5 @@ public class ContractResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

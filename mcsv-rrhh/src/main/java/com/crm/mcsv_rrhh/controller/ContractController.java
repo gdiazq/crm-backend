@@ -73,10 +73,19 @@ public class ContractController {
     @GetMapping("/paged")
     @Operation(summary = "Listar contratos (paginado)")
     public ResponseEntity<PagedResponse<ContractResponse>> paged(
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long employeeId,
             @RequestParam(required = false) Long statusId,
+            @RequestParam(required = false) Long contractStatusId,
+            @RequestParam(required = false) Long contractTypeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedTo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -85,7 +94,7 @@ public class ContractController {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ContractResponse> result = contractService.list(employeeId, statusId, createdFrom, createdTo, pageable, safeSortBy, sortDir);
+        Page<ContractResponse> result = contractService.list(search, employeeId, statusId, contractStatusId, contractTypeId, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, pageable, safeSortBy, sortDir);
         Map<String, Long> stats = contractService.getStats(employeeId);
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));

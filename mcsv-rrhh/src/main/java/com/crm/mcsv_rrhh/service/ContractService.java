@@ -16,8 +16,13 @@ import java.util.Map;
 public interface ContractService {
     ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files);
 
-    Page<ContractResponse> list(Long employeeId, Long statusId,
+    Page<ContractResponse> list(String search,
+                                Long employeeId, Long statusId,
+                                Long contractStatusId, Long contractTypeId,
                                 LocalDate createdFrom, LocalDate createdTo,
+                                LocalDate startDateFrom, LocalDate startDateTo,
+                                LocalDate endDateFrom, LocalDate endDateTo,
+                                LocalDate updatedFrom, LocalDate updatedTo,
                                 Pageable pageable, String sortBy, String sortDir);
 
     Map<String, Long> getStats(Long employeeId);

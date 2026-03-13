@@ -151,13 +151,18 @@ public class ContractServiceImpl implements ContractService {
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     @Override
-    public Page<ContractResponse> list(Long employeeId, Long statusId,
+    public Page<ContractResponse> list(String search,
+                                       Long employeeId, Long statusId,
+                                       Long contractStatusId, Long contractTypeId,
                                        LocalDate createdFrom, LocalDate createdTo,
+                                       LocalDate startDateFrom, LocalDate startDateTo,
+                                       LocalDate endDateFrom, LocalDate endDateTo,
+                                       LocalDate updatedFrom, LocalDate updatedTo,
                                        Pageable pageable, String sortBy, String sortDir) {
         Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
                 ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
                 : pageable;
-        Specification<Contract> spec = ContractSpecification.withFilters(employeeId, statusId, createdFrom, createdTo, sortBy, sortDir);
+        Specification<Contract> spec = ContractSpecification.withFilters(search, employeeId, statusId, contractStatusId, contractTypeId, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, sortBy, sortDir);
         return contractRepository.findAll(spec, effectivePageable).map(this::toResponse);
     }
 
@@ -257,6 +262,7 @@ public class ContractServiceImpl implements ContractService {
                 .startDate(c.getStartDate())
                 .endDate(c.getEndDate())
                 .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
                 .build();
     }
 
