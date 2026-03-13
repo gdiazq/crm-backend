@@ -102,5 +102,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findAllByRolesId(Long roleId);
 
+    List<User> findByRolesNameContainingIgnoreCase(String name);
+
     long countByEnabled(boolean enabled);
 }

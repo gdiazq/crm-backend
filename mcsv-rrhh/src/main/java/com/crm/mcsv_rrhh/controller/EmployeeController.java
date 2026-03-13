@@ -87,6 +87,18 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.updateEmployee(request.getId(), request));
     }
 
+    @GetMapping("/select/supervisors")
+    @Operation(summary = "Empleados supervisores", description = "Retorna empleados cuyo usuario vinculado tiene un rol de supervisor")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getSupervisors() {
+        return ResponseEntity.ok(employeeService.getSupervisors());
+    }
+
+    @GetMapping("/select/visitors")
+    @Operation(summary = "Empleados visitadores", description = "Retorna empleados cuyo usuario vinculado tiene un rol de visitador")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getVisitors() {
+        return ResponseEntity.ok(employeeService.getVisitors());
+    }
+
     @GetMapping("/select/without-contract")
     @Operation(summary = "Empleados sin contrato", description = "Retorna empleados activos y aprobados que aún no tienen contrato")
     public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithoutContract() {

@@ -3,6 +3,7 @@ package com.crm.mcsv_user.controller;
 import com.crm.mcsv_user.dto.PagedResponse;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.repository.PermissionRepository;
+import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.RoleService;
 import com.crm.mcsv_user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +29,7 @@ public class SelectController {
     private final RoleService roleService;
     private final UserService userService;
     private final PermissionRepository permissionRepository;
+    private final UserRepository userRepository;
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles for selector", description = "Retrieve id and name of all roles")
@@ -98,4 +100,26 @@ public class SelectController {
     }
 
     record PermissionSelectItem(Long id, String name) {}
+
+    @GetMapping("/users/supervisors")
+    @Operation(summary = "Usuarios supervisores")
+    public ResponseEntity<List<UserNameSelectItem>> getSupervisors() {
+        List<UserNameSelectItem> users = userRepository.findByRolesNameContainingIgnoreCase("supervisor").stream()
+                .map(u -> new UserNameSelectItem(u.getId(),
+                        ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
+                         (u.getLastName()  != null ? u.getLastName()  : "")).trim()))
+                .toList();
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/users/visitors")
+    @Operation(summary = "Usuarios visitadores")
+    public ResponseEntity<List<UserNameSelectItem>> getVisitors() {
+        List<UserNameSelectItem> users = userRepository.findByRolesNameContainingIgnoreCase("visitador").stream()
+                .map(u -> new UserNameSelectItem(u.getId(),
+                        ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
+                         (u.getLastName()  != null ? u.getLastName()  : "")).trim()))
+                .toList();
+        return ResponseEntity.ok(users);
+    }
 }

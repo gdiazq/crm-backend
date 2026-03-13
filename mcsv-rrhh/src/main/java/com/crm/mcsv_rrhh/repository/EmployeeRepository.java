@@ -28,4 +28,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     List<Employee> findByActiveTrueAndStatusIdAndIdNotIn(Long statusId, List<Long> excludedIds);
 
     List<Employee> findByActiveTrueAndStatusId(Long statusId);
+
+    List<Employee> findByUserIdIn(java.util.Collection<Long> userIds);
 }

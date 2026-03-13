@@ -21,4 +21,10 @@ public interface UserClient {
             @RequestParam(required = false) List<Long> excludeIds,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size);
+
+    @GetMapping("/select/users/supervisors")
+    List<UserDTO> getSupervisors();
+
+    @GetMapping("/select/users/visitors")
+    List<UserDTO> getVisitors();
 }

@@ -42,5 +42,9 @@ public interface EmployeeService {
 
     List<EmployeeSelectItem> getEmployeesWithoutContract();
 
+    List<EmployeeSelectItem> getSupervisors();
+
+    List<EmployeeSelectItem> getVisitors();
+
     record EmployeeSelectItem(Long id, String name) {}
 }
