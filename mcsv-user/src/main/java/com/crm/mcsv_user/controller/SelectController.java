@@ -68,16 +68,17 @@ public class SelectController {
     record UserEmailSelectItem(Long id, String email) {}
 
     @GetMapping("/users/available")
-    @Operation(summary = "Get available users for employee assignment", description = "Returns paged users excluding already linked ones")
-    public ResponseEntity<PagedResponse<UserResponse>> getAvailableForEmployee(
+    @Operation(summary = "Get available users for employee assignment", description = "Returns users excluding already linked ones")
+    public ResponseEntity<List<Item>> getAvailableForEmployee(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) List<Long> excludeIds,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Page<UserResponse> result = userService.getAvailableUsersForEmployee(
-                search, excludeIds, PageRequest.of(page, size, Sort.by("firstName").ascending()));
-        return ResponseEntity.ok(PagedResponse.of(result, 0L, 0L));
+            @RequestParam(required = false) List<Long> excludeIds) {
+        List<Item> result = userService.getAvailableUsersForEmployee(search, excludeIds).stream()
+                .map(u -> new Item(u.getId(), (u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "").trim()))
+                .toList();
+        return ResponseEntity.ok(result);
     }
+
+    record Item(Long id, String name) {}
 
     @GetMapping("/status")
     @Operation(summary = "Get status options for selector", description = "Retrieve available status options")

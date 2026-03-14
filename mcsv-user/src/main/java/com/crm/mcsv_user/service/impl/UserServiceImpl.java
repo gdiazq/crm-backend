@@ -106,12 +106,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAvailableUsersForEmployee(String search, List<Long> excludeIds, Pageable pageable) {
+    public List<UserResponse> getAvailableUsersForEmployee(String search, List<Long> excludeIds) {
         String searchParam = (search != null && !search.isBlank()) ? search.trim() : "";
         boolean excludeEmpty = excludeIds == null || excludeIds.isEmpty();
         java.util.Collection<Long> safeIds = excludeEmpty ? List.of() : excludeIds;
-        return userRepository.findAvailableForEmployee(searchParam, safeIds, excludeEmpty, pageable)
-                .map(userMapper::toResponse);
+        return userRepository.findAvailableForEmployee(searchParam, safeIds, excludeEmpty)
+                .stream().map(userMapper::toResponse).toList();
     }
 
     @Override

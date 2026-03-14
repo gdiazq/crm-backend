@@ -1,12 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
-import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
-import com.crm.mcsv_rrhh.dto.EmployeeDetailResponse;
-import com.crm.mcsv_rrhh.dto.EmployeeResponse;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
-import com.crm.mcsv_rrhh.dto.UserDTO;
+import com.crm.mcsv_rrhh.dto.*;
 import com.crm.mcsv_rrhh.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -106,12 +100,10 @@ public class EmployeeController {
     }
 
     @GetMapping("/select/available-users")
-    @Operation(summary = "Usuarios disponibles para vincular a empleado", description = "Retorna usuarios paginados excluyendo los ya vinculados a un empleado")
-    public ResponseEntity<PagedResponse<UserDTO>> getAvailableUsers(
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(employeeService.getAvailableUsersForEmployee(search, page, size));
+    @Operation(summary = "Usuarios disponibles para vincular a empleado", description = "Retorna usuarios excluyendo los ya vinculados a un empleado")
+    public ResponseEntity<List<CatalogItem>> getAvailableUsers(
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(employeeService.getAvailableUsersForEmployee(search));
     }
 
     @PutMapping("/{id}/status")
@@ -122,16 +114,9 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}/link-user")
-    @Operation(summary = "Vincular usuario del sistema a un empleado")
-    public ResponseEntity<Void> linkUser(@PathVariable Long id, @RequestBody Map<String, Long> body) {
-        employeeService.linkUser(id, body.get("userId"));
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{id}/link-user")
-    @Operation(summary = "Desvincular usuario del sistema de un empleado")
-    public ResponseEntity<Void> unlinkUser(@PathVariable Long id) {
-        employeeService.unlinkUser(id);
+    @Operation(summary = "Vincular/desvincular usuario del sistema a un empleado")
+    public ResponseEntity<Void> updateLinkedUser(@PathVariable Long id, @RequestBody Map<String, Long> body) {
+        employeeService.updateLinkedUser(id, body.get("userId"));
         return ResponseEntity.ok().build();
     }
 

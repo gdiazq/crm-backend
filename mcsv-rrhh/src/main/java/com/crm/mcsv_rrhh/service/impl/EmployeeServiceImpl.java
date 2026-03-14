@@ -130,23 +130,18 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void linkUser(Long id, Long userId) {
+    public void updateLinkedUser(Long id, Long userId) {
         Employee employee = findOrThrow(id);
-        if (employeeRepository.existsByUserId(userId)) {
-            throw new DuplicateResourceException("El usuario ya está vinculado a otro empleado");
-        }
-        UserDTO user = userClient.getUserById(userId);
-        if (user == null) {
-            throw new ResourceNotFoundException("Usuario no encontrado con id: " + userId);
+        if (userId != null) {
+            if (employeeRepository.existsByUserId(userId)) {
+                throw new DuplicateResourceException("El usuario ya está vinculado a otro empleado");
+            }
+            UserDTO user = userClient.getUserById(userId);
+            if (user == null) {
+                throw new ResourceNotFoundException("Usuario no encontrado con id: " + userId);
+            }
         }
         employee.setUserId(userId);
-        employeeRepository.save(employee);
-    }
-
-    @Override
-    public void unlinkUser(Long id) {
-        Employee employee = findOrThrow(id);
-        employee.setUserId(null);
         employeeRepository.save(employee);
     }
 
@@ -218,9 +213,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public PagedResponse<UserDTO> getAvailableUsersForEmployee(String search, int page, int size) {
+    public List<CatalogItem> getAvailableUsersForEmployee(String search) {
         List<Long> linkedUserIds = employeeRepository.findAllUserIds();
-        return userClient.getAvailableForEmployee(search, linkedUserIds, page, size);
+        return userClient.getAvailableForEmployee(search, linkedUserIds);
     }
 
     @Override
@@ -293,6 +288,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private EmployeeResponse toResponse(Employee e, Map<Long, String> statusMap) {
         return EmployeeResponse.builder()
                 .id(e.getId())
+                .userId(e.getUserId())
                 .identification(e.getIdentification())
                 .firstName(e.getFirstName())
                 .paternalLastName(e.getPaternalLastName())

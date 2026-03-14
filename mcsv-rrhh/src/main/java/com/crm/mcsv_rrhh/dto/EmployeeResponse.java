@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class EmployeeResponse {
 
     private Long id;
+    private Long userId;
 
     // Datos de identificación
     private String identification;

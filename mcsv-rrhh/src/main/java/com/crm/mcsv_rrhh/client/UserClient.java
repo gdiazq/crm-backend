@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.client;
 
+import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,11 +17,9 @@ public interface UserClient {
     UserDTO getUserById(@PathVariable Long id);
 
     @GetMapping("/select/users/available")
-    PagedResponse<UserDTO> getAvailableForEmployee(
+    List<CatalogItem> getAvailableForEmployee(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) List<Long> excludeIds,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size);
+            @RequestParam(required = false) List<Long> excludeIds);
 
     @GetMapping("/select/users/supervisors")
     List<UserDTO> getSupervisors();
