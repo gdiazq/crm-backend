@@ -12,8 +12,10 @@ import com.crm.mcsv_project.repository.ProjectStatusRepository;
 import com.crm.mcsv_project.service.ProjectStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.crm.mcsv_project.repository.ProjectStatusSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -80,8 +82,9 @@ public class ProjectStatusServiceImpl implements ProjectStatusService {
         LocalDateTime to = createdTo != null ? createdTo.atTime(23, 59, 59) : null;
         LocalDateTime uFrom = updatedFrom != null ? updatedFrom.atStartOfDay() : null;
         LocalDateTime uTo = updatedTo != null ? updatedTo.atTime(23, 59, 59) : null;
-        Page<ProjectStatus> page = repository.findAllWithFilters(pageable, search != null ? search : "", active, from, to, uFrom, uTo);
-        long totalActive = repository.findAllWithFilters(Pageable.unpaged(), "", true, null, null, null, null).getTotalElements();
+        Specification<ProjectStatus> spec = ProjectStatusSpecification.withFilters(search, active, from, to, uFrom, uTo);
+        Page<ProjectStatus> page = repository.findAll(spec, pageable);
+        long totalActive = repository.count(ProjectStatusSpecification.withFilters(null, true, null, null, null, null));
         return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), totalActive);
     }
 

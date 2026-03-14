@@ -12,8 +12,10 @@ import com.crm.mcsv_project.repository.ProjectTypeRepository;
 import com.crm.mcsv_project.service.ProjectTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.crm.mcsv_project.repository.ProjectTypeSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -80,8 +82,9 @@ public class ProjectTypeServiceImpl implements ProjectTypeService {
         LocalDateTime to = createdTo != null ? createdTo.atTime(23, 59, 59) : null;
         LocalDateTime uFrom = updatedFrom != null ? updatedFrom.atStartOfDay() : null;
         LocalDateTime uTo = updatedTo != null ? updatedTo.atTime(23, 59, 59) : null;
-        Page<ProjectType> page = repository.findAllWithFilters(pageable, search != null ? search : "", active, from, to, uFrom, uTo);
-        long totalActive = repository.findAllWithFilters(Pageable.unpaged(), "", true, null, null, null, null).getTotalElements();
+        Specification<ProjectType> spec = ProjectTypeSpecification.withFilters(search, active, from, to, uFrom, uTo);
+        Page<ProjectType> page = repository.findAll(spec, pageable);
+        long totalActive = repository.count(ProjectTypeSpecification.withFilters(null, true, null, null, null, null));
         return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), totalActive);
     }
 
