@@ -20,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,9 +75,13 @@ public class ProjectStatusServiceImpl implements ProjectStatusService {
     }
 
     @Override
-    public PagedResponse<ProjectStatusResponse> list(String search, Boolean active, Pageable pageable) {
-        Page<ProjectStatus> page = repository.findAllWithFilters(pageable, search != null ? search : "", active);
-        long totalActive = repository.findAllWithFilters(Pageable.unpaged(), "", true).getTotalElements();
+    public PagedResponse<ProjectStatusResponse> list(String search, Boolean active, LocalDate createdFrom, LocalDate createdTo, LocalDate updatedFrom, LocalDate updatedTo, Pageable pageable) {
+        LocalDateTime from = createdFrom != null ? createdFrom.atStartOfDay() : null;
+        LocalDateTime to = createdTo != null ? createdTo.atTime(23, 59, 59) : null;
+        LocalDateTime uFrom = updatedFrom != null ? updatedFrom.atStartOfDay() : null;
+        LocalDateTime uTo = updatedTo != null ? updatedTo.atTime(23, 59, 59) : null;
+        Page<ProjectStatus> page = repository.findAllWithFilters(pageable, search != null ? search : "", active, from, to, uFrom, uTo);
+        long totalActive = repository.findAllWithFilters(Pageable.unpaged(), "", true, null, null, null, null).getTotalElements();
         return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), totalActive);
     }
 

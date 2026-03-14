@@ -8,12 +8,14 @@ import com.crm.mcsv_project.dto.UpdateProjectSpecialtyRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+
 public interface ProjectSpecialtyService {
     ProjectSpecialtyResponse create(ProjectSpecialtyRequest request);
     ProjectSpecialtyResponse update(UpdateProjectSpecialtyRequest request);
     void updateStatus(Long id, Boolean active);
     ProjectSpecialtyResponse getById(Long id);
-    PagedResponse<ProjectSpecialtyResponse> list(String search, Boolean active, Pageable pageable);
+    PagedResponse<ProjectSpecialtyResponse> list(String search, Boolean active, LocalDate createdFrom, LocalDate createdTo, LocalDate updatedFrom, LocalDate updatedTo, Pageable pageable);
     byte[] exportCsv();
     BulkImportResult importFromCsv(MultipartFile file);
 }
