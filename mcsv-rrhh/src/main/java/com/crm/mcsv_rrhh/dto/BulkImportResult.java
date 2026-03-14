@@ -3,11 +3,14 @@ package com.crm.mcsv_rrhh.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BulkImportResult {
     private int total;
     private int success;
