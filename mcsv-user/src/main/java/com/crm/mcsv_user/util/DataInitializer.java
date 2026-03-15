@@ -78,6 +78,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("PROJECT_SPECIALTY:READ",   "Ver y consultar especialidades de proyecto");
         createPermissionIfNotExists("PROJECT_SPECIALTY:UPDATE", "Modificar especialidades de proyecto");
         createPermissionIfNotExists("PROJECT_SPECIALTY:DELETE", "Eliminar especialidades de proyecto");
+        createPermissionIfNotExists("PROJECT:CREATE", "Crear proyectos");
+        createPermissionIfNotExists("PROJECT:READ",   "Ver y consultar proyectos");
+        createPermissionIfNotExists("PROJECT:UPDATE", "Modificar proyectos");
+        createPermissionIfNotExists("PROJECT:DELETE", "Eliminar proyectos");
 
         log.info("Permissions initialized.");
     }

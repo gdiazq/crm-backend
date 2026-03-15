@@ -21,9 +21,9 @@ public class ProjectResponse {
     private String address;
     private String description;
 
-    private CatalogItem type;
-    private CatalogItem status;
-    private CatalogItem specialty;
+    private Long typeId;
+    private Long statusId;
+    private Long specialtyId;
 
     private Long visitorId;
     private String visitorName;
@@ -31,7 +31,7 @@ public class ProjectResponse {
     private Long supervisorId;
     private String supervisorName;
 
-    private List<CatalogItem> companyRepresentatives;
+    private List<Long> companyRepresentativeIds;
 
     private LocalDate startDate;
     private LocalDate realStartDate;
