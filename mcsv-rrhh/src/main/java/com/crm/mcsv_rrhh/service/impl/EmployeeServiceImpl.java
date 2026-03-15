@@ -268,6 +268,20 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    @Override
+    public List<EmployeeService.EmployeeSelectItem> getCompanyRepresentatives() {
+        try {
+            List<Long> userIds = userClient.getCompanyRepresentatives().stream().map(u -> u.getId()).toList();
+            if (userIds.isEmpty()) return List.of();
+            return employeeRepository.findByUserIdIn(userIds).stream()
+                    .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
+                    .toList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener representantes de empresa: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private Employee findOrThrow(Long id) {

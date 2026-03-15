@@ -26,4 +26,7 @@ public interface UserClient {
 
     @GetMapping("/select/users/visitors")
     List<UserDTO> getVisitors();
+
+    @GetMapping("/select/users/company-representatives")
+    List<UserDTO> getCompanyRepresentatives();
 }

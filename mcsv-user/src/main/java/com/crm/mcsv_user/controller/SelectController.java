@@ -123,4 +123,15 @@ public class SelectController {
                 .toList();
         return ResponseEntity.ok(users);
     }
+
+    @GetMapping("/users/company-representatives")
+    @Operation(summary = "Usuarios representantes de empresa")
+    public ResponseEntity<List<UserNameSelectItem>> getCompanyRepresentatives() {
+        List<UserNameSelectItem> users = userRepository.findByRolesNameContainingIgnoreCase("representante").stream()
+                .map(u -> new UserNameSelectItem(u.getId(),
+                        ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
+                         (u.getLastName()  != null ? u.getLastName()  : "")).trim()))
+                .toList();
+        return ResponseEntity.ok(users);
+    }
 }

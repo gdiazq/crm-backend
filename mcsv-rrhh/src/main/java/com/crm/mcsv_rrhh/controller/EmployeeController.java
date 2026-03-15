@@ -99,6 +99,12 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getEmployeesWithoutContract());
     }
 
+    @GetMapping("/select/company-representatives")
+    @Operation(summary = "Representantes de empresa", description = "Retorna empleados cuyo usuario vinculado tiene un rol de representante de empresa")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getCompanyRepresentatives() {
+        return ResponseEntity.ok(employeeService.getCompanyRepresentatives());
+    }
+
     @GetMapping("/select/available-users")
     @Operation(summary = "Usuarios disponibles para vincular a empleado", description = "Retorna usuarios excluyendo los ya vinculados a un empleado")
     public ResponseEntity<List<CatalogItem>> getAvailableUsers(
