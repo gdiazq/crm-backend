@@ -123,12 +123,38 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
 
     @Override
     public ProjectResponse update(UpdateProjectRequest request) {
-        throw new UnsupportedOperationException("Implemented in Fase 6");
+        Project project = findOrThrow(request.getId());
+
+        if (request.getCostCenter() != null &&
+                !request.getCostCenter().equals(project.getCostCenter()) &&
+                projectRepository.existsByCostCenterAndIdNot(request.getCostCenter(), request.getId()))
+            throw new DuplicateResourceException("Ya existe un proyecto con el centro de costo: " + request.getCostCenter());
+
+        if (request.getCostCenter() != null)   project.setCostCenter(request.getCostCenter());
+        if (request.getName() != null)         project.setName(request.getName());
+        if (request.getAddress() != null)      project.setAddress(request.getAddress());
+        if (request.getDescription() != null)  project.setDescription(request.getDescription());
+        if (request.getTypeId() != null)       project.setType(resolveType(request.getTypeId()));
+        if (request.getStatusId() != null)     project.setStatus(resolveStatus(request.getStatusId()));
+        if (request.getSpecialtyId() != null)  project.setSpecialty(resolveSpecialty(request.getSpecialtyId()));
+        if (request.getVisitorId() != null)    project.setVisitorId(request.getVisitorId());
+        if (request.getSupervisorId() != null) project.setSupervisorId(request.getSupervisorId());
+        if (request.getCompanyRepresentativeIds() != null)
+            project.setCompanyRepresentativeIds(request.getCompanyRepresentativeIds());
+        if (request.getStartDate() != null)     project.setStartDate(request.getStartDate());
+        if (request.getRealStartDate() != null) project.setRealStartDate(request.getRealStartDate());
+        if (request.getEndDate() != null)       project.setEndDate(request.getEndDate());
+        if (request.getRealEndDate() != null)   project.setRealEndDate(request.getRealEndDate());
+
+        return toResponse(projectRepository.save(project),
+                fetchVisitorMap(), fetchSupervisorMap(), fetchCompanyRepMap());
     }
 
     @Override
     public void updateStatus(Long id, Boolean active) {
-        throw new UnsupportedOperationException("Implemented in Fase 6");
+        Project project = findOrThrow(id);
+        project.setActive(active);
+        projectRepository.save(project);
     }
 
     // ─── Export/Import ────────────────────────────────────────────────────────
