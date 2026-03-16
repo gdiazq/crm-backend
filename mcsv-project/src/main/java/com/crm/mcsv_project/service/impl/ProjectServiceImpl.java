@@ -161,12 +161,111 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
 
     @Override
     public byte[] exportCsv() {
-        throw new UnsupportedOperationException("Implemented in Fase 7");
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Centro de Costo,Nombre,Dirección,Descripción,Tipo ID,Estado ID,Especialidad ID," +
+                   "Visitador ID,Supervisor ID,Fecha Inicio,Fecha Inicio Real,Fecha Fin,Fecha Fin Real," +
+                   "Activo,Fecha Creación,Fecha Actualización\n");
+
+        projectRepository.findAll().forEach(p -> csv
+                .append(p.getId()).append(",")
+                .append(p.getCostCenter()).append(",")
+                .append(escape(p.getName())).append(",")
+                .append(escape(p.getAddress())).append(",")
+                .append(escape(p.getDescription())).append(",")
+                .append(p.getType()      != null ? p.getType().getId()      : "").append(",")
+                .append(p.getStatus()    != null ? p.getStatus().getId()    : "").append(",")
+                .append(p.getSpecialty() != null ? p.getSpecialty().getId() : "").append(",")
+                .append(p.getVisitorId()    != null ? p.getVisitorId()    : "").append(",")
+                .append(p.getSupervisorId() != null ? p.getSupervisorId() : "").append(",")
+                .append(p.getStartDate()     != null ? p.getStartDate()     : "").append(",")
+                .append(p.getRealStartDate() != null ? p.getRealStartDate() : "").append(",")
+                .append(p.getEndDate()       != null ? p.getEndDate()       : "").append(",")
+                .append(p.getRealEndDate()   != null ? p.getRealEndDate()   : "").append(",")
+                .append(p.getActive()).append(",")
+                .append(formatDate(p.getCreatedAt())).append(",")
+                .append(formatDate(p.getUpdatedAt())).append("\n"));
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
     public BulkImportResult importFromCsv(MultipartFile file) {
-        throw new UnsupportedOperationException("Implemented in Fase 7");
+        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        int total = 0;
+        int success = 0;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+
+            String headerLine = reader.readLine();
+            if (headerLine == null)
+                return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
+
+            String[] headers = parseCsvLine(headerLine);
+            Map<String, Integer> idx = buildHeaderIndex(headers);
+
+            int iCostCenter  = idx.getOrDefault("centro de costo", -1);
+            int iName        = idx.getOrDefault("nombre", -1);
+            int iAddress     = idx.getOrDefault("dirección", idx.getOrDefault("direccion", -1));
+            int iDescription = idx.getOrDefault("descripción", idx.getOrDefault("descripcion", -1));
+            int iTypeId      = idx.getOrDefault("tipo id", -1);
+            int iStatusId    = idx.getOrDefault("estado id", -1);
+            int iSpecialtyId = idx.getOrDefault("especialidad id", -1);
+            int iVisitorId   = idx.getOrDefault("visitador id", -1);
+            int iSupervisorId= idx.getOrDefault("supervisor id", -1);
+            int iStartDate   = idx.getOrDefault("fecha inicio", -1);
+            int iEndDate     = idx.getOrDefault("fecha fin", -1);
+
+            if (iCostCenter < 0 || iName < 0) {
+                errors.add(new BulkImportResult.RowError(1, "Faltan columnas obligatorias: 'centro de costo' y/o 'nombre'"));
+                return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
+            }
+
+            String line;
+            int row = 1;
+            while ((line = reader.readLine()) != null) {
+                row++;
+                if (line.isBlank()) continue;
+                total++;
+                try {
+                    String[] cols = parseCsvLine(line);
+
+                    String costCenterStr = col(cols, iCostCenter);
+                    String name          = col(cols, iName);
+
+                    if (costCenterStr.isEmpty()) throw new IllegalArgumentException("El centro de costo es obligatorio");
+                    if (name.isEmpty())          throw new IllegalArgumentException("El nombre es obligatorio");
+
+                    ProjectRequest request = new ProjectRequest();
+                    request.setCostCenter(Integer.parseInt(costCenterStr));
+                    request.setName(name);
+                    request.setAddress(nullIfEmpty(col(cols, iAddress)));
+                    request.setDescription(nullIfEmpty(col(cols, iDescription)));
+                    request.setTypeId(parseLong(col(cols, iTypeId)));
+                    request.setStatusId(parseLong(col(cols, iStatusId)));
+                    request.setSpecialtyId(parseLong(col(cols, iSpecialtyId)));
+                    request.setVisitorId(parseLong(col(cols, iVisitorId)));
+                    request.setSupervisorId(parseLong(col(cols, iSupervisorId)));
+                    request.setStartDate(parseDate(col(cols, iStartDate)));
+                    request.setEndDate(parseDate(col(cols, iEndDate)));
+
+                    create(request);
+                    success++;
+                } catch (Exception e) {
+                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error leyendo CSV de proyectos", e);
+            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+        }
+
+        return BulkImportResult.builder()
+                .total(total)
+                .success(success)
+                .failed(errors.size())
+                .errors(errors)
+                .build();
     }
 
     // ─── Feign helpers ────────────────────────────────────────────────────────
@@ -266,5 +365,55 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
     private String formatDate(LocalDateTime dt) {
         if (dt == null) return "";
         return dt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    private String[] parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    sb.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                fields.add(sb.toString());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        fields.add(sb.toString());
+        return fields.toArray(new String[0]);
+    }
+
+    private Map<String, Integer> buildHeaderIndex(String[] headers) {
+        Map<String, Integer> idx = new HashMap<>();
+        for (int i = 0; i < headers.length; i++)
+            idx.put(headers[i].trim().toLowerCase(), i);
+        return idx;
+    }
+
+    private String col(String[] cols, int index) {
+        if (index < 0 || index >= cols.length) return "";
+        return cols[index].trim();
+    }
+
+    private String nullIfEmpty(String value) {
+        return value == null || value.isEmpty() ? null : value;
+    }
+
+    private Long parseLong(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try { return Long.parseLong(value); } catch (NumberFormatException e) { return null; }
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try { return LocalDate.parse(value); } catch (Exception e) { return null; }
     }
 }
