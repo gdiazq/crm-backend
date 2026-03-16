@@ -92,7 +92,31 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
 
     @Override
     public ProjectResponse create(ProjectRequest request) {
-        throw new UnsupportedOperationException("Implemented in Fase 5");
+        if (projectRepository.existsByCostCenter(request.getCostCenter()))
+            throw new DuplicateResourceException("Ya existe un proyecto con el centro de costo: " + request.getCostCenter());
+
+        Project project = Project.builder()
+                .costCenter(request.getCostCenter())
+                .name(request.getName())
+                .address(request.getAddress())
+                .description(request.getDescription())
+                .type(resolveType(request.getTypeId()))
+                .status(resolveStatus(request.getStatusId()))
+                .specialty(resolveSpecialty(request.getSpecialtyId()))
+                .visitorId(request.getVisitorId())
+                .supervisorId(request.getSupervisorId())
+                .companyRepresentativeIds(request.getCompanyRepresentativeIds() != null
+                        ? request.getCompanyRepresentativeIds()
+                        : new ArrayList<>())
+                .startDate(request.getStartDate())
+                .realStartDate(request.getRealStartDate())
+                .endDate(request.getEndDate())
+                .realEndDate(request.getRealEndDate())
+                .active(true)
+                .build();
+
+        return toResponse(projectRepository.save(project),
+                fetchVisitorMap(), fetchSupervisorMap(), fetchCompanyRepMap());
     }
 
     // ─── Update ───────────────────────────────────────────────────────────────
