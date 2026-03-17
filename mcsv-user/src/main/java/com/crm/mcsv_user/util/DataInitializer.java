@@ -82,6 +82,26 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("PROJECT:READ",   "Ver y consultar proyectos");
         createPermissionIfNotExists("PROJECT:UPDATE", "Modificar proyectos");
         createPermissionIfNotExists("PROJECT:DELETE", "Eliminar proyectos");
+        createPermissionIfNotExists("LEGAL_TERMINATION_CAUSE:CREATE", "Crear causas legales de terminación");
+        createPermissionIfNotExists("LEGAL_TERMINATION_CAUSE:READ",   "Ver y consultar causas legales de terminación");
+        createPermissionIfNotExists("LEGAL_TERMINATION_CAUSE:UPDATE", "Modificar causas legales de terminación");
+        createPermissionIfNotExists("LEGAL_TERMINATION_CAUSE:DELETE", "Eliminar causas legales de terminación");
+        createPermissionIfNotExists("QUALITY_OF_WORK:CREATE", "Crear categorías de calidad de trabajo");
+        createPermissionIfNotExists("QUALITY_OF_WORK:READ",   "Ver y consultar categorías de calidad de trabajo");
+        createPermissionIfNotExists("QUALITY_OF_WORK:UPDATE", "Modificar categorías de calidad de trabajo");
+        createPermissionIfNotExists("QUALITY_OF_WORK:DELETE", "Eliminar categorías de calidad de trabajo");
+        createPermissionIfNotExists("SAFETY_COMPLIANCE:CREATE", "Crear categorías de cumplimiento de seguridad");
+        createPermissionIfNotExists("SAFETY_COMPLIANCE:READ",   "Ver y consultar categorías de cumplimiento de seguridad");
+        createPermissionIfNotExists("SAFETY_COMPLIANCE:UPDATE", "Modificar categorías de cumplimiento de seguridad");
+        createPermissionIfNotExists("SAFETY_COMPLIANCE:DELETE", "Eliminar categorías de cumplimiento de seguridad");
+        createPermissionIfNotExists("NO_RE_HIRED_CAUSE:CREATE", "Crear causas de no recontratación");
+        createPermissionIfNotExists("NO_RE_HIRED_CAUSE:READ",   "Ver y consultar causas de no recontratación");
+        createPermissionIfNotExists("NO_RE_HIRED_CAUSE:UPDATE", "Modificar causas de no recontratación");
+        createPermissionIfNotExists("NO_RE_HIRED_CAUSE:DELETE", "Eliminar causas de no recontratación");
+        createPermissionIfNotExists("TERMINATION:CREATE", "Crear finiquitos");
+        createPermissionIfNotExists("TERMINATION:READ",   "Ver y consultar finiquitos");
+        createPermissionIfNotExists("TERMINATION:UPDATE", "Modificar finiquitos");
+        createPermissionIfNotExists("TERMINATION:DELETE", "Eliminar finiquitos");
 
         log.info("Permissions initialized.");
     }
