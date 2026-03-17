@@ -1,0 +1,16 @@
+package com.crm.mcsv_rrhh.repository;
+
+import com.crm.mcsv_rrhh.entity.SafetyCompliance;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import java.util.List;
+
+public interface SafetyComplianceRepository extends JpaRepository<SafetyCompliance, Long>, JpaSpecificationExecutor<SafetyCompliance> {
+
+    boolean existsByName(String name);
+
+    boolean existsByNameAndIdNot(String name, Long id);
+
+    List<SafetyCompliance> findByActiveTrue();
+}
