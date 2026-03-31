@@ -22,8 +22,13 @@ public class ProjectResponse {
     private String description;
 
     private Long typeId;
+    private String typeName;
+
     private Long statusId;
+    private String statusName;
+
     private Long specialtyId;
+    private String specialtyName;
 
     private Long visitorId;
     private String visitorName;
@@ -32,6 +37,7 @@ public class ProjectResponse {
     private String supervisorName;
 
     private List<Long> companyRepresentativeIds;
+    private List<String> companyRepresentativeNames;
 
     private LocalDate startDate;
     private LocalDate realStartDate;

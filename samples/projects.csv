@@ -1,0 +1,6 @@
+centro de costo,nombre,dirección,descripción,tipo id,estado id,especialidad id,visitador id,supervisor id,representantes ids,fecha inicio,fecha fin
+1001,Planta Procesadora Norte,"Av. Industrial 450, Antofagasta","Construcción de planta procesadora de minerales",1,2,1,1,1,1,2025-03-01,2025-12-31
+1002,Subestación Eléctrica Sector B,"Camino Minero km 12, Calama","Instalación de subestación de media tensión 23kV",2,2,2,2,1,1,2025-04-01,2025-10-31
+1003,Mantenimiento Anual Refinería,"Av. Refinería 800, Copiapó","Mantenimiento preventivo anual de equipos mecánicos",5,1,3,1,1,1,2025-06-01,2025-07-31
+1004,Montaje Estructura Bodega Industrial,"Ruta 5 Norte km 820, La Serena","Fabricación y montaje de estructura metálica para bodega",1,1,7,2,1,1,2025-05-15,2025-11-30
+1005,Sistema SCADA Planta Sur,"Parque Industrial Sur, Santiago","Implementación de sistema de control y monitoreo SCADA",4,2,4,1,1,1,2025-02-01,2025-08-31

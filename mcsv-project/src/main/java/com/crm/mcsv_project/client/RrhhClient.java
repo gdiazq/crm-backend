@@ -11,6 +11,9 @@ public interface RrhhClient {
     @GetMapping("/employee/select/supervisors")
     List<PersonSelectItem> getSupervisors();
 
+    @GetMapping("/employee/select/visitors")
+    List<PersonSelectItem> getVisitors();
+
     @GetMapping("/employee/select/company-representatives")
     List<PersonSelectItem> getCompanyRepresentatives();
 

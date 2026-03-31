@@ -1,0 +1,7 @@
+nombre,descripción
+Planificado,Proyecto aprobado y en fase de planificación previa al inicio
+En Ejecución,Proyecto actualmente en curso con trabajos en terreno
+En Pausa,Proyecto detenido temporalmente por causas operativas o contractuales
+Finalizado,Proyecto completado con cierre formal aprobado
+Cancelado,Proyecto cancelado antes de su finalización
+En Licitación,Proyecto en proceso de adjudicación o cotización

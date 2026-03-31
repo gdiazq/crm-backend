@@ -2,3 +2,6 @@
 /.idea
 /.vscode
 target/
+
+/mcsv-project/.*
+/mcsv-project/.settings/org.*

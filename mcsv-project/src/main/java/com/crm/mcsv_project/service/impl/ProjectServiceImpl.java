@@ -213,6 +213,7 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
             int iSpecialtyId = idx.getOrDefault("especialidad id", -1);
             int iVisitorId   = idx.getOrDefault("visitador id", -1);
             int iSupervisorId= idx.getOrDefault("supervisor id", -1);
+            int iCompanyReps = idx.getOrDefault("representantes ids", -1);
             int iStartDate   = idx.getOrDefault("fecha inicio", -1);
             int iEndDate     = idx.getOrDefault("fecha fin", -1);
 
@@ -246,6 +247,7 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                     request.setSpecialtyId(parseLong(col(cols, iSpecialtyId)));
                     request.setVisitorId(parseLong(col(cols, iVisitorId)));
                     request.setSupervisorId(parseLong(col(cols, iSupervisorId)));
+                    request.setCompanyRepresentativeIds(parseLongList(col(cols, iCompanyReps)));
                     request.setStartDate(parseDate(col(cols, iStartDate)));
                     request.setEndDate(parseDate(col(cols, iEndDate)));
 
@@ -272,7 +274,7 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
 
     private Map<Long, String> fetchVisitorMap() {
         try {
-            return userClient.getVisitors().stream()
+            return rrhhClient.getVisitors().stream()
                     .collect(Collectors.toMap(PersonSelectItem::id, PersonSelectItem::name));
         } catch (Exception e) {
             log.warn("No se pudieron obtener visitadores: {}", e.getMessage());
@@ -313,13 +315,22 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                 .address(p.getAddress())
                 .description(p.getDescription())
                 .typeId(p.getType() != null ? p.getType().getId() : null)
+                .typeName(p.getType() != null ? p.getType().getName() : null)
                 .statusId(p.getStatus() != null ? p.getStatus().getId() : null)
+                .statusName(p.getStatus() != null ? p.getStatus().getName() : null)
                 .specialtyId(p.getSpecialty() != null ? p.getSpecialty().getId() : null)
+                .specialtyName(p.getSpecialty() != null ? p.getSpecialty().getName() : null)
                 .visitorId(p.getVisitorId())
                 .visitorName(p.getVisitorId() != null ? visitorMap.getOrDefault(p.getVisitorId(), null) : null)
                 .supervisorId(p.getSupervisorId())
                 .supervisorName(p.getSupervisorId() != null ? supervisorMap.getOrDefault(p.getSupervisorId(), null) : null)
                 .companyRepresentativeIds(p.getCompanyRepresentativeIds())
+                .companyRepresentativeNames(p.getCompanyRepresentativeIds() != null
+                        ? p.getCompanyRepresentativeIds().stream()
+                                .map(id -> companyRepMap.getOrDefault(id, null))
+                                .filter(name -> name != null)
+                                .collect(Collectors.toList())
+                        : Collections.emptyList())
                 .startDate(p.getStartDate())
                 .realStartDate(p.getRealStartDate())
                 .endDate(p.getEndDate())
@@ -410,6 +421,16 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
     private Long parseLong(String value) {
         if (value == null || value.isEmpty()) return null;
         try { return Long.parseLong(value); } catch (NumberFormatException e) { return null; }
+    }
+
+    private List<Long> parseLongList(String value) {
+        if (value == null || value.isEmpty()) return new ArrayList<>();
+        List<Long> result = new ArrayList<>();
+        for (String part : value.split("\\|")) {
+            Long id = parseLong(part.trim());
+            if (id != null) result.add(id);
+        }
+        return result;
     }
 
     private LocalDate parseDate(String value) {
