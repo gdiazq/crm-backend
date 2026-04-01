@@ -1,0 +1,6 @@
+nombre,descripción
+Cumplimiento Total,Cumple con todos los protocolos y normativas de seguridad sin observaciones
+Cumplimiento Parcial,Cumple con la mayoría de los protocolos con algunas observaciones menores
+Cumplimiento Mínimo,Cumple solo con los requisitos básicos de seguridad con observaciones relevantes
+Incumplimiento Leve,Presenta infracciones menores a los protocolos de seguridad
+Incumplimiento Grave,Presenta infracciones graves o reiteradas a los protocolos de seguridad
