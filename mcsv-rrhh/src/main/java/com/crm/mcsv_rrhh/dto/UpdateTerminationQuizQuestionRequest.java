@@ -1,0 +1,36 @@
+package com.crm.mcsv_rrhh.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateTerminationQuizQuestionRequest {
+
+    @NotNull(message = "El id es obligatorio")
+    @Schema(description = "ID de la pregunta")
+    private Long id;
+
+    @Schema(description = "Texto de la pregunta")
+    private String question;
+
+    @Schema(description = "Grupo o sección de la pregunta")
+    private String questionGroup;
+
+    @Schema(description = "Indica si la pregunta es obligatoria")
+    private Boolean required;
+
+    @Schema(description = "Orden de visualización")
+    private Integer displayOrder;
+
+    @Valid
+    @Schema(description = "Opciones de respuesta — reemplaza todas las opciones existentes")
+    private List<TerminationQuizOptionRequest> options;
+}
