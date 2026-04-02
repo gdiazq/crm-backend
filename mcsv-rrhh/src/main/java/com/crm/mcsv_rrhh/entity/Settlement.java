@@ -7,15 +7,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "termination_agreements", indexes = {
-        @Index(name = "idx_ta_employee_id",  columnList = "employee_id"),
-        @Index(name = "idx_ta_contract_id",  columnList = "contract_id"),
-        @Index(name = "idx_ta_status",       columnList = "status"),
-        @Index(name = "idx_ta_end_date",     columnList = "end_date"),
-        @Index(name = "idx_ta_created_at",   columnList = "created_at")
+@Table(name = "settlements", indexes = {
+        @Index(name = "idx_stl_employee_id",  columnList = "employee_id"),
+        @Index(name = "idx_stl_contract_id",  columnList = "contract_id"),
+        @Index(name = "idx_stl_status",       columnList = "status"),
+        @Index(name = "idx_stl_end_date",     columnList = "end_date"),
+        @Index(name = "idx_stl_created_at",   columnList = "created_at")
 })
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
-public class TerminationAgreement {
+public class Settlement {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

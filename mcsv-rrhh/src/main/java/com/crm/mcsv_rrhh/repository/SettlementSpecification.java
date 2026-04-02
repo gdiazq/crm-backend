@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.repository;
 
-import com.crm.mcsv_rrhh.entity.TerminationAgreement;
+import com.crm.mcsv_rrhh.entity.Settlement;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -9,19 +9,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TerminationAgreementSpecification {
+public class SettlementSpecification {
 
-    private TerminationAgreementSpecification() {}
+    private SettlementSpecification() {}
 
-    public static Specification<TerminationAgreement> withFilters(String search,
-                                                                   String status,
-                                                                   Long employeeId,
-                                                                   Long legalTerminationCauseId,
-                                                                   Boolean rehireEligible,
-                                                                   LocalDate endDateFrom,
-                                                                   LocalDate endDateTo,
-                                                                   LocalDateTime createdFrom,
-                                                                   LocalDateTime createdTo) {
+    public static Specification<Settlement> withFilters(String search,
+                                                         String status,
+                                                         Long employeeId,
+                                                         Long legalTerminationCauseId,
+                                                         Boolean rehireEligible,
+                                                         LocalDate endDateFrom,
+                                                         LocalDate endDateTo,
+                                                         LocalDateTime createdFrom,
+                                                         LocalDateTime createdTo) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -37,25 +37,18 @@ public class TerminationAgreementSpecification {
 
             if (status != null && !status.isBlank())
                 predicates.add(cb.equal(root.get("status"), status));
-
             if (employeeId != null)
                 predicates.add(cb.equal(root.get("employeeId"), employeeId));
-
             if (legalTerminationCauseId != null)
                 predicates.add(cb.equal(root.get("legalTerminationCause").get("id"), legalTerminationCauseId));
-
             if (rehireEligible != null)
                 predicates.add(cb.equal(root.get("rehireEligible"), rehireEligible));
-
             if (endDateFrom != null)
                 predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), endDateFrom));
-
             if (endDateTo != null)
                 predicates.add(cb.lessThanOrEqualTo(root.get("endDate"), endDateTo));
-
             if (createdFrom != null)
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFrom));
-
             if (createdTo != null)
                 predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdTo));
 

@@ -1,8 +1,8 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.mcsv_rrhh.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.TerminationAgreementResponse;
-import com.crm.mcsv_rrhh.service.TerminationAgreementService;
+import com.crm.mcsv_rrhh.dto.SettlementResponse;
+import com.crm.mcsv_rrhh.service.SettlementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -16,16 +16,16 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/termination-agreement")
+@RequestMapping("/settlements")
 @RequiredArgsConstructor
-@Tag(name = "TerminationAgreement", description = "Gestión de finiquitos")
-public class TerminationAgreementController {
+@Tag(name = "Settlement", description = "Gestión de finiquitos")
+public class SettlementController {
 
-    private final TerminationAgreementService service;
+    private final SettlementService service;
 
     @GetMapping("/paged")
     @Operation(summary = "Listar finiquitos (paginado)")
-    public ResponseEntity<PagedResponse<TerminationAgreementResponse>> paged(
+    public ResponseEntity<PagedResponse<SettlementResponse>> paged(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long employeeId,
@@ -48,7 +48,7 @@ public class TerminationAgreementController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener finiquito por ID")
-    public ResponseEntity<TerminationAgreementResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<SettlementResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
     }
 }
