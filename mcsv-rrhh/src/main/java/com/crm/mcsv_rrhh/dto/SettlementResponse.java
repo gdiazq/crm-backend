@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -30,7 +31,7 @@ public class SettlementResponse {
     private Boolean rehireEligible;
     private Long noReHiredCauseId;
     private String noReHiredCauseName;
-    private String terminationDocumentUrl;
+    private List<FileMetadataResponse> documents;
     private String observations;
     private Long hrRequestId;
     private LocalDateTime createdAt;

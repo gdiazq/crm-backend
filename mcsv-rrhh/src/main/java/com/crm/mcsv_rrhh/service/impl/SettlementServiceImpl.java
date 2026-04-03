@@ -1,5 +1,7 @@
 package com.crm.mcsv_rrhh.service.impl;
 
+import com.crm.mcsv_rrhh.client.StorageClient;
+import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.SettlementRequest;
 import com.crm.mcsv_rrhh.dto.SettlementResponse;
@@ -13,18 +15,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SettlementServiceImpl implements SettlementService {
+
+    private static final String ENTITY_TYPE = "SETTLEMENT";
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L;
+    private static final Set<String> ALLOWED_TYPES = Set.of(
+            "application/pdf", "image/jpeg", "image/png");
 
     private final SettlementRepository repository;
     private final EmployeeRepository employeeRepository;
@@ -34,6 +47,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final SafetyComplianceRepository safetyComplianceRepository;
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TerminationQuizQuestionRepository quizQuestionRepository;
+    private final StorageClient storageClient;
 
     @Override
     public PagedResponse<SettlementResponse> list(String search, String status,
@@ -54,17 +68,18 @@ public class SettlementServiceImpl implements SettlementService {
         long signed = repository.count(SettlementSpecification.withFilters(
                 null, "FIRMADO", null, null, null, null, null, null, null));
 
-        return PagedResponse.of(page.map(this::toResponse), total, signed);
+        return PagedResponse.of(page.map(e -> toResponse(e, Collections.emptyList())), total, signed);
     }
 
     @Override
     public SettlementResponse getById(Long id) {
-        return toResponse(findOrThrow(id));
+        Settlement entity = findOrThrow(id);
+        return toResponse(entity, fetchDocuments(id));
     }
 
     @Override
     @Transactional
-    public SettlementResponse create(SettlementRequest request) {
+    public SettlementResponse create(SettlementRequest request, List<MultipartFile> files) {
         employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + request.getEmployeeId()));
         contractRepository.findById(request.getContractId())
@@ -81,7 +96,6 @@ public class SettlementServiceImpl implements SettlementService {
                 .noReHiredCause(request.getRehireEligible() != null && !request.getRehireEligible()
                         ? resolveOrNull(request.getNoReHiredCauseId(), noReHiredCauseRepository, "Causa de no recontratación")
                         : null)
-                .terminationDocumentUrl(request.getTerminationDocumentUrl())
                 .observations(request.getObservations())
                 .hrRequestId(request.getHrRequestId())
                 .status("BORRADOR")
@@ -92,12 +106,13 @@ public class SettlementServiceImpl implements SettlementService {
         // TODO (Parte 3): generar SettlementQuiz por cada pregunta activa
         // quizService.generateQuizForSettlement(saved.getId());
 
-        return toResponse(saved);
+        List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
+        return toResponse(saved, documents);
     }
 
     @Override
     @Transactional
-    public SettlementResponse update(UpdateSettlementRequest request) {
+    public SettlementResponse update(UpdateSettlementRequest request, List<MultipartFile> files) {
         Settlement entity = findOrThrow(request.getId());
 
         if (!"BORRADOR".equals(entity.getStatus()))
@@ -114,11 +129,13 @@ public class SettlementServiceImpl implements SettlementService {
             else if (request.getRehireEligible())
                 entity.setNoReHiredCause(null);
         }
-        if (request.getTerminationDocumentUrl() != null) entity.setTerminationDocumentUrl(request.getTerminationDocumentUrl());
-        if (request.getObservations() != null)           entity.setObservations(request.getObservations());
-        if (request.getHrRequestId() != null)            entity.setHrRequestId(request.getHrRequestId());
+        if (request.getObservations() != null) entity.setObservations(request.getObservations());
+        if (request.getHrRequestId() != null)  entity.setHrRequestId(request.getHrRequestId());
 
-        return toResponse(repository.save(entity));
+        Settlement saved = repository.save(entity);
+        uploadFiles(saved.getId(), saved.getEmployeeId(), files);
+        List<FileMetadataResponse> documents = fetchDocuments(saved.getId());
+        return toResponse(saved, documents);
     }
 
     @Override
@@ -182,7 +199,7 @@ public class SettlementServiceImpl implements SettlementService {
                 .orElseThrow(() -> new ResourceNotFoundException(label + " no encontrado con id: " + id));
     }
 
-    private SettlementResponse toResponse(Settlement e) {
+    private SettlementResponse toResponse(Settlement e, List<FileMetadataResponse> documents) {
         Employee emp = e.getEmployee();
         return SettlementResponse.builder()
                 .id(e.getId())
@@ -201,12 +218,40 @@ public class SettlementServiceImpl implements SettlementService {
                 .rehireEligible(e.getRehireEligible())
                 .noReHiredCauseId(e.getNoReHiredCause() != null ? e.getNoReHiredCause().getId() : null)
                 .noReHiredCauseName(e.getNoReHiredCause() != null ? e.getNoReHiredCause().getName() : null)
-                .terminationDocumentUrl(e.getTerminationDocumentUrl())
+                .documents(documents)
                 .observations(e.getObservations())
                 .hrRequestId(e.getHrRequestId())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
+    }
+
+    private List<FileMetadataResponse> uploadFiles(Long settlementId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return Collections.emptyList();
+        List<FileMetadataResponse> uploaded = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file.getSize() > MAX_FILE_SIZE)
+                throw new IllegalArgumentException(
+                        "El archivo '" + file.getOriginalFilename() + "' supera el límite de 10MB.");
+            if (!ALLOWED_TYPES.contains(file.getContentType()))
+                throw new IllegalArgumentException(
+                        "El archivo '" + file.getOriginalFilename() + "' no es un formato permitido. Use PDF, JPG o PNG.");
+            ResponseEntity<FileMetadataResponse> response =
+                    storageClient.upload(file, uploadedBy, ENTITY_TYPE, settlementId, false);
+            if (response.getBody() != null) uploaded.add(response.getBody());
+        }
+        return uploaded;
+    }
+
+    private List<FileMetadataResponse> fetchDocuments(Long settlementId) {
+        try {
+            ResponseEntity<List<FileMetadataResponse>> response =
+                    storageClient.listByEntity(ENTITY_TYPE, settlementId);
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener documentos del finiquito {}: {}", settlementId, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     private String fullName(Employee emp) {

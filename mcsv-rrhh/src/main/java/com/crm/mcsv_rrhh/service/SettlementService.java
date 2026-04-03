@@ -5,8 +5,10 @@ import com.crm.mcsv_rrhh.dto.SettlementRequest;
 import com.crm.mcsv_rrhh.dto.SettlementResponse;
 import com.crm.mcsv_rrhh.dto.UpdateSettlementRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface SettlementService {
 
@@ -19,9 +21,9 @@ public interface SettlementService {
 
     SettlementResponse getById(Long id);
 
-    SettlementResponse create(SettlementRequest request);
+    SettlementResponse create(SettlementRequest request, List<MultipartFile> files);
 
-    SettlementResponse update(UpdateSettlementRequest request);
+    SettlementResponse update(UpdateSettlementRequest request, List<MultipartFile> files);
 
     void sign(Long id);
 

@@ -14,10 +14,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/settlements")
@@ -56,15 +59,19 @@ public class SettlementController {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    @PostMapping("/create")
-    @Operation(summary = "Crear finiquito")
-    public ResponseEntity<SettlementResponse> create(@Valid @RequestBody SettlementRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Crear finiquito (con documentos opcionales)")
+    public ResponseEntity<SettlementResponse> create(
+            @RequestPart("data") @Valid SettlementRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request, files));
     }
 
-    @PutMapping("/update")
-    @Operation(summary = "Actualizar finiquito")
-    public ResponseEntity<SettlementResponse> update(@Valid @RequestBody UpdateSettlementRequest request) {
-        return ResponseEntity.ok(service.update(request));
+    @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Actualizar finiquito (con documentos opcionales)")
+    public ResponseEntity<SettlementResponse> update(
+            @RequestPart("data") @Valid UpdateSettlementRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(service.update(request, files));
     }
 }

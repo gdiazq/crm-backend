@@ -40,9 +40,6 @@ public class SettlementRequest {
     @Schema(description = "ID de la causa de no recontratación (solo si rehireEligible=false)")
     private Long noReHiredCauseId;
 
-    @Schema(description = "URL del documento de finiquito en mcsv-storage")
-    private String terminationDocumentUrl;
-
     @Schema(description = "Observaciones adicionales")
     private String observations;
 
