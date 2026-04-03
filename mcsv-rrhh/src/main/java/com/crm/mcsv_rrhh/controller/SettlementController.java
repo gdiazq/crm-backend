@@ -1,15 +1,19 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.mcsv_rrhh.dto.SettlementRequest;
 import com.crm.mcsv_rrhh.dto.SettlementResponse;
+import com.crm.mcsv_rrhh.dto.UpdateSettlementRequest;
 import com.crm.mcsv_rrhh.service.SettlementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,5 +54,17 @@ public class SettlementController {
     @Operation(summary = "Obtener finiquito por ID")
     public ResponseEntity<SettlementResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
+    }
+
+    @PostMapping("/create")
+    @Operation(summary = "Crear finiquito")
+    public ResponseEntity<SettlementResponse> create(@Valid @RequestBody SettlementRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    }
+
+    @PutMapping("/update")
+    @Operation(summary = "Actualizar finiquito")
+    public ResponseEntity<SettlementResponse> update(@Valid @RequestBody UpdateSettlementRequest request) {
+        return ResponseEntity.ok(service.update(request));
     }
 }
