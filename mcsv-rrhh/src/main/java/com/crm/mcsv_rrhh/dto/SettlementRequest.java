@@ -17,10 +17,6 @@ public class SettlementRequest {
     @Schema(description = "ID del empleado")
     private Long employeeId;
 
-    @NotNull(message = "El contrato es obligatorio")
-    @Schema(description = "ID del contrato")
-    private Long contractId;
-
     @NotNull(message = "La fecha de término es obligatoria")
     @Schema(description = "Fecha de término del contrato")
     private LocalDate endDate;
@@ -42,7 +38,4 @@ public class SettlementRequest {
 
     @Schema(description = "Observaciones adicionales")
     private String observations;
-
-    @Schema(description = "ID de la solicitud HR relacionada (opcional)")
-    private Long hrRequestId;
 }

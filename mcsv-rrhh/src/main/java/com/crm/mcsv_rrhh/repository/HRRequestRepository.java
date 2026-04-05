@@ -17,6 +17,7 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
     Page<HRRequest> findByIdModuleAndStatusId(Long idModule, Long statusId, Pageable pageable);
     Optional<HRRequest> findTopByIdModuleOrderByCreatedAtDesc(Long idModule);
     Optional<HRRequest> findTopByContractIdOrderByCreatedAtDesc(Long contractId);
+    Optional<HRRequest> findTopBySettlementIdOrderByCreatedAtDesc(Long settlementId);
     long countByIdModule(Long idModule);
     long countByStatusId(Long statusId);
     long countByIdModuleAndStatusId(Long idModule, Long statusId);

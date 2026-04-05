@@ -106,6 +106,32 @@ public class HRRequestServiceImpl implements HRRequestService {
         return hrRequestRepository.save(request);
     }
 
+    @Override
+    public HRRequest createForSettlement(Long settlementId, Long employeeId, String action, String proposedData) {
+        HRRequestType type = hrRequestTypeRepository.findByName("Finiquito")
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Finiquito"));
+
+        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
+                ? "Pendiente de revisión"
+                : "Pendiente de aprobación";
+
+        Long statusId = employeeStatusRepository.findByName(initialStatusName)
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
+
+        HRRequest request = HRRequest.builder()
+                .requestTypeId(type.getId())
+                .statusId(statusId)
+                .requireApproval(type.getRequireApproval())
+                .idModule(employeeId)
+                .settlementId(settlementId)
+                .action(action)
+                .proposedData(proposedData)
+                .build();
+
+        return hrRequestRepository.save(request);
+    }
+
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     @Override

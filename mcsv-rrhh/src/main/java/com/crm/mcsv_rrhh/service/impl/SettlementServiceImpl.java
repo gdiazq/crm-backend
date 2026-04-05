@@ -9,7 +9,9 @@ import com.crm.mcsv_rrhh.dto.UpdateSettlementRequest;
 import com.crm.mcsv_rrhh.entity.*;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
+import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.SettlementService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -48,6 +50,9 @@ public class SettlementServiceImpl implements SettlementService {
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TerminationQuizQuestionRepository quizQuestionRepository;
     private final StorageClient storageClient;
+    private final HRRequestService hrRequestService;
+    private final HRRequestRepository hrRequestRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public PagedResponse<SettlementResponse> list(String search, String status,
@@ -82,12 +87,15 @@ public class SettlementServiceImpl implements SettlementService {
     public SettlementResponse create(SettlementRequest request, List<MultipartFile> files) {
         employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + request.getEmployeeId()));
-        contractRepository.findById(request.getContractId())
-                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + request.getContractId()));
+
+        List<com.crm.mcsv_rrhh.entity.Contract> contracts = contractRepository.findByEmployeeId(request.getEmployeeId());
+        if (contracts.isEmpty())
+            throw new ResourceNotFoundException("El empleado no tiene contrato: " + request.getEmployeeId());
+        Long contractId = contracts.get(0).getId();
 
         Settlement entity = Settlement.builder()
                 .employeeId(request.getEmployeeId())
-                .contractId(request.getContractId())
+                .contractId(contractId)
                 .endDate(request.getEndDate())
                 .legalTerminationCause(resolveOrNull(request.getLegalTerminationCauseId(), legalTerminationCauseRepository, "Causal legal"))
                 .qualityOfWork(resolveOrNull(request.getQualityOfWorkId(), qualityOfWorkRepository, "Calidad de trabajo"))
@@ -97,11 +105,14 @@ public class SettlementServiceImpl implements SettlementService {
                         ? resolveOrNull(request.getNoReHiredCauseId(), noReHiredCauseRepository, "Causa de no recontratación")
                         : null)
                 .observations(request.getObservations())
-                .hrRequestId(request.getHrRequestId())
                 .status("BORRADOR")
                 .build();
 
         Settlement saved = repository.save(entity);
+
+        HRRequest hrReq = hrRequestService.createForSettlement(saved.getId(), saved.getEmployeeId(), "CREATE", null);
+        saved.setHrRequestId(hrReq.getId());
+        repository.save(saved);
 
         // TODO (Parte 3): generar SettlementQuiz por cada pregunta activa
         // quizService.generateQuizForSettlement(saved.getId());
@@ -130,7 +141,16 @@ public class SettlementServiceImpl implements SettlementService {
                 entity.setNoReHiredCause(null);
         }
         if (request.getObservations() != null) entity.setObservations(request.getObservations());
-        if (request.getHrRequestId() != null)  entity.setHrRequestId(request.getHrRequestId());
+
+        String proposedData;
+        try {
+            proposedData = objectMapper.writeValueAsString(request);
+        } catch (Exception e) {
+            throw new RuntimeException("Error serializando proposedData", e);
+        }
+
+        HRRequest hrReq = hrRequestService.createForSettlement(entity.getId(), entity.getEmployeeId(), "UPDATE", proposedData);
+        entity.setHrRequestId(hrReq.getId());
 
         Settlement saved = repository.save(entity);
         uploadFiles(saved.getId(), saved.getEmployeeId(), files);

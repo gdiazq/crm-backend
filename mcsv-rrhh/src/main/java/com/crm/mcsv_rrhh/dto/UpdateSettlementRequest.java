@@ -37,7 +37,4 @@ public class UpdateSettlementRequest {
 
     @Schema(description = "Observaciones adicionales")
     private String observations;
-
-    @Schema(description = "ID de la solicitud HR relacionada (opcional)")
-    private Long hrRequestId;
 }

@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
         @Index(name = "idx_hr_request_id_module",   columnList = "id_module"),
         @Index(name = "idx_hr_request_status_id",   columnList = "status_id"),
         @Index(name = "idx_hr_request_type_id",     columnList = "request_type_id"),
-        @Index(name = "idx_hr_request_contract_id", columnList = "contract_id"),
+        @Index(name = "idx_hr_request_contract_id",    columnList = "contract_id"),
+        @Index(name = "idx_hr_request_settlement_id",  columnList = "settlement_id"),
         @Index(name = "idx_hr_request_created_at",  columnList = "created_at"),
         @Index(name = "idx_hr_request_module_status", columnList = "id_module, status_id")
 })
@@ -50,6 +51,9 @@ public class HRRequest {
 
     @Column
     private Long contractId;
+
+    @Column
+    private Long settlementId;
 
     @Column
     private String action;
