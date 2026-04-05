@@ -99,6 +99,12 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getEmployeesWithoutContract());
     }
 
+    @GetMapping("/select/with-contract")
+    @Operation(summary = "Empleados con contrato", description = "Retorna empleados activos y aprobados que tienen contrato")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithContract() {
+        return ResponseEntity.ok(employeeService.getEmployeesWithContract());
+    }
+
     @GetMapping("/select/company-representatives")
     @Operation(summary = "Representantes de empresa", description = "Retorna empleados cuyo usuario vinculado tiene un rol de representante de empresa")
     public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getCompanyRepresentatives() {

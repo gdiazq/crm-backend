@@ -241,6 +241,27 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public List<EmployeeService.EmployeeSelectItem> getEmployeesWithContract() {
+        Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
+
+        List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
+                .map(c -> c.getEmployeeId())
+                .distinct()
+                .toList();
+
+        if (employeeIdsWithContract.isEmpty()) return List.of();
+
+        return employeeRepository.findByActiveTrueAndStatusIdAndIdIn(approvedStatusId, employeeIdsWithContract)
+                .stream()
+                .map(e -> new EmployeeService.EmployeeSelectItem(
+                        e.getId(),
+                        e.getFirstName() + " " + e.getPaternalLastName()))
+                .toList();
+    }
+
+    @Override
     public List<EmployeeService.EmployeeSelectItem> getSupervisors() {
         try {
             List<Long> userIds = userClient.getSupervisors().stream().map(u -> u.getId()).toList();

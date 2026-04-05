@@ -34,6 +34,8 @@ public interface EmployeeService {
 
     List<EmployeeSelectItem> getEmployeesWithoutContract();
 
+    List<EmployeeSelectItem> getEmployeesWithContract();
+
     List<EmployeeSelectItem> getSupervisors();
 
     List<EmployeeSelectItem> getVisitors();
