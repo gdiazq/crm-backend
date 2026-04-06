@@ -1,7 +1,10 @@
 package com.crm.mcsv_rrhh.repository;
 
+import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.Settlement;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -14,7 +17,7 @@ public class SettlementSpecification {
     private SettlementSpecification() {}
 
     public static Specification<Settlement> withFilters(String search,
-                                                         String status,
+                                                         Long statusId,
                                                          Long employeeId,
                                                          Long legalTerminationCauseId,
                                                          Boolean rehireEligible,
@@ -35,8 +38,25 @@ public class SettlementSpecification {
                 ));
             }
 
-            if (status != null && !status.isBlank())
-                predicates.add(cb.equal(root.get("status"), status));
+            if (statusId != null) {
+                // Subquery: max createdAt de hr_requests para este finiquito
+                Subquery<LocalDateTime> maxDate = query.subquery(LocalDateTime.class);
+                Root<HRRequest> hrForMax = maxDate.from(HRRequest.class);
+                maxDate.select(cb.greatest(hrForMax.<LocalDateTime>get("createdAt")))
+                       .where(cb.equal(hrForMax.get("settlementId"), root.get("id")));
+
+                // Existe un hr_request con ese max date y el statusId pedido
+                Subquery<Long> hrExists = query.subquery(Long.class);
+                Root<HRRequest> hrRoot = hrExists.from(HRRequest.class);
+                hrExists.select(hrRoot.get("id"))
+                        .where(
+                            cb.equal(hrRoot.get("settlementId"), root.get("id")),
+                            cb.equal(hrRoot.get("statusId"), statusId),
+                            cb.equal(hrRoot.get("createdAt"), maxDate)
+                        );
+                predicates.add(cb.exists(hrExists));
+            }
+
             if (employeeId != null)
                 predicates.add(cb.equal(root.get("employeeId"), employeeId));
             if (legalTerminationCauseId != null)

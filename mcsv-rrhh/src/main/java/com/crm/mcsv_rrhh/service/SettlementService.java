@@ -25,9 +25,5 @@ public interface SettlementService {
 
     SettlementResponse update(UpdateSettlementRequest request, List<MultipartFile> files);
 
-    void sign(Long id);
-
-    void cancel(Long id);
-
     byte[] exportCsv();
 }

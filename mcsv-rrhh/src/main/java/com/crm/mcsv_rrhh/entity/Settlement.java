@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Table(name = "settlements", indexes = {
         @Index(name = "idx_stl_employee_id",  columnList = "employee_id"),
         @Index(name = "idx_stl_contract_id",  columnList = "contract_id"),
-        @Index(name = "idx_stl_status",       columnList = "status"),
         @Index(name = "idx_stl_end_date",     columnList = "end_date"),
         @Index(name = "idx_stl_created_at",   columnList = "created_at")
 })
@@ -61,17 +60,6 @@ public class Settlement {
 
     @Column(columnDefinition = "TEXT")
     private String observations;
-
-    @Column(name = "hr_request_id")
-    private Long hrRequestId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hr_request_id", insertable = false, updatable = false)
-    private HRRequest hrRequest;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private String status = "BORRADOR";
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

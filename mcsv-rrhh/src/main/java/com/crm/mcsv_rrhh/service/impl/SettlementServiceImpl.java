@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -49,6 +50,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final SafetyComplianceRepository safetyComplianceRepository;
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TerminationQuizQuestionRepository quizQuestionRepository;
+    private final EmployeeStatusRepository employeeStatusRepository;
     private final StorageClient storageClient;
     private final HRRequestService hrRequestService;
     private final HRRequestRepository hrRequestRepository;
@@ -64,22 +66,33 @@ public class SettlementServiceImpl implements SettlementService {
         LocalDateTime cFrom = createdFrom != null ? createdFrom.atStartOfDay()   : null;
         LocalDateTime cTo   = createdTo   != null ? createdTo.atTime(23, 59, 59) : null;
 
+        Long statusId = status != null && !status.isBlank()
+                ? employeeStatusRepository.findByName(status).map(s -> s.getId()).orElse(null)
+                : null;
+
         Specification<Settlement> spec = SettlementSpecification.withFilters(
-                search, status, employeeId, legalTerminationCauseId,
+                search, statusId, employeeId, legalTerminationCauseId,
                 rehireEligible, endDateFrom, endDateTo, cFrom, cTo);
 
         Page<Settlement> page = repository.findAll(spec, pageable);
-        long total  = repository.count();
-        long signed = repository.count(SettlementSpecification.withFilters(
-                null, "FIRMADO", null, null, null, null, null, null, null));
+        long total    = repository.count();
+        long approved = resolveApprovedCount();
 
-        return PagedResponse.of(page.map(e -> toResponse(e, Collections.emptyList())), total, signed);
+        return PagedResponse.of(page.map(e -> {
+            Optional<HRRequest> hrReq = hrRequestRepository.findTopBySettlementIdOrderByCreatedAtDesc(e.getId());
+            Long reqId = hrReq.map(HRRequest::getId).orElse(null);
+            String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
+            return toResponse(e, Collections.emptyList(), reqId, statusName);
+        }), total, approved);
     }
 
     @Override
     public SettlementResponse getById(Long id) {
         Settlement entity = findOrThrow(id);
-        return toResponse(entity, fetchDocuments(id));
+        Optional<HRRequest> hrReq = hrRequestRepository.findTopBySettlementIdOrderByCreatedAtDesc(id);
+        Long requestId = hrReq.map(HRRequest::getId).orElse(null);
+        String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
+        return toResponse(entity, fetchDocuments(id), requestId, statusName);
     }
 
     @Override
@@ -88,7 +101,7 @@ public class SettlementServiceImpl implements SettlementService {
         employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + request.getEmployeeId()));
 
-        List<com.crm.mcsv_rrhh.entity.Contract> contracts = contractRepository.findByEmployeeId(request.getEmployeeId());
+        List<Contract> contracts = contractRepository.findByEmployeeId(request.getEmployeeId());
         if (contracts.isEmpty())
             throw new ResourceNotFoundException("El empleado no tiene contrato: " + request.getEmployeeId());
         Long contractId = contracts.get(0).getId();
@@ -105,42 +118,23 @@ public class SettlementServiceImpl implements SettlementService {
                         ? resolveOrNull(request.getNoReHiredCauseId(), noReHiredCauseRepository, "Causa de no recontratación")
                         : null)
                 .observations(request.getObservations())
-                .status("BORRADOR")
                 .build();
 
         Settlement saved = repository.save(entity);
-
         HRRequest hrReq = hrRequestService.createForSettlement(saved.getId(), saved.getEmployeeId(), "CREATE", null);
-        saved.setHrRequestId(hrReq.getId());
-        repository.save(saved);
 
         // TODO (Parte 3): generar SettlementQuiz por cada pregunta activa
         // quizService.generateQuizForSettlement(saved.getId());
 
         List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
-        return toResponse(saved, documents);
+        String statusName = resolveStatusName(hrReq.getStatusId());
+        return toResponse(saved, documents, hrReq.getId(), statusName);
     }
 
     @Override
     @Transactional
     public SettlementResponse update(UpdateSettlementRequest request, List<MultipartFile> files) {
         Settlement entity = findOrThrow(request.getId());
-
-        if (!"BORRADOR".equals(entity.getStatus()))
-            throw new IllegalStateException("Solo se pueden editar finiquitos en estado BORRADOR");
-
-        if (request.getEndDate() != null)                 entity.setEndDate(request.getEndDate());
-        if (request.getLegalTerminationCauseId() != null) entity.setLegalTerminationCause(resolveOrNull(request.getLegalTerminationCauseId(), legalTerminationCauseRepository, "Causal legal"));
-        if (request.getQualityOfWorkId() != null)         entity.setQualityOfWork(resolveOrNull(request.getQualityOfWorkId(), qualityOfWorkRepository, "Calidad de trabajo"));
-        if (request.getSafetyComplianceId() != null)      entity.setSafetyCompliance(resolveOrNull(request.getSafetyComplianceId(), safetyComplianceRepository, "Cumplimiento de seguridad"));
-        if (request.getRehireEligible() != null) {
-            entity.setRehireEligible(request.getRehireEligible());
-            if (!request.getRehireEligible() && request.getNoReHiredCauseId() != null)
-                entity.setNoReHiredCause(resolveOrNull(request.getNoReHiredCauseId(), noReHiredCauseRepository, "Causa de no recontratación"));
-            else if (request.getRehireEligible())
-                entity.setNoReHiredCause(null);
-        }
-        if (request.getObservations() != null) entity.setObservations(request.getObservations());
 
         String proposedData;
         try {
@@ -150,36 +144,12 @@ public class SettlementServiceImpl implements SettlementService {
         }
 
         HRRequest hrReq = hrRequestService.createForSettlement(entity.getId(), entity.getEmployeeId(), "UPDATE", proposedData);
-        entity.setHrRequestId(hrReq.getId());
-
-        Settlement saved = repository.save(entity);
-        uploadFiles(saved.getId(), saved.getEmployeeId(), files);
-        List<FileMetadataResponse> documents = fetchDocuments(saved.getId());
-        return toResponse(saved, documents);
-    }
-
-    @Override
-    @Transactional
-    public void sign(Long id) {
-        Settlement entity = findOrThrow(id);
-        if (!"BORRADOR".equals(entity.getStatus()))
-            throw new IllegalStateException("Solo se pueden firmar finiquitos en estado BORRADOR");
-
-        // TODO (Parte 3): validar que todas las preguntas requeridas tienen respuesta
-        // quizService.validateQuizCompleted(id);
-
-        entity.setStatus("FIRMADO");
         repository.save(entity);
-    }
 
-    @Override
-    @Transactional
-    public void cancel(Long id) {
-        Settlement entity = findOrThrow(id);
-        if ("CANCELADO".equals(entity.getStatus()))
-            throw new IllegalStateException("El finiquito ya está cancelado");
-        entity.setStatus("CANCELADO");
-        repository.save(entity);
+        uploadFiles(entity.getId(), entity.getEmployeeId(), files);
+        List<FileMetadataResponse> documents = fetchDocuments(entity.getId());
+        String statusName = resolveStatusName(hrReq.getStatusId());
+        return toResponse(entity, documents, hrReq.getId(), statusName);
     }
 
     @Override
@@ -189,24 +159,29 @@ public class SettlementServiceImpl implements SettlementService {
                    "Cumplimiento Seguridad,Recontratación,Causa No Recontratación," +
                    "URL Documento,Observaciones,Estado,Fecha Creación\n");
 
-        repository.findAll().forEach(e -> csv
-                .append(e.getId()).append(",")
-                .append(escape(fullName(e.getEmployee()))).append(",")
-                .append(e.getEmployee() != null ? e.getEmployee().getIdentification() : "").append(",")
-                .append(e.getContractId()).append(",")
-                .append(e.getEndDate() != null ? e.getEndDate() : "").append(",")
-                .append(e.getLegalTerminationCause() != null ? escape(e.getLegalTerminationCause().getName()) : "").append(",")
-                .append(e.getQualityOfWork() != null ? escape(e.getQualityOfWork().getName()) : "").append(",")
-                .append(e.getSafetyCompliance() != null ? escape(e.getSafetyCompliance().getName()) : "").append(",")
-                .append(e.getRehireEligible()).append(",")
-                .append(e.getNoReHiredCause() != null ? escape(e.getNoReHiredCause().getName()) : "").append(",")
-                .append(escape(e.getTerminationDocumentUrl())).append(",")
-                .append(escape(e.getObservations())).append(",")
-                .append(e.getStatus()).append(",")
-                .append(formatDate(e.getCreatedAt())).append("\n"));
+        repository.findAll().forEach(e -> {
+            String statusName = hrRequestRepository.findTopBySettlementIdOrderByCreatedAtDesc(e.getId())
+                    .map(r -> resolveStatusName(r.getStatusId())).orElse("");
+            csv.append(e.getId()).append(",")
+               .append(escape(fullName(e.getEmployee()))).append(",")
+               .append(e.getEmployee() != null ? e.getEmployee().getIdentification() : "").append(",")
+               .append(e.getContractId()).append(",")
+               .append(e.getEndDate() != null ? e.getEndDate() : "").append(",")
+               .append(e.getLegalTerminationCause() != null ? escape(e.getLegalTerminationCause().getName()) : "").append(",")
+               .append(e.getQualityOfWork() != null ? escape(e.getQualityOfWork().getName()) : "").append(",")
+               .append(e.getSafetyCompliance() != null ? escape(e.getSafetyCompliance().getName()) : "").append(",")
+               .append(e.getRehireEligible()).append(",")
+               .append(e.getNoReHiredCause() != null ? escape(e.getNoReHiredCause().getName()) : "").append(",")
+               .append(escape(e.getTerminationDocumentUrl())).append(",")
+               .append(escape(e.getObservations())).append(",")
+               .append(escape(statusName)).append(",")
+               .append(formatDate(e.getCreatedAt())).append("\n");
+        });
 
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private Settlement findOrThrow(Long id) {
         return repository.findById(id)
@@ -219,11 +194,23 @@ public class SettlementServiceImpl implements SettlementService {
                 .orElseThrow(() -> new ResourceNotFoundException(label + " no encontrado con id: " + id));
     }
 
-    private SettlementResponse toResponse(Settlement e, List<FileMetadataResponse> documents) {
+    private String resolveStatusName(Long statusId) {
+        if (statusId == null) return null;
+        return employeeStatusRepository.findById(statusId).map(s -> s.getName()).orElse(null);
+    }
+
+    private long resolveApprovedCount() {
+        return employeeStatusRepository.findByName("Aprobado")
+                .map(s -> hrRequestRepository.countSettlementsWithLatestStatusId(s.getId()))
+                .orElse(0L);
+    }
+
+    private SettlementResponse toResponse(Settlement e, List<FileMetadataResponse> documents,
+                                           Long requestId, String statusName) {
         Employee emp = e.getEmployee();
         return SettlementResponse.builder()
                 .id(e.getId())
-                .status(e.getStatus())
+                .status(statusName)
                 .employeeId(e.getEmployeeId())
                 .employeeFullName(fullName(emp))
                 .employeeIdentification(emp != null ? emp.getIdentification() : null)
@@ -240,7 +227,7 @@ public class SettlementServiceImpl implements SettlementService {
                 .noReHiredCauseName(e.getNoReHiredCause() != null ? e.getNoReHiredCause().getName() : null)
                 .documents(documents)
                 .observations(e.getObservations())
-                .hrRequestId(e.getHrRequestId())
+                .hrRequestId(requestId)
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();

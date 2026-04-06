@@ -25,6 +25,10 @@ import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestSpecification;
 import com.crm.mcsv_rrhh.repository.HRRequestTypeRepository;
+import com.crm.mcsv_rrhh.repository.LegalTerminationCauseRepository;
+import com.crm.mcsv_rrhh.repository.NoReHiredCauseRepository;
+import com.crm.mcsv_rrhh.repository.QualityOfWorkRepository;
+import com.crm.mcsv_rrhh.repository.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,10 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final ContractRepository contractRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final SettlementRepository settlementRepository;
+    private final LegalTerminationCauseRepository legalTerminationCauseRepository;
+    private final QualityOfWorkRepository qualityOfWorkRepository;
+    private final SafetyComplianceRepository safetyComplianceRepository;
+    private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final UserClient userClient;
     private final StorageClient storageClient;
     private final ObjectMapper objectMapper;
@@ -203,6 +211,10 @@ public class HRRequestServiceImpl implements HRRequestService {
             hr.setApprovalDate(LocalDateTime.now());
             hr.setStatusId(resolveStatusId("Pendiente de aprobación"));
             hrRequestRepository.save(hr);
+
+            String reqTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
+                    .map(HRRequestType::getName).orElse(null);
+
             return toResponse(hr);
 
         } else if ("Pendiente de aprobación".equals(currentStatus)) {
@@ -260,11 +272,43 @@ public class HRRequestServiceImpl implements HRRequestService {
             } else if ("Finiquito".equals(requestTypeName)) {
                 Settlement settlement = settlementRepository.findById(hr.getSettlementId())
                         .orElseThrow(() -> new ResourceNotFoundException("Finiquito no encontrado: " + hr.getSettlementId()));
-                Contract contract = contractRepository.findById(settlement.getContractId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + settlement.getContractId()));
-                contractStatusRepository.findByName("Terminado")
-                        .ifPresent(s -> contract.setContractStatusId(s.getId()));
-                contractRepository.save(contract);
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    try {
+                        com.crm.mcsv_rrhh.dto.UpdateSettlementRequest proposed =
+                                objectMapper.readValue(hr.getProposedData(), com.crm.mcsv_rrhh.dto.UpdateSettlementRequest.class);
+                        if (proposed.getEndDate() != null)
+                            settlement.setEndDate(proposed.getEndDate());
+                        if (proposed.getLegalTerminationCauseId() != null)
+                            settlement.setLegalTerminationCause(
+                                    legalTerminationCauseRepository.findById(proposed.getLegalTerminationCauseId()).orElse(null));
+                        if (proposed.getQualityOfWorkId() != null)
+                            settlement.setQualityOfWork(
+                                    qualityOfWorkRepository.findById(proposed.getQualityOfWorkId()).orElse(null));
+                        if (proposed.getSafetyComplianceId() != null)
+                            settlement.setSafetyCompliance(
+                                    safetyComplianceRepository.findById(proposed.getSafetyComplianceId()).orElse(null));
+                        if (proposed.getRehireEligible() != null) {
+                            settlement.setRehireEligible(proposed.getRehireEligible());
+                            if (!proposed.getRehireEligible() && proposed.getNoReHiredCauseId() != null)
+                                settlement.setNoReHiredCause(
+                                        noReHiredCauseRepository.findById(proposed.getNoReHiredCauseId()).orElse(null));
+                            else if (proposed.getRehireEligible())
+                                settlement.setNoReHiredCause(null);
+                        }
+                        if (proposed.getObservations() != null)
+                            settlement.setObservations(proposed.getObservations());
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                    }
+                } else {
+                    Contract contract = contractRepository.findById(settlement.getContractId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + settlement.getContractId()));
+                    contractStatusRepository.findByName("Terminado")
+                            .ifPresent(s -> contract.setContractStatusId(s.getId()));
+                    contractRepository.save(contract);
+                }
+                settlementRepository.save(settlement);
 
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
