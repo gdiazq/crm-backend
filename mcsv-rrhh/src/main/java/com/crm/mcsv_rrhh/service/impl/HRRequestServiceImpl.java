@@ -15,6 +15,8 @@ import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
+import com.crm.mcsv_rrhh.entity.Settlement;
+import com.crm.mcsv_rrhh.repository.SettlementRepository;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.ContractRepository;
 import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
@@ -49,6 +51,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final EmployeeRepository employeeRepository;
     private final ContractRepository contractRepository;
     private final ContractStatusRepository contractStatusRepository;
+    private final SettlementRepository settlementRepository;
     private final UserClient userClient;
     private final StorageClient storageClient;
     private final ObjectMapper objectMapper;
@@ -254,6 +257,15 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 contractRepository.save(contract);
 
+            } else if ("Finiquito".equals(requestTypeName)) {
+                Settlement settlement = settlementRepository.findById(hr.getSettlementId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Finiquito no encontrado: " + hr.getSettlementId()));
+                Contract contract = contractRepository.findById(settlement.getContractId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + settlement.getContractId()));
+                contractStatusRepository.findByName("Terminado")
+                        .ifPresent(s -> contract.setContractStatusId(s.getId()));
+                contractRepository.save(contract);
+
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
@@ -348,6 +360,9 @@ public class HRRequestServiceImpl implements HRRequestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
                 contract.setStatusId(rejectedStatusId);
                 contractRepository.save(contract);
+            } else if ("Finiquito".equals(requestTypeName)) {
+                if (hr.getSettlementId() != null)
+                    settlementRepository.deleteById(hr.getSettlementId());
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
