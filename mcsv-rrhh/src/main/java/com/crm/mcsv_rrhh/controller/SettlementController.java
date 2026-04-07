@@ -35,8 +35,10 @@ public class SettlementController {
     public ResponseEntity<PagedResponse<SettlementResponse>> paged(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long employeeId,
             @RequestParam(required = false) Long legalTerminationCauseId,
+            @RequestParam(required = false) Long qualityOfWorkId,
+            @RequestParam(required = false) Long safetyComplianceId,
+            @RequestParam(required = false) Long noReHiredCauseId,
             @RequestParam(required = false) Boolean rehireEligible,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateTo,
@@ -49,7 +51,8 @@ public class SettlementController {
 
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(service.list(search, status, employeeId, legalTerminationCauseId,
+        return ResponseEntity.ok(service.list(search, status, legalTerminationCauseId,
+                qualityOfWorkId, safetyComplianceId, noReHiredCauseId,
                 rehireEligible, endDateFrom, endDateTo, createdFrom, createdTo, pageable));
     }
 

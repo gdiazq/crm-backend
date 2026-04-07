@@ -18,8 +18,10 @@ public class SettlementSpecification {
 
     public static Specification<Settlement> withFilters(String search,
                                                          Long statusId,
-                                                         Long employeeId,
                                                          Long legalTerminationCauseId,
+                                                         Long qualityOfWorkId,
+                                                         Long safetyComplianceId,
+                                                         Long noReHiredCauseId,
                                                          Boolean rehireEligible,
                                                          LocalDate endDateFrom,
                                                          LocalDate endDateTo,
@@ -57,10 +59,14 @@ public class SettlementSpecification {
                 predicates.add(cb.exists(hrExists));
             }
 
-            if (employeeId != null)
-                predicates.add(cb.equal(root.get("employeeId"), employeeId));
             if (legalTerminationCauseId != null)
                 predicates.add(cb.equal(root.get("legalTerminationCause").get("id"), legalTerminationCauseId));
+            if (qualityOfWorkId != null)
+                predicates.add(cb.equal(root.get("qualityOfWork").get("id"), qualityOfWorkId));
+            if (safetyComplianceId != null)
+                predicates.add(cb.equal(root.get("safetyCompliance").get("id"), safetyComplianceId));
+            if (noReHiredCauseId != null)
+                predicates.add(cb.equal(root.get("noReHiredCause").get("id"), noReHiredCauseId));
             if (rehireEligible != null)
                 predicates.add(cb.equal(root.get("rehireEligible"), rehireEligible));
             if (endDateFrom != null)

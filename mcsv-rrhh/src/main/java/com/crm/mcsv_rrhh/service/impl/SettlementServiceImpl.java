@@ -58,7 +58,10 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     public PagedResponse<SettlementResponse> list(String search, String status,
-                                                   Long employeeId, Long legalTerminationCauseId,
+                                                   Long legalTerminationCauseId,
+                                                   Long qualityOfWorkId,
+                                                   Long safetyComplianceId,
+                                                   Long noReHiredCauseId,
                                                    Boolean rehireEligible,
                                                    LocalDate endDateFrom, LocalDate endDateTo,
                                                    LocalDate createdFrom, LocalDate createdTo,
@@ -71,7 +74,7 @@ public class SettlementServiceImpl implements SettlementService {
                 : null;
 
         Specification<Settlement> spec = SettlementSpecification.withFilters(
-                search, statusId, employeeId, legalTerminationCauseId,
+                search, statusId, legalTerminationCauseId, qualityOfWorkId, safetyComplianceId, noReHiredCauseId,
                 rehireEligible, endDateFrom, endDateTo, cFrom, cTo);
 
         Page<Settlement> page = repository.findAll(spec, pageable);

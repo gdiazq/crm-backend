@@ -13,7 +13,10 @@ import java.util.List;
 public interface SettlementService {
 
     PagedResponse<SettlementResponse> list(String search, String status,
-                                            Long employeeId, Long legalTerminationCauseId,
+                                            Long legalTerminationCauseId,
+                                            Long qualityOfWorkId,
+                                            Long safetyComplianceId,
+                                            Long noReHiredCauseId,
                                             Boolean rehireEligible,
                                             LocalDate endDateFrom, LocalDate endDateTo,
                                             LocalDate createdFrom, LocalDate createdTo,
