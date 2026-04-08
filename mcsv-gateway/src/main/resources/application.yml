@@ -5,6 +5,9 @@ spring:
     active: dev
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  data:
+    redis:
+      url: ${REDIS_URL}
   main:
     web-application-type: reactive
   cloud:
@@ -48,6 +51,11 @@ spring:
               args:
                 name: mcsv-auth
                 fallbackUri: forward:/fallback/mcsv-auth
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@ipKeyResolver}"
         - id: mcsv-user
           uri: lb://mcsv-user
           predicates:
@@ -59,6 +67,11 @@ spring:
               args:
                 name: mcsv-user
                 fallbackUri: forward:/fallback/mcsv-user
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-role
           uri: lb://mcsv-user
           predicates:
@@ -70,6 +83,11 @@ spring:
               args:
                 name: mcsv-role
                 fallbackUri: forward:/fallback/mcsv-role
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-select
           uri: lb://mcsv-user
           predicates:
@@ -81,6 +99,11 @@ spring:
               args:
                 name: mcsv-select
                 fallbackUri: forward:/fallback/mcsv-user
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-notification-ws
           uri: lb:ws://mcsv-notification
           predicates:
@@ -98,6 +121,11 @@ spring:
               args:
                 name: mcsv-notification
                 fallbackUri: forward:/fallback/mcsv-notification
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-storage
           uri: lb://mcsv-storage
           predicates:
@@ -109,6 +137,11 @@ spring:
               args:
                 name: mcsv-storage
                 fallbackUri: forward:/fallback/mcsv-storage
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-rrhh
           uri: lb://mcsv-rrhh
           predicates:
@@ -120,6 +153,11 @@ spring:
               args:
                 name: mcsv-rrhh
                 fallbackUri: forward:/fallback/mcsv-rrhh
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-project
           uri: lb://mcsv-project
           predicates:
@@ -131,6 +169,11 @@ spring:
               args:
                 name: mcsv-project
                 fallbackUri: forward:/fallback/mcsv-project
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
 
 server:
   port: 9090
