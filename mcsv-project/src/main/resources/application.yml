@@ -25,6 +25,34 @@ openapi:
     version: 1.0.0
     url: ${URLAPI:http://localhost:9090}/v1/api/project
 
+feign:
+  circuitbreaker:
+    enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      mcsv-user:
+        baseConfig: default
+      mcsv-rrhh:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+    instances:
+      mcsv-user:
+        baseConfig: default
+      mcsv-rrhh:
+        baseConfig: default
+
 springdoc:
   api-docs:
     path: /api/api-docs/project
