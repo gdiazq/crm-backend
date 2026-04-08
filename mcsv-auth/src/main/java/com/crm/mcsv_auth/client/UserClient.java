@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-@FeignClient(name = "mcsv-user", fallback = UserClientFallback.class)
+@FeignClient(name = "mcsv-user", contextId = "authUserClient", fallback = UserClientFallback.class)
 public interface UserClient {
 
     @GetMapping("/detail/username/{username}")

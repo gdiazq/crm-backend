@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "mcsv-email", fallback = EmailClientFallback.class)
+@FeignClient(name = "mcsv-email", contextId = "authEmailClient", fallback = EmailClientFallback.class)
 public interface EmailClient {
 
     @PostMapping("/send")
