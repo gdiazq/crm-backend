@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@FeignClient(name = "mcsv-storage")
+@FeignClient(name = "mcsv-storage", fallback = com.crm.mcsv_rrhh.client.fallback.StorageClientFallback.class)
 public interface StorageClient {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
