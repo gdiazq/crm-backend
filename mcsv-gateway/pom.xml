@@ -81,6 +81,12 @@
             <version>1.49.0</version>
         </dependency>
 
+        <!-- Resilience4j for WebFlux -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+        </dependency>
+
         <!-- Utilidades -->
         <dependency>
             <groupId>org.projectlombok</groupId>
