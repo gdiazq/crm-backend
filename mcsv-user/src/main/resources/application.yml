@@ -31,6 +31,38 @@ openapi:
         version: 1.0.0
         url: ${URLAPI:http://localhost:9090}/v1/api/user # url api swagger
 
+feign:
+  circuitbreaker:
+    enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      mcsv-storage:
+        baseConfig: default
+      mcsv-notification:
+        baseConfig: default
+      mcsv-email:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+    instances:
+      mcsv-storage:
+        baseConfig: default
+      mcsv-notification:
+        baseConfig: default
+      mcsv-email:
+        baseConfig: default
+
 springdoc:
   api-docs:
     path: /api/api-docs/user #these urls will be used to load the swagger ui of this service by the api gateway
