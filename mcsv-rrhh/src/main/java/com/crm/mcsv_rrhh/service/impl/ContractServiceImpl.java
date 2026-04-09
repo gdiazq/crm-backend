@@ -8,15 +8,14 @@ import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
 import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
+import com.crm.mcsv_rrhh.entity.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.crm.mcsv_rrhh.entity.Contract;
-import com.crm.mcsv_rrhh.entity.Employee;
-import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.repository.ContractSpecification;
 import com.crm.mcsv_rrhh.service.ContractService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
+import com.crm.mcsv_rrhh.util.FileUploadHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -43,9 +42,6 @@ public class ContractServiceImpl implements ContractService {
 
     private static final String ENTITY_TYPE = "CONTRACT";
     private static final int MAX_DOCUMENTS = 5;
-    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10MB
-    private static final List<String> ALLOWED_TYPES = List.of(
-            "application/pdf", "image/jpeg", "image/png");
 
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
@@ -53,6 +49,7 @@ public class ContractServiceImpl implements ContractService {
     private final HRRequestService hrRequestService;
     private final ObjectMapper objectMapper;
     private final StorageClient storageClient;
+    private final FileUploadHelper fileUploadHelper;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final ContractTypeRepository contractTypeRepository;
@@ -69,16 +66,16 @@ public class ContractServiceImpl implements ContractService {
     @Transactional
     public ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files) {
         Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
-                .map(s -> s.getId())
+                .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
 
         Long suspendedContractStatusId = contractStatusRepository.findByName("Suspendido")
-                .map(s -> s.getId())
+                .map(ContractStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: Suspendido"));
 
         Long contractTypeId = request.getEndDate() == null
                 ? contractTypeRepository.findByName("Indefinido")
-                        .map(t -> t.getId())
+                        .map(ContractType::getId)
                         .orElse(request.getContractTypeId())
                 : request.getContractTypeId();
 
@@ -120,7 +117,7 @@ public class ContractServiceImpl implements ContractService {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
-                .map(r -> r.getId()).orElse(null);
+                .map(HRRequest::getId).orElse(null);
         List<FileMetadataResponse> documents = fetchDocuments(id);
         return toDetailResponse(contract, requestId, documents);
     }
@@ -146,7 +143,7 @@ public class ContractServiceImpl implements ContractService {
         uploadPendingFiles(hrReq.getId(), contract.getEmployeeId(), files);
 
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
-                .map(r -> r.getId()).orElse(hrReq.getId());
+                .map(HRRequest::getId).orElse(hrReq.getId());
 
         List<FileMetadataResponse> documents = fetchDocuments(id);
         return toDetailResponse(contract, requestId, documents);
@@ -175,9 +172,9 @@ public class ContractServiceImpl implements ContractService {
     @Override
     public Map<String, Long> getStats(Long employeeId) {
         Long pendingStatusId = contractStatusRepository.findByName("Pendiente de revisión")
-                .map(s -> s.getId()).orElse(-1L);
+                .map(ContractStatus::getId).orElse(-1L);
         Long activeContractStatusId = contractStatusRepository.findByName("Activo")
-                .map(s -> s.getId()).orElse(-1L);
+                .map(ContractStatus::getId).orElse(-1L);
 
         long total   = employeeId != null ? contractRepository.countByEmployeeId(employeeId) : contractRepository.count();
         long active  = employeeId != null ? contractRepository.countByEmployeeIdAndContractStatusId(employeeId, activeContractStatusId) : contractRepository.countByContractStatusId(activeContractStatusId);
@@ -203,22 +200,13 @@ public class ContractServiceImpl implements ContractService {
     private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) return;
         for (MultipartFile file : files) {
-            if (file.getSize() > MAX_FILE_SIZE) {
-                throw new IllegalArgumentException(
-                        "El archivo '" + file.getOriginalFilename() + "' supera el límite de 10MB.");
-            }
-            if (!ALLOWED_TYPES.contains(file.getContentType())) {
-                throw new IllegalArgumentException(
-                        "El archivo '" + file.getOriginalFilename() + "' no es un formato permitido. Use PDF, JPG o PNG.");
-            }
+            fileUploadHelper.validateFile(file);
             storageClient.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
         }
     }
 
     private List<FileMetadataResponse> uploadFiles(Long contractId, Long uploadedBy, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
-            return Collections.emptyList();
-        }
+        if (files == null || files.isEmpty()) return Collections.emptyList();
 
         List<FileMetadataResponse> existing = fetchDocuments(contractId);
         if (existing.size() + files.size() > MAX_DOCUMENTS) {
@@ -227,23 +215,7 @@ public class ContractServiceImpl implements ContractService {
                     "Máximo permitido: " + MAX_DOCUMENTS + ".");
         }
 
-        List<FileMetadataResponse> uploaded = new ArrayList<>();
-        for (MultipartFile file : files) {
-            if (file.getSize() > MAX_FILE_SIZE) {
-                throw new IllegalArgumentException(
-                        "El archivo '" + file.getOriginalFilename() + "' supera el límite de 10MB.");
-            }
-            if (!ALLOWED_TYPES.contains(file.getContentType())) {
-                throw new IllegalArgumentException(
-                        "El archivo '" + file.getOriginalFilename() + "' no es un formato permitido. Use PDF, JPG o PNG.");
-            }
-            ResponseEntity<FileMetadataResponse> response =
-                    storageClient.upload(file, uploadedBy, ENTITY_TYPE, contractId, false);
-            if (response.getBody() != null) {
-                uploaded.add(response.getBody());
-            }
-        }
-        return uploaded;
+        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, contractId);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -347,15 +319,15 @@ public class ContractServiceImpl implements ContractService {
     @Override
     public byte[] exportCsv() {
         Map<Long, String> contractStatusMap = contractStatusRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(s -> s.getId(), s -> s.getName()));
+                .collect(java.util.stream.Collectors.toMap(ContractStatus::getId, ContractStatus::getName));
         Map<Long, String> contractTypeMap = contractTypeRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(t -> t.getId(), t -> t.getName()));
+                .collect(java.util.stream.Collectors.toMap(ContractType::getId, ContractType::getName));
         Map<Long, String> companyMap = companyRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(c -> c.getId(), c -> c.getName()));
+                .collect(java.util.stream.Collectors.toMap(Company::getId, Company::getName));
         Map<Long, String> jobTitleMap = jobTitleRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(j -> j.getId(), j -> j.getName()));
+                .collect(java.util.stream.Collectors.toMap(JobTitle::getId, JobTitle::getName));
         Map<Long, Employee> employeeMap = employeeRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(e -> e.getId(), e -> e));
+                .collect(java.util.stream.Collectors.toMap(Employee::getId, e -> e));
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,RUT Trabajador,Nombre Trabajador,Nombre Contrato,Número Contrato,Tipo Contrato,Estado Contrato,Empresa,Cargo,Salario Base,Fecha Inicio,Fecha Fin,Fecha Creación,Fecha Actualización\n");
@@ -391,9 +363,9 @@ public class ContractServiceImpl implements ContractService {
         int success = 0;
 
         Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
-                .map(s -> s.getId()).orElse(null);
+                .map(EmployeeStatus::getId).orElse(null);
         Long suspendedContractStatusId = contractStatusRepository.findByName("Suspendido")
-                .map(s -> s.getId()).orElse(null);
+                .map(ContractStatus::getId).orElse(null);
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -435,7 +407,7 @@ public class ContractServiceImpl implements ContractService {
                     String contractTypeName = col(cols, iContractType);
                     if (!contractTypeName.isBlank()) {
                         contractTypeId = contractTypeRepository.findByName(contractTypeName)
-                                .map(t -> t.getId())
+                                .map(ContractType::getId)
                                 .orElseThrow(() -> new IllegalArgumentException("Tipo de contrato no encontrado: " + contractTypeName));
                     }
 
@@ -444,7 +416,7 @@ public class ContractServiceImpl implements ContractService {
 
                     if (contractTypeId == null) {
                         contractTypeId = endDate == null
-                                ? contractTypeRepository.findByName("Indefinido").map(t -> t.getId()).orElse(null)
+                                ? contractTypeRepository.findByName("Indefinido").map(ContractType::getId).orElse(null)
                                 : null;
                     }
 

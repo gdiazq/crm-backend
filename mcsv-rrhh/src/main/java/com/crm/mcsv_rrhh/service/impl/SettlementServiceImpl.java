@@ -11,6 +11,7 @@ import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.SettlementService;
+import com.crm.mcsv_rrhh.util.FileUploadHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,17 +31,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SettlementServiceImpl implements SettlementService {
 
     private static final String ENTITY_TYPE = "SETTLEMENT";
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024L;
-    private static final Set<String> ALLOWED_TYPES = Set.of(
-            "application/pdf", "image/jpeg", "image/png");
 
     private final SettlementRepository repository;
     private final EmployeeRepository employeeRepository;
@@ -52,6 +48,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final TerminationQuizQuestionRepository quizQuestionRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final StorageClient storageClient;
+    private final FileUploadHelper fileUploadHelper;
     private final HRRequestService hrRequestService;
     private final HRRequestRepository hrRequestRepository;
     private final ObjectMapper objectMapper;
@@ -237,20 +234,7 @@ public class SettlementServiceImpl implements SettlementService {
     }
 
     private List<FileMetadataResponse> uploadFiles(Long settlementId, Long uploadedBy, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) return Collections.emptyList();
-        List<FileMetadataResponse> uploaded = new ArrayList<>();
-        for (MultipartFile file : files) {
-            if (file.getSize() > MAX_FILE_SIZE)
-                throw new IllegalArgumentException(
-                        "El archivo '" + file.getOriginalFilename() + "' supera el límite de 10MB.");
-            if (!ALLOWED_TYPES.contains(file.getContentType()))
-                throw new IllegalArgumentException(
-                        "El archivo '" + file.getOriginalFilename() + "' no es un formato permitido. Use PDF, JPG o PNG.");
-            ResponseEntity<FileMetadataResponse> response =
-                    storageClient.upload(file, uploadedBy, ENTITY_TYPE, settlementId, false);
-            if (response.getBody() != null) uploaded.add(response.getBody());
-        }
-        return uploaded;
+        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, settlementId);
     }
 
     private List<FileMetadataResponse> fetchDocuments(Long settlementId) {
