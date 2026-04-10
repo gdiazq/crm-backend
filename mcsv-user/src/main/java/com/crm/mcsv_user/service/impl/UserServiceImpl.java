@@ -1,6 +1,6 @@
 package com.crm.mcsv_user.service.impl;
 
-import com.crm.mcsv_user.client.EmailClient;
+import com.crm.common.client.SqsEmailClient;
 import com.crm.mcsv_user.client.NotificationClient;
 import com.crm.mcsv_user.client.StorageClient;
 import com.crm.common.dto.BulkImportResult;
@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final StorageClient storageClient;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
-    private final EmailClient emailClient;
+    private final SqsEmailClient sqsEmailClient;
     private final NotificationClient notificationClient;
 
     @Value("${app.frontend.url:http://localhost:5173}")
@@ -421,7 +421,7 @@ public class UserServiceImpl implements UserService {
                     .templateName("verification-code")
                     .variables(Map.of("code", code, "username", username, "link", link))
                     .build();
-            emailClient.sendEmail(emailRequest);
+            sqsEmailClient.sendEmail(emailRequest);
             log.info("Verification email sent to: {}", email);
         } catch (Exception e) {
             log.error("Failed to send verification email to: {}", email, e);

@@ -18,6 +18,13 @@ spring:
         config:
             uri: ${CONFIG_SERVER_URI:http://localhost:8888}
 
+aws:
+    region: ${AWS_REGION:us-east-1}
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
+    sqs:
+        email-queue-url: ${AWS_SQS_EMAIL_QUEUE_URL:}
+
 info:
   app:
     name: user Microservicio Server
@@ -49,8 +56,6 @@ resilience4j:
         baseConfig: default
       mcsv-notification:
         baseConfig: default
-      mcsv-email:
-        baseConfig: default
   timelimiter:
     configs:
       default:
@@ -59,8 +64,6 @@ resilience4j:
       mcsv-storage:
         baseConfig: default
       mcsv-notification:
-        baseConfig: default
-      mcsv-email:
         baseConfig: default
 
 springdoc:
