@@ -17,7 +17,6 @@
         <module>mcsv-rrhh</module>
         <module>mcsv-auth</module>
         <module>mcsv-gateway</module>
-        <module>mcsv-email</module>
         <module>mcsv-notification</module>
         <module>mcsv-storage</module>
         <module>mcsv-project</module>
