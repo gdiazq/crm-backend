@@ -68,6 +68,10 @@ github:
         frontend-success-url: ${URL_FRONT:http://localhost:4200}/dashboard
 
 resilience4j:
+    timelimiter:
+        configs:
+            default:
+                timeout-duration: 10s
     circuitbreaker:
         instances:
             mcsv-user:

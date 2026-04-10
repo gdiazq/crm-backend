@@ -242,6 +242,10 @@ springdoc:
   packagesToScan: com.cmr.mcsv_gateway
 
 resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 15s
   circuitbreaker:
     instances:
       mcsv-auth:

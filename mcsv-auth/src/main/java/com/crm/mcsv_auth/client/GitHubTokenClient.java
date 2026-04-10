@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "github-token-client", url = "https://github.com", fallback = GitHubTokenClientFallback.class)
+@FeignClient(name = "github-token-client", url = "https://github.com", fallbackFactory = GitHubTokenClientFallback.class)
 public interface GitHubTokenClient {
 
     @PostMapping(value = "/login/oauth/access_token",
