@@ -21,6 +21,7 @@ import com.crm.mcsv_user.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
+import com.crm.mcsv_user.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -481,8 +482,8 @@ public class UserServiceImpl implements UserService {
             if (headerLine == null) {
                 return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
             }
-            String[] headers = parseCsvLine(headerLine);
-            Map<String, Integer> idx = buildHeaderIndex(headers);
+            String[] headers = CsvUtil.parseLine(headerLine);
+            Map<String, Integer> idx = CsvUtil.headerIndex(headers);
 
             int iUsername  = idx.getOrDefault("username", -1);
             int iFirstName = idx.getOrDefault("nombre", -1);
@@ -503,13 +504,13 @@ public class UserServiceImpl implements UserService {
                 if (line.isBlank()) continue;
                 total++;
                 try {
-                    String[] cols = parseCsvLine(line);
-                    String username  = col(cols, iUsername);
-                    String firstName = col(cols, iFirstName);
-                    String lastName  = col(cols, iLastName);
-                    String email     = col(cols, iEmail);
-                    String phone     = col(cols, iPhone);
-                    String roleName  = col(cols, iRole);
+                    String[] cols = CsvUtil.parseLine(line);
+                    String username  = CsvUtil.col(cols, iUsername);
+                    String firstName = CsvUtil.col(cols, iFirstName);
+                    String lastName  = CsvUtil.col(cols, iLastName);
+                    String email     = CsvUtil.col(cols, iEmail);
+                    String phone     = CsvUtil.col(cols, iPhone);
+                    String roleName  = CsvUtil.col(cols, iRole);
 
                     Long roleId = (!roleName.isEmpty())
                             ? roleRepository.findByName(roleName).map(r -> r.getId()).orElse(null)
@@ -552,43 +553,6 @@ public class UserServiceImpl implements UserService {
                 .failed(errors.size())
                 .errors(errors)
                 .build();
-    }
-
-    private String[] parseCsvLine(String line) {
-        List<String> fields = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    sb.append('"');
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (c == ',' && !inQuotes) {
-                fields.add(sb.toString());
-                sb.setLength(0);
-            } else {
-                sb.append(c);
-            }
-        }
-        fields.add(sb.toString());
-        return fields.toArray(new String[0]);
-    }
-
-    private Map<String, Integer> buildHeaderIndex(String[] headers) {
-        Map<String, Integer> idx = new java.util.HashMap<>();
-        for (int i = 0; i < headers.length; i++) {
-            idx.put(headers[i].trim().toLowerCase(), i);
-        }
-        return idx;
-    }
-
-    private String col(String[] cols, int index) {
-        if (index < 0 || index >= cols.length) return "";
-        return cols[index].trim();
     }
 
     @Override

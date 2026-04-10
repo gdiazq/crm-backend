@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.crm.mcsv_rrhh.util.DateRangeUtil;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,8 +64,8 @@ public class SettlementServiceImpl implements SettlementService {
                                                    LocalDate endDateFrom, LocalDate endDateTo,
                                                    LocalDate createdFrom, LocalDate createdTo,
                                                    Pageable pageable) {
-        LocalDateTime cFrom = createdFrom != null ? createdFrom.atStartOfDay()   : null;
-        LocalDateTime cTo   = createdTo   != null ? createdTo.atTime(23, 59, 59) : null;
+        LocalDateTime cFrom = DateRangeUtil.startOf(createdFrom);
+        LocalDateTime cTo   = DateRangeUtil.endOf(createdTo);
 
         Long statusId = status != null && !status.isBlank()
                 ? employeeStatusRepository.findByName(status).map(s -> s.getId()).orElse(null)

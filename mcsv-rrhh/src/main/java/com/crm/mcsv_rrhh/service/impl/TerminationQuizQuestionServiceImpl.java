@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.crm.mcsv_rrhh.util.DateRangeUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,10 +40,10 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                                                                 LocalDate createdFrom, LocalDate createdTo,
                                                                 LocalDate updatedFrom, LocalDate updatedTo,
                                                                 Pageable pageable) {
-        LocalDateTime cFrom = createdFrom != null ? createdFrom.atStartOfDay()    : null;
-        LocalDateTime cTo   = createdTo   != null ? createdTo.atTime(23, 59, 59)  : null;
-        LocalDateTime uFrom = updatedFrom != null ? updatedFrom.atStartOfDay()    : null;
-        LocalDateTime uTo   = updatedTo   != null ? updatedTo.atTime(23, 59, 59)  : null;
+        LocalDateTime cFrom = DateRangeUtil.startOf(createdFrom);
+        LocalDateTime cTo   = DateRangeUtil.endOf(createdTo);
+        LocalDateTime uFrom = DateRangeUtil.startOf(updatedFrom);
+        LocalDateTime uTo   = DateRangeUtil.endOf(updatedTo);
 
         Specification<TerminationQuizQuestion> spec =
                 TerminationQuizQuestionSpecification.withFilters(search, active, questionGroup, cFrom, cTo, uFrom, uTo);

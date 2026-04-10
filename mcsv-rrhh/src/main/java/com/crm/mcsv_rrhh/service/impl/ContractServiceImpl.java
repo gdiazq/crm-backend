@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import com.crm.mcsv_rrhh.util.CsvUtil;
 import java.util.*;
 
 @Service
@@ -374,8 +375,8 @@ public class ContractServiceImpl implements ContractService {
             if (headerLine == null) {
                 return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
             }
-            String[] headers = parseCsvLine(headerLine);
-            Map<String, Integer> idx = buildHeaderIndex(headers);
+            String[] headers = CsvUtil.parseLine(headerLine);
+            Map<String, Integer> idx = CsvUtil.headerIndex(headers);
 
             int iRut            = idx.getOrDefault("rut trabajador", -1);
             int iName           = idx.getOrDefault("nombre contrato", -1);
@@ -397,22 +398,22 @@ public class ContractServiceImpl implements ContractService {
                 if (line.isBlank()) continue;
                 total++;
                 try {
-                    String[] cols = parseCsvLine(line);
+                    String[] cols = CsvUtil.parseLine(line);
 
-                    String rut = col(cols, iRut);
+                    String rut = CsvUtil.col(cols, iRut);
                     Employee employee = employeeRepository.findByIdentification(rut)
                             .orElseThrow(() -> new IllegalArgumentException("Empleado no encontrado con RUT: " + rut));
 
                     Long contractTypeId = null;
-                    String contractTypeName = col(cols, iContractType);
+                    String contractTypeName = CsvUtil.col(cols, iContractType);
                     if (!contractTypeName.isBlank()) {
                         contractTypeId = contractTypeRepository.findByName(contractTypeName)
                                 .map(ContractType::getId)
                                 .orElseThrow(() -> new IllegalArgumentException("Tipo de contrato no encontrado: " + contractTypeName));
                     }
 
-                    LocalDate startDate = parseDate(col(cols, iStartDate));
-                    LocalDate endDate   = parseDate(col(cols, iEndDate));
+                    LocalDate startDate = parseDate(CsvUtil.col(cols, iStartDate));
+                    LocalDate endDate   = parseDate(CsvUtil.col(cols, iEndDate));
 
                     if (contractTypeId == null) {
                         contractTypeId = endDate == null
@@ -422,11 +423,11 @@ public class ContractServiceImpl implements ContractService {
 
                     Contract contract = Contract.builder()
                             .employeeId(employee.getId())
-                            .name(col(cols, iName))
-                            .contractNumber(col(cols, iContractNumber).isEmpty() ? null : col(cols, iContractNumber))
+                            .name(CsvUtil.col(cols, iName))
+                            .contractNumber(CsvUtil.col(cols, iContractNumber).isEmpty() ? null : CsvUtil.col(cols, iContractNumber))
                             .contractTypeId(contractTypeId)
                             .contractStatusId(suspendedContractStatusId)
-                            .baseSalary(col(cols, iBaseSalary).isEmpty() ? null : col(cols, iBaseSalary))
+                            .baseSalary(CsvUtil.col(cols, iBaseSalary).isEmpty() ? null : CsvUtil.col(cols, iBaseSalary))
                             .startDate(startDate)
                             .endDate(endDate)
                             .statusId(pendingStatusId)
@@ -463,43 +464,6 @@ public class ContractServiceImpl implements ContractService {
                 throw new IllegalArgumentException("Fecha inválida: " + value + ". Use dd-MM-yyyy o yyyy-MM-dd");
             }
         }
-    }
-
-    private String[] parseCsvLine(String line) {
-        List<String> fields = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    sb.append('"');
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (c == ',' && !inQuotes) {
-                fields.add(sb.toString());
-                sb.setLength(0);
-            } else {
-                sb.append(c);
-            }
-        }
-        fields.add(sb.toString());
-        return fields.toArray(new String[0]);
-    }
-
-    private Map<String, Integer> buildHeaderIndex(String[] headers) {
-        Map<String, Integer> idx = new HashMap<>();
-        for (int i = 0; i < headers.length; i++) {
-            idx.put(headers[i].trim().toLowerCase(), i);
-        }
-        return idx;
-    }
-
-    private String col(String[] cols, int index) {
-        if (index < 0 || index >= cols.length) return "";
-        return cols[index].trim();
     }
 
     private String formatDate(LocalDate date) {
