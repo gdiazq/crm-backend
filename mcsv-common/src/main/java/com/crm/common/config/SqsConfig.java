@@ -10,7 +10,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 @Configuration
-@ConditionalOnProperty(name = "aws.sqs.email-queue-url")
+@ConditionalOnProperty(name = "aws.sqs.enabled", havingValue = "true")
 public class SqsConfig {
 
     @Value("${aws.region:us-east-1}")

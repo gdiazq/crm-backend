@@ -289,9 +289,8 @@ public class AuthServiceImpl implements AuthService {
         try {
             user = getUserByEmail(request.getEmail());
         } catch (Exception e) {
-            // No revelar si el email existe o no por seguridad
-            log.warn("Forgot password requested for non-existent email");
-            return;
+            log.warn("Forgot password requested for non-existent email: {}", request.getEmail());
+            throw new AuthenticationException("No account found with that email address");
         }
 
         // Invalidar códigos anteriores

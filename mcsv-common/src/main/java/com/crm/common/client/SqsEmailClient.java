@@ -11,7 +11,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Component
-@ConditionalOnProperty(name = "aws.sqs.email-queue-url")
+@ConditionalOnProperty(name = "aws.sqs.enabled", havingValue = "true")
 @Slf4j
 public class SqsEmailClient {
 

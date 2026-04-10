@@ -64,7 +64,8 @@ aws:
     access-key: ${AWS_ACCESS_KEY:}
     secret-key: ${AWS_SECRET_KEY:}
     sqs:
-        email-queue-url: ${AWS_SQS_EMAIL_QUEUE_URL:}
+        enabled: true
+        email-queue-url: ${AWS_SQS_EMAIL_QUEUE_URL}
 
 github:
     oauth2:
