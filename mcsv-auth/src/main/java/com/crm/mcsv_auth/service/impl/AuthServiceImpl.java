@@ -1,7 +1,7 @@
 package com.crm.mcsv_auth.service.impl;
 
-import com.crm.mcsv_auth.client.EmailClient;
 import com.crm.mcsv_auth.client.NotificationClient;
+import com.crm.common.client.SqsEmailClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.JwtConfig;
 import com.crm.mcsv_auth.dto.AuthResponse;
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 public class AuthServiceImpl implements AuthService {
 
     private final UserClient userClient;
-    private final EmailClient emailClient;
+    private final SqsEmailClient sqsEmailClient;
     private final NotificationClient notificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
@@ -547,7 +547,7 @@ public class AuthServiceImpl implements AuthService {
                     ))
                     .build();
 
-            emailClient.sendEmail(emailRequest);
+            sqsEmailClient.sendEmail(emailRequest);
         } catch (Exception e) {
             log.error("Failed to send verification email to: {}", email, e);
         }

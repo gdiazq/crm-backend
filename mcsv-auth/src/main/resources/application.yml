@@ -59,6 +59,13 @@ azure:
     jwks-uri: https://login.microsoftonline.com/${azure.tenant-id}/discovery/v2.0/keys
     issuer: https://login.microsoftonline.com/${azure.tenant-id}/v2.0
 
+aws:
+    region: ${AWS_REGION:us-east-1}
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
+    sqs:
+        email-queue-url: ${AWS_SQS_EMAIL_QUEUE_URL:}
+
 github:
     oauth2:
         client-id: ${GITHUB_CLIENT_ID:}
@@ -86,11 +93,6 @@ resilience4j:
                 failure-rate-threshold: 50
                 wait-duration-in-open-state: 30s
                 permitted-number-of-calls-in-half-open-state: 3
-            mcsv-email:
-                sliding-window-size: 10
-                failure-rate-threshold: 50
-                wait-duration-in-open-state: 30s
-                permitted-number-of-calls-in-half-open-state: 3
             github-token-client:
                 sliding-window-size: 5
                 minimum-number-of-calls: 3
@@ -111,10 +113,6 @@ resilience4j:
                 enable-exponential-backoff: true
                 exponential-backoff-multiplier: 2
             mcsv-notification:
-                max-attempts: 2
-                wait-duration: 500ms
-                enable-exponential-backoff: true
-            mcsv-email:
                 max-attempts: 2
                 wait-duration: 500ms
                 enable-exponential-backoff: true
