@@ -1,14 +1,14 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.TerminationQuizOptionResponse;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.entity.TerminationQuizOption;
 import com.crm.mcsv_rrhh.entity.TerminationQuizQuestion;
-import com.crm.mcsv_rrhh.exception.DuplicateResourceException;
-import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
+import com.crm.common.exception.DuplicateResourceException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.TerminationQuizQuestionRepository;
 import com.crm.mcsv_rrhh.repository.TerminationQuizQuestionSpecification;
 import com.crm.mcsv_rrhh.service.TerminationQuizQuestionService;
@@ -20,7 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.crm.mcsv_rrhh.util.DateRangeUtil;
+import com.crm.common.util.DateRangeUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;

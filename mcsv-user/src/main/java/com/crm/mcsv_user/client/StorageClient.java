@@ -1,6 +1,6 @@
 package com.crm.mcsv_user.client;
 
-import com.crm.mcsv_user.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

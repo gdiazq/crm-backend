@@ -2,7 +2,7 @@ package com.crm.mcsv_rrhh.controller;
 
 import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import io.swagger.v3.oas.annotations.Operation;

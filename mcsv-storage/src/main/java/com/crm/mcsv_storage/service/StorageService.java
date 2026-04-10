@@ -1,6 +1,6 @@
 package com.crm.mcsv_storage.service;
 
-import com.crm.mcsv_storage.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

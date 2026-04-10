@@ -1,6 +1,6 @@
 package com.crm.mcsvemail.service.impl;
 
-import com.crm.mcsvemail.dto.EmailRequest;
+import com.crm.common.dto.EmailRequest;
 import com.crm.mcsvemail.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

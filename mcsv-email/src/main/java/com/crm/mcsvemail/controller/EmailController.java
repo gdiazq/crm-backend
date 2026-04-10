@@ -1,6 +1,6 @@
 package com.crm.mcsvemail.controller;
 
-import com.crm.mcsvemail.dto.EmailRequest;
+import com.crm.common.dto.EmailRequest;
 import com.crm.mcsvemail.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,4 +1,4 @@
-package com.crm.mcsv_project.exception;
+package com.crm.common.exception;
 
 public class DuplicateResourceException extends RuntimeException {
     public DuplicateResourceException(String message) {

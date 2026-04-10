@@ -1,7 +1,7 @@
 package com.crm.mcsv_notification.controller;
 
 import com.crm.mcsv_notification.dto.NotificationResponse;
-import com.crm.mcsv_notification.dto.SendNotificationRequest;
+import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

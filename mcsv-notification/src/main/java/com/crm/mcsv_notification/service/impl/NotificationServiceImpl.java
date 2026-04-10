@@ -1,7 +1,7 @@
 package com.crm.mcsv_notification.service.impl;
 
 import com.crm.mcsv_notification.dto.NotificationResponse;
-import com.crm.mcsv_notification.dto.SendNotificationRequest;
+import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_notification.entity.Notification;
 import com.crm.mcsv_notification.exception.NotificationException;
 import com.crm.mcsv_notification.repository.NotificationRepository;

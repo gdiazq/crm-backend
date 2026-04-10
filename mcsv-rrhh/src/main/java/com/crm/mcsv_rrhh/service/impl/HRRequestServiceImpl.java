@@ -2,7 +2,7 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.StorageClient;
 import com.crm.mcsv_rrhh.client.UserClient;
-import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
@@ -17,7 +17,7 @@ import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
 import com.crm.mcsv_rrhh.entity.Settlement;
 import com.crm.mcsv_rrhh.repository.SettlementRepository;
-import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.ContractRepository;
 import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;

@@ -1,8 +1,8 @@
 package com.crm.mcsv_user.controller;
 
-import com.crm.mcsv_user.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
-import com.crm.mcsv_user.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;

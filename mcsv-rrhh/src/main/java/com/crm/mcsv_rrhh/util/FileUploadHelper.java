@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.util;
 
 import com.crm.mcsv_rrhh.client.StorageClient;
-import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;

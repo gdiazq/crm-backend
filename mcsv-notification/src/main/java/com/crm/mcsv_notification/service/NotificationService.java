@@ -1,7 +1,7 @@
 package com.crm.mcsv_notification.service;
 
 import com.crm.mcsv_notification.dto.NotificationResponse;
-import com.crm.mcsv_notification.dto.SendNotificationRequest;
+import com.crm.common.dto.SendNotificationRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

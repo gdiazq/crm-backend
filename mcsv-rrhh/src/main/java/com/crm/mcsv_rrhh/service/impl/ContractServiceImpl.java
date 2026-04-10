@@ -1,16 +1,16 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.StorageClient;
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
-import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.entity.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.repository.ContractSpecification;
 import com.crm.mcsv_rrhh.service.ContractService;
@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import com.crm.mcsv_rrhh.util.CsvUtil;
+import com.crm.common.util.CsvUtil;
 import java.util.*;
 
 @Service

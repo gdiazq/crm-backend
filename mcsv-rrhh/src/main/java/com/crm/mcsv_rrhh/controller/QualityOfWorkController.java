@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.QualityOfWorkRequest;
 import com.crm.mcsv_rrhh.dto.QualityOfWorkResponse;
 import com.crm.mcsv_rrhh.dto.UpdateQualityOfWorkRequest;

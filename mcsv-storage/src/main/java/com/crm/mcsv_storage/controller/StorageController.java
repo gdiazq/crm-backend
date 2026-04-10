@@ -1,6 +1,6 @@
 package com.crm.mcsv_storage.controller;
 
-import com.crm.mcsv_storage.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_storage.service.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.client;
 
 import com.crm.mcsv_rrhh.dto.CatalogItem;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

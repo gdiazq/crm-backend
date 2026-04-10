@@ -1,6 +1,6 @@
 package com.crm.mcsv_auth.client;
 
-import com.crm.mcsv_auth.dto.SendNotificationRequest;
+import com.crm.common.dto.SendNotificationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

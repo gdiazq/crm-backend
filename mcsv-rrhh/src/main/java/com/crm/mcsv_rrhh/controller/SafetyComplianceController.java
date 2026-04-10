@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.SafetyComplianceRequest;
 import com.crm.mcsv_rrhh.dto.SafetyComplianceResponse;
 import com.crm.mcsv_rrhh.dto.UpdateSafetyComplianceRequest;

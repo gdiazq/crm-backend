@@ -1,4 +1,4 @@
-package com.crm.mcsv_user.exception;
+package com.crm.common.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

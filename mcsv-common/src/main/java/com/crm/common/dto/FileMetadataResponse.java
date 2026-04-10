@@ -1,4 +1,4 @@
-package com.crm.mcsv_storage.dto;
+package com.crm.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

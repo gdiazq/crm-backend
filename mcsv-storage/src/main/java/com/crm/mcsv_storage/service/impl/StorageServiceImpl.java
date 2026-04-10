@@ -1,6 +1,6 @@
 package com.crm.mcsv_storage.service.impl;
 
-import com.crm.mcsv_storage.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_storage.entity.FileMetadata;
 import com.crm.mcsv_storage.exception.StorageException;
 import com.crm.mcsv_storage.repository.FileMetadataRepository;

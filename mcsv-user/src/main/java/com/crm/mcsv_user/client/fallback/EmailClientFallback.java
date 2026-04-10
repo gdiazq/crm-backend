@@ -1,7 +1,7 @@
 package com.crm.mcsv_user.client.fallback;
 
 import com.crm.mcsv_user.client.EmailClient;
-import com.crm.mcsv_user.dto.EmailRequest;
+import com.crm.common.dto.EmailRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;

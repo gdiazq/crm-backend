@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>mcsv-common</module>
         <module>mcsv-eureka</module>
         <module>mcsv-config</module>
         <module>mcsv-user</module>

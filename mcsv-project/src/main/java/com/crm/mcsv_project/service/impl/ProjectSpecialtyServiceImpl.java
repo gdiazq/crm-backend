@@ -1,17 +1,17 @@
 package com.crm.mcsv_project.service.impl;
 
-import com.crm.mcsv_project.dto.BulkImportResult;
-import com.crm.mcsv_project.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectSpecialtyRequest;
 import com.crm.mcsv_project.dto.ProjectSpecialtyResponse;
 import com.crm.mcsv_project.dto.UpdateProjectSpecialtyRequest;
 import com.crm.mcsv_project.entity.ProjectSpecialty;
-import com.crm.mcsv_project.exception.DuplicateResourceException;
-import com.crm.mcsv_project.exception.ResourceNotFoundException;
+import com.crm.common.exception.DuplicateResourceException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_project.repository.ProjectSpecialtyRepository;
 import com.crm.mcsv_project.service.ProjectSpecialtyService;
-import com.crm.mcsv_project.util.CsvUtil;
-import com.crm.mcsv_project.util.DateRangeUtil;
+import com.crm.common.util.CsvUtil;
+import com.crm.common.util.DateRangeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.crm.mcsv_project.repository.ProjectSpecialtySpecification;

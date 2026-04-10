@@ -1,4 +1,4 @@
-package com.crm.mcsv_notification.dto;
+package com.crm.common.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +21,6 @@ public class SendNotificationRequest {
 
     @NotBlank(message = "message is required")
     private String message;
-
     @Builder.Default
     private String type = "INFO";
 }

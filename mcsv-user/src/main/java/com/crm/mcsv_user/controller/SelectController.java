@@ -1,6 +1,6 @@
 package com.crm.mcsv_user.controller;
 
-import com.crm.mcsv_user.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.repository.PermissionRepository;
 import com.crm.mcsv_user.repository.UserRepository;

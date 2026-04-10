@@ -1,6 +1,6 @@
 package com.crm.mcsv_auth.client;
 
-import com.crm.mcsv_auth.dto.EmailRequest;
+import com.crm.common.dto.EmailRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

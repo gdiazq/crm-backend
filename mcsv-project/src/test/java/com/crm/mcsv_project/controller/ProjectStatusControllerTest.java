@@ -1,13 +1,13 @@
 package com.crm.mcsv_project.controller;
 
-import com.crm.mcsv_project.dto.BulkImportResult;
-import com.crm.mcsv_project.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectStatusRequest;
 import com.crm.mcsv_project.dto.ProjectStatusResponse;
 import com.crm.mcsv_project.dto.UpdateProjectStatusRequest;
-import com.crm.mcsv_project.exception.DuplicateResourceException;
+import com.crm.common.exception.DuplicateResourceException;
 import com.crm.mcsv_project.exception.GlobalExceptionHandler;
-import com.crm.mcsv_project.exception.ResourceNotFoundException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_project.service.ProjectStatusService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

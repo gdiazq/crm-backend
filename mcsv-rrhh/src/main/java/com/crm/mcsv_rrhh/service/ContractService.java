@@ -1,11 +1,11 @@
 package com.crm.mcsv_rrhh.service;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;

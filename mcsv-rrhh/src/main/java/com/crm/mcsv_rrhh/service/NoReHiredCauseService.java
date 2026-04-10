@@ -1,9 +1,9 @@
 package com.crm.mcsv_rrhh.service;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.NoReHiredCauseRequest;
 import com.crm.mcsv_rrhh.dto.NoReHiredCauseResponse;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateNoReHiredCauseRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;

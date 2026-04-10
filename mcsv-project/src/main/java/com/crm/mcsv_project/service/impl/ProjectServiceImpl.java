@@ -3,8 +3,8 @@ package com.crm.mcsv_project.service.impl;
 import com.crm.mcsv_project.client.PersonSelectItem;
 import com.crm.mcsv_project.client.RrhhClient;
 import com.crm.mcsv_project.client.UserClient;
-import com.crm.mcsv_project.dto.BulkImportResult;
-import com.crm.mcsv_project.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectRequest;
 import com.crm.mcsv_project.dto.ProjectResponse;
 import com.crm.mcsv_project.dto.UpdateProjectRequest;
@@ -12,15 +12,15 @@ import com.crm.mcsv_project.entity.Project;
 import com.crm.mcsv_project.entity.ProjectSpecialty;
 import com.crm.mcsv_project.entity.ProjectStatus;
 import com.crm.mcsv_project.entity.ProjectType;
-import com.crm.mcsv_project.exception.DuplicateResourceException;
-import com.crm.mcsv_project.exception.ResourceNotFoundException;
+import com.crm.common.exception.DuplicateResourceException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_project.repository.ProjectRepository;
 import com.crm.mcsv_project.repository.ProjectSpecification;
 import com.crm.mcsv_project.repository.ProjectSpecialtyRepository;
 import com.crm.mcsv_project.repository.ProjectStatusRepository;
 import com.crm.mcsv_project.repository.ProjectTypeRepository;
-import com.crm.mcsv_project.util.CsvUtil;
-import com.crm.mcsv_project.util.DateRangeUtil;
+import com.crm.common.util.CsvUtil;
+import com.crm.common.util.DateRangeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,11 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -327,7 +324,7 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                 .companyRepresentativeNames(p.getCompanyRepresentativeIds() != null
                         ? p.getCompanyRepresentativeIds().stream()
                                 .map(id -> companyRepMap.getOrDefault(id, null))
-                                .filter(name -> name != null)
+                                .filter(Objects::nonNull)
                                 .collect(Collectors.toList())
                         : Collections.emptyList())
                 .startDate(p.getStartDate())

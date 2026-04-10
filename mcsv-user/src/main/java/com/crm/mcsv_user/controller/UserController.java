@@ -1,10 +1,10 @@
 package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.client.NotificationClient;
-import com.crm.mcsv_user.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
-import com.crm.mcsv_user.dto.PagedResponse;
-import com.crm.mcsv_user.dto.SendNotificationRequest;
+import com.crm.common.dto.PagedResponse;
+import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UpdatePasswordRequest;
 import com.crm.mcsv_user.dto.UserDTO;

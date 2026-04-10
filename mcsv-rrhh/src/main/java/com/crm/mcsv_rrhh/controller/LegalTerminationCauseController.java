@@ -1,9 +1,9 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.LegalTerminationCauseRequest;
 import com.crm.mcsv_rrhh.dto.LegalTerminationCauseResponse;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateLegalTerminationCauseRequest;
 import com.crm.mcsv_rrhh.service.LegalTerminationCauseService;
 import io.swagger.v3.oas.annotations.Operation;

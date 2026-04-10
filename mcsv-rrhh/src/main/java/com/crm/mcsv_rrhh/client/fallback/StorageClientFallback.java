@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.client.fallback;
 
 import com.crm.mcsv_rrhh.client.StorageClient;
-import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
+import com.crm.common.dto.FileMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;

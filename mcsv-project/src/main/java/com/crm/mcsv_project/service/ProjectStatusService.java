@@ -1,7 +1,7 @@
 package com.crm.mcsv_project.service;
 
-import com.crm.mcsv_project.dto.BulkImportResult;
-import com.crm.mcsv_project.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectStatusRequest;
 import com.crm.mcsv_project.dto.ProjectStatusResponse;
 import com.crm.mcsv_project.dto.UpdateProjectStatusRequest;

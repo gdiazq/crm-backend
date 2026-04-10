@@ -1,18 +1,18 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.SafetyComplianceRequest;
 import com.crm.mcsv_rrhh.dto.SafetyComplianceResponse;
 import com.crm.mcsv_rrhh.dto.UpdateSafetyComplianceRequest;
 import com.crm.mcsv_rrhh.entity.SafetyCompliance;
-import com.crm.mcsv_rrhh.exception.DuplicateResourceException;
-import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
+import com.crm.common.exception.DuplicateResourceException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.repository.SafetyComplianceSpecification;
 import com.crm.mcsv_rrhh.service.SafetyComplianceService;
-import com.crm.mcsv_rrhh.util.CsvUtil;
-import com.crm.mcsv_rrhh.util.DateRangeUtil;
+import com.crm.common.util.CsvUtil;
+import com.crm.common.util.DateRangeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

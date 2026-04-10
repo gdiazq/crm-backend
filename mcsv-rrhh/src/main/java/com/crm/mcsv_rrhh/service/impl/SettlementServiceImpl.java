@@ -1,13 +1,13 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.StorageClient;
-import com.crm.mcsv_rrhh.dto.FileMetadataResponse;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.FileMetadataResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.SettlementRequest;
 import com.crm.mcsv_rrhh.dto.SettlementResponse;
 import com.crm.mcsv_rrhh.dto.UpdateSettlementRequest;
 import com.crm.mcsv_rrhh.entity.*;
-import com.crm.mcsv_rrhh.exception.ResourceNotFoundException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.SettlementService;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.crm.mcsv_rrhh.util.DateRangeUtil;
+import com.crm.common.util.DateRangeUtil;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

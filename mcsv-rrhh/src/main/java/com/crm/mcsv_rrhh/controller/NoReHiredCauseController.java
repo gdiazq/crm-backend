@@ -1,9 +1,9 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.NoReHiredCauseRequest;
 import com.crm.mcsv_rrhh.dto.NoReHiredCauseResponse;
-import com.crm.mcsv_rrhh.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.UpdateNoReHiredCauseRequest;
 import com.crm.mcsv_rrhh.service.NoReHiredCauseService;
 import io.swagger.v3.oas.annotations.Operation;

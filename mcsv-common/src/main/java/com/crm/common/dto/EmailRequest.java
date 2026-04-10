@@ -1,4 +1,4 @@
-package com.crm.mcsvemail.dto;
+package com.crm.common.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

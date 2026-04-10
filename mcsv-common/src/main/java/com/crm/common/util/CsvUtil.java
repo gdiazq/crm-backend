@@ -1,6 +1,6 @@
-package com.crm.mcsv_project.util;
+package com.crm.common.util;
 
-import com.crm.mcsv_project.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;

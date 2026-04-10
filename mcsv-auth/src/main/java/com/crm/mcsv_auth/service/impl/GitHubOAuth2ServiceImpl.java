@@ -10,7 +10,7 @@ import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.GitHubTokenResponse;
 import com.crm.mcsv_auth.dto.GitHubUserInfo;
-import com.crm.mcsv_auth.dto.SendNotificationRequest;
+import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
@@ -75,6 +75,9 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
 
         // 2. Obtener info del usuario de GitHub
         GitHubUserInfo githubUser = gitHubApiClient.getUserInfo("Bearer " + tokenResponse.getAccessToken());
+        if (githubUser == null) {
+            throw new AuthenticationException("GitHub API is temporarily unavailable. Please try again later.");
+        }
         log.info("GitHub user authenticated: {}", githubUser.getLogin());
 
         if (githubUser.getEmail() == null || githubUser.getEmail().isBlank()) {

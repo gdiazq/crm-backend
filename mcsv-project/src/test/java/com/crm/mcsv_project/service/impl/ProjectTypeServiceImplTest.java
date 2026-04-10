@@ -1,12 +1,12 @@
 package com.crm.mcsv_project.service.impl;
 
-import com.crm.mcsv_project.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectTypeRequest;
 import com.crm.mcsv_project.dto.ProjectTypeResponse;
 import com.crm.mcsv_project.dto.UpdateProjectTypeRequest;
 import com.crm.mcsv_project.entity.ProjectType;
-import com.crm.mcsv_project.exception.DuplicateResourceException;
-import com.crm.mcsv_project.exception.ResourceNotFoundException;
+import com.crm.common.exception.DuplicateResourceException;
+import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_project.repository.ProjectTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

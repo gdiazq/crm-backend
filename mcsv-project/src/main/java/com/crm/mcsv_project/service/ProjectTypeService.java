@@ -1,10 +1,10 @@
 package com.crm.mcsv_project.service;
 
-import com.crm.mcsv_project.dto.BulkImportResult;
+import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_project.dto.ProjectTypeRequest;
 import com.crm.mcsv_project.dto.ProjectTypeResponse;
 import com.crm.mcsv_project.dto.UpdateProjectTypeRequest;
-import com.crm.mcsv_project.dto.PagedResponse;
+import com.crm.common.dto.PagedResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
