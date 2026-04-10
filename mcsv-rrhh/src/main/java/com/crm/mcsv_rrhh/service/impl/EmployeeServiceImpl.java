@@ -2,6 +2,8 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.BulkImportResult;
+import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.EmployeeStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
@@ -70,7 +72,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
         Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
-                .map(s -> s.getId())
+                .map(EmployeeStatus::getId)
                 .orElse(null);
 
         Employee employee = Employee.builder()
@@ -182,12 +184,12 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                    java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                                    Pageable pageable) {
         Long rejectedStatusId = employeeStatusRepository.findByName("Rechazado")
-                .map(s -> s.getId()).orElse(null);
+                .map(EmployeeStatus::getId).orElse(null);
         Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, createdFrom, createdTo);
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                        s -> s.getId(),
-                        s -> s.getName()
+                        EmployeeStatus::getId,
+                        EmployeeStatus::getName
                 ));
         return employeeRepository.findAll(spec, pageable).map(e -> toResponse(e, statusMap));
     }
@@ -195,7 +197,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Map<String, Long> getEmployeeStats() {
         Long rejectedStatusId = employeeStatusRepository.findByName("Rechazado")
-                .map(s -> s.getId()).orElse(null);
+                .map(EmployeeStatus::getId).orElse(null);
         long total  = rejectedStatusId != null
                 ? employeeRepository.countByStatusIdNot(rejectedStatusId)
                 : employeeRepository.count();
@@ -221,11 +223,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeService.EmployeeSelectItem> getEmployeesWithoutContract() {
         Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
-                .map(s -> s.getId())
+                .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
 
         List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
-                .map(c -> c.getEmployeeId())
+                .map(Contract::getEmployeeId)
                 .distinct()
                 .toList();
 
@@ -243,11 +245,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeService.EmployeeSelectItem> getEmployeesWithContract() {
         Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
-                .map(s -> s.getId())
+                .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
 
         List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
-                .map(c -> c.getEmployeeId())
+                .map(Contract::getEmployeeId)
                 .distinct()
                 .toList();
 
@@ -264,7 +266,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeService.EmployeeSelectItem> getSupervisors() {
         try {
-            List<Long> userIds = userClient.getSupervisors().stream().map(u -> u.getId()).toList();
+            List<Long> userIds = userClient.getSupervisors().stream().map(UserDTO::getId).toList();
             if (userIds.isEmpty()) return List.of();
             return employeeRepository.findByUserIdIn(userIds).stream()
                     .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
@@ -278,7 +280,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeService.EmployeeSelectItem> getVisitors() {
         try {
-            List<Long> userIds = userClient.getVisitors().stream().map(u -> u.getId()).toList();
+            List<Long> userIds = userClient.getVisitors().stream().map(UserDTO::getId).toList();
             if (userIds.isEmpty()) return List.of();
             return employeeRepository.findByUserIdIn(userIds).stream()
                     .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
@@ -292,7 +294,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeService.EmployeeSelectItem> getCompanyRepresentatives() {
         try {
-            List<Long> userIds = userClient.getCompanyRepresentatives().stream().map(u -> u.getId()).toList();
+            List<Long> userIds = userClient.getCompanyRepresentatives().stream().map(UserDTO::getId).toList();
             if (userIds.isEmpty()) return List.of();
             return employeeRepository.findByUserIdIn(userIds).stream()
                     .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
@@ -442,7 +444,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public byte[] exportCsv() {
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(s -> s.getId(), s -> s.getName()));
+                .collect(java.util.stream.Collectors.toMap(EmployeeStatus::getId, EmployeeStatus::getName));
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,RUT,Nombre,Apellido Paterno,Apellido Materno,Email Corporativo,Teléfono,Estado,Activo,Fecha Creación\n");

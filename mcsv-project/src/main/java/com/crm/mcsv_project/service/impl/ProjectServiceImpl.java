@@ -19,6 +19,8 @@ import com.crm.mcsv_project.repository.ProjectSpecification;
 import com.crm.mcsv_project.repository.ProjectSpecialtyRepository;
 import com.crm.mcsv_project.repository.ProjectStatusRepository;
 import com.crm.mcsv_project.repository.ProjectTypeRepository;
+import com.crm.mcsv_project.util.CsvUtil;
+import com.crm.mcsv_project.util.DateRangeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,7 +37,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,13 +62,10 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                                                 LocalDate createdFrom, LocalDate createdTo,
                                                 LocalDate updatedFrom, LocalDate updatedTo,
                                                 Pageable pageable) {
-        LocalDateTime cFrom = createdFrom  != null ? createdFrom.atStartOfDay()      : null;
-        LocalDateTime cTo   = createdTo    != null ? createdTo.atTime(23, 59, 59)    : null;
-        LocalDateTime uFrom = updatedFrom  != null ? updatedFrom.atStartOfDay()      : null;
-        LocalDateTime uTo   = updatedTo    != null ? updatedTo.atTime(23, 59, 59)    : null;
-
         Specification<Project> spec = ProjectSpecification.withFilters(
-                search, active, typeId, statusId, specialtyId, cFrom, cTo, uFrom, uTo);
+                search, active, typeId, statusId, specialtyId,
+                DateRangeUtil.startOf(createdFrom), DateRangeUtil.endOf(createdTo),
+                DateRangeUtil.startOf(updatedFrom), DateRangeUtil.endOf(updatedTo));
 
         Page<Project> page = projectRepository.findAll(spec, pageable);
         long totalActive = projectRepository.count(
@@ -201,8 +200,8 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
             if (headerLine == null)
                 return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
 
-            String[] headers = parseCsvLine(headerLine);
-            Map<String, Integer> idx = buildHeaderIndex(headers);
+            String[] headers = CsvUtil.parseLine(headerLine);
+            Map<String, Integer> idx = CsvUtil.headerIndex(headers);
 
             int iCostCenter  = idx.getOrDefault("centro de costo", -1);
             int iName        = idx.getOrDefault("nombre", -1);
@@ -229,10 +228,10 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                 if (line.isBlank()) continue;
                 total++;
                 try {
-                    String[] cols = parseCsvLine(line);
+                    String[] cols = CsvUtil.parseLine(line);
 
-                    String costCenterStr = col(cols, iCostCenter);
-                    String name          = col(cols, iName);
+                    String costCenterStr = CsvUtil.col(cols, iCostCenter);
+                    String name          = CsvUtil.col(cols, iName);
 
                     if (costCenterStr.isEmpty()) throw new IllegalArgumentException("El centro de costo es obligatorio");
                     if (name.isEmpty())          throw new IllegalArgumentException("El nombre es obligatorio");
@@ -240,16 +239,16 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                     ProjectRequest request = new ProjectRequest();
                     request.setCostCenter(Integer.parseInt(costCenterStr));
                     request.setName(name);
-                    request.setAddress(nullIfEmpty(col(cols, iAddress)));
-                    request.setDescription(nullIfEmpty(col(cols, iDescription)));
-                    request.setTypeId(parseLong(col(cols, iTypeId)));
-                    request.setStatusId(parseLong(col(cols, iStatusId)));
-                    request.setSpecialtyId(parseLong(col(cols, iSpecialtyId)));
-                    request.setVisitorId(parseLong(col(cols, iVisitorId)));
-                    request.setSupervisorId(parseLong(col(cols, iSupervisorId)));
-                    request.setCompanyRepresentativeIds(parseLongList(col(cols, iCompanyReps)));
-                    request.setStartDate(parseDate(col(cols, iStartDate)));
-                    request.setEndDate(parseDate(col(cols, iEndDate)));
+                    request.setAddress(nullIfEmpty(CsvUtil.col(cols, iAddress)));
+                    request.setDescription(nullIfEmpty(CsvUtil.col(cols, iDescription)));
+                    request.setTypeId(parseLong(CsvUtil.col(cols, iTypeId)));
+                    request.setStatusId(parseLong(CsvUtil.col(cols, iStatusId)));
+                    request.setSpecialtyId(parseLong(CsvUtil.col(cols, iSpecialtyId)));
+                    request.setVisitorId(parseLong(CsvUtil.col(cols, iVisitorId)));
+                    request.setSupervisorId(parseLong(CsvUtil.col(cols, iSupervisorId)));
+                    request.setCompanyRepresentativeIds(parseLongList(CsvUtil.col(cols, iCompanyReps)));
+                    request.setStartDate(parseDate(CsvUtil.col(cols, iStartDate)));
+                    request.setEndDate(parseDate(CsvUtil.col(cols, iEndDate)));
 
                     create(request);
                     success++;
@@ -376,42 +375,6 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
     private String formatDate(LocalDateTime dt) {
         if (dt == null) return "";
         return dt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-    }
-
-    private String[] parseCsvLine(String line) {
-        List<String> fields = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    sb.append('"');
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (c == ',' && !inQuotes) {
-                fields.add(sb.toString());
-                sb.setLength(0);
-            } else {
-                sb.append(c);
-            }
-        }
-        fields.add(sb.toString());
-        return fields.toArray(new String[0]);
-    }
-
-    private Map<String, Integer> buildHeaderIndex(String[] headers) {
-        Map<String, Integer> idx = new HashMap<>();
-        for (int i = 0; i < headers.length; i++)
-            idx.put(headers[i].trim().toLowerCase(), i);
-        return idx;
-    }
-
-    private String col(String[] cols, int index) {
-        if (index < 0 || index >= cols.length) return "";
-        return cols[index].trim();
     }
 
     private String nullIfEmpty(String value) {
