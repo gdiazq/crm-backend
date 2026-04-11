@@ -66,6 +66,7 @@ aws:
     sqs:
         enabled: true
         email-queue-url: ${AWS_SQS_EMAIL_QUEUE_URL}
+        notification-queue-url: ${AWS_SQS_NOTIFICATION_QUEUE_URL}
 
 github:
     oauth2:

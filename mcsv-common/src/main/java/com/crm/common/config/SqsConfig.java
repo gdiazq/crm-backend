@@ -22,6 +22,9 @@ public class SqsConfig {
     @Value("${aws.secret-key:}")
     private String secretKey;
 
+    @Value("${aws.sqs.notification-queue-url:}")
+    private String notificationQueueUrl;
+
     @Bean
     public SqsClient sqsClient() {
         var builder = SqsClient.builder()
