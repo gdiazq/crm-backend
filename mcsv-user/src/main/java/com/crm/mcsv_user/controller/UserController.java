@@ -1,6 +1,6 @@
 package com.crm.mcsv_user.controller;
 
-import com.crm.mcsv_user.client.NotificationClient;
+import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.common.dto.PagedResponse;
@@ -44,7 +44,7 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
-    private final NotificationClient notificationClient;
+    private final EventBridgeNotificationClient eventBridgeNotificationClient;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "username", "firstName", "lastName", "email", "phoneNumber",
@@ -112,7 +112,7 @@ public class UserController {
             @Valid @RequestBody UpdateUserRequest request) {
         UserResponse updatedUser = userService.updateUser(request.getId(), request);
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(updatedUser.getId())
                     .title("Perfil actualizado")
                     .message("La información de tu perfil ha sido actualizada exitosamente.")

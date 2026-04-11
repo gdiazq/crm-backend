@@ -1,6 +1,6 @@
 package com.crm.mcsv_user.service.impl;
 
-import com.crm.mcsv_user.client.NotificationClient;
+import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
@@ -42,7 +42,7 @@ public class RoleServiceImpl implements RoleService {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
     private final UserMapper userMapper;
-    private final NotificationClient notificationClient;
+    private final EventBridgeNotificationClient eventBridgeNotificationClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -101,7 +101,7 @@ public class RoleServiceImpl implements RoleService {
             List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
             admins.forEach(admin -> {
                 try {
-                    notificationClient.send(SendNotificationRequest.builder()
+                    eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                             .userId(admin.getId())
                             .title("Nuevo rol creado")
                             .message("Se ha creado el rol \"" + savedRole.getName() + "\" en el sistema.")
@@ -141,7 +141,7 @@ public class RoleServiceImpl implements RoleService {
         List<User> users = userRepository.findAllByRolesId(updatedRole.getId());
         users.forEach(u -> {
             try {
-                notificationClient.send(SendNotificationRequest.builder()
+                eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                         .userId(u.getId())
                         .title("Rol actualizado")
                         .message("Tu rol \"" + updatedRole.getName() + "\" ha sido actualizado por un administrador.")
@@ -203,7 +203,7 @@ public class RoleServiceImpl implements RoleService {
         // Notificar a los usuarios afectados
         users.forEach(u -> {
             try {
-                notificationClient.send(SendNotificationRequest.builder()
+                eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                         .userId(u.getId())
                         .title(userTitle)
                         .message(userMessage)
@@ -219,7 +219,7 @@ public class RoleServiceImpl implements RoleService {
             List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
             admins.forEach(admin -> {
                 try {
-                    notificationClient.send(SendNotificationRequest.builder()
+                    eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                             .userId(admin.getId())
                             .title("Rol " + statusLabel)
                             .message("El rol \"" + role.getName() + "\" ha sido " + statusLabel + ". " + users.size() + " usuario(s) afectado(s).")
@@ -288,7 +288,7 @@ public class RoleServiceImpl implements RoleService {
 
         users.forEach(u -> {
             try {
-                notificationClient.send(SendNotificationRequest.builder()
+                eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                         .userId(u.getId())
                         .title("Permisos actualizados")
                         .message(userMessage)
@@ -303,7 +303,7 @@ public class RoleServiceImpl implements RoleService {
             List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
             admins.forEach(admin -> {
                 try {
-                    notificationClient.send(SendNotificationRequest.builder()
+                    eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                             .userId(admin.getId())
                             .title("Permisos de rol actualizados")
                             .message("Los permisos del rol \"" + role.getName() + "\" han sido modificados. " + users.size() + " usuario(s) afectado(s).")

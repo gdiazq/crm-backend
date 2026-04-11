@@ -58,16 +58,12 @@ resilience4j:
     instances:
       mcsv-storage:
         baseConfig: default
-      mcsv-notification:
-        baseConfig: default
   timelimiter:
     configs:
       default:
         timeoutDuration: 3s
     instances:
       mcsv-storage:
-        baseConfig: default
-      mcsv-notification:
         baseConfig: default
 
 springdoc:

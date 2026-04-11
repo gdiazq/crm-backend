@@ -1,7 +1,7 @@
 package com.crm.mcsv_user.service.impl;
 
+import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.client.SqsEmailClient;
-import com.crm.mcsv_user.client.NotificationClient;
 import com.crm.mcsv_user.client.StorageClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
     private final StorageClient storageClient;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final SqsEmailClient sqsEmailClient;
-    private final NotificationClient notificationClient;
+    private final EventBridgeNotificationClient eventBridgeNotificationClient;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -184,7 +184,7 @@ public class UserServiceImpl implements UserService {
         log.info("User created successfully with id: {}", savedUser.getId());
 
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(savedUser.getId())
                     .title("Bienvenido a CRM")
                     .message("Hola " + savedUser.getUsername() + ", tu cuenta ha sido creada. Verifica tu correo para comenzar.")
@@ -529,7 +529,7 @@ public class UserServiceImpl implements UserService {
                     sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
                     success++;
                     try {
-                        notificationClient.send(SendNotificationRequest.builder()
+                        eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                                 .userId(created.getId())
                                 .title("Bienvenido a CRM")
                                 .message("Hola " + created.getUsername() + ", tu cuenta ha sido creada. Verifica tu correo para comenzar.")
