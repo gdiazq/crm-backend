@@ -104,28 +104,6 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 key-resolver: "#{@userKeyResolver}"
-        - id: mcsv-notification-ws
-          uri: lb:ws://mcsv-notification
-          predicates:
-            - Path=/v1/api/notification/ws/**
-          filters:
-            - StripPrefix=3
-        - id: mcsv-notification
-          uri: lb://mcsv-notification
-          predicates:
-            - Path=/v1/api/notification/**
-          filters:
-            - StripPrefix=3
-            - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-notification
-                fallbackUri: forward:/fallback/mcsv-notification
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 20
-                redis-rate-limiter.burstCapacity: 40
-                key-resolver: "#{@userKeyResolver}"
         - id: mcsv-storage
           uri: lb://mcsv-storage
           predicates:
@@ -272,13 +250,6 @@ resilience4j:
         failure-rate-threshold: 50
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
-      mcsv-notification:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
       mcsv-storage:
         sliding-window-size: 10
         failure-rate-threshold: 50
@@ -312,10 +283,6 @@ resilience4j:
         wait-duration: 500ms
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2
-      mcsv-notification:
-        max-attempts: 2
-        wait-duration: 500ms
-        enable-exponential-backoff: true
       mcsv-storage:
         max-attempts: 2
         wait-duration: 500ms
