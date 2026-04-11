@@ -66,7 +66,9 @@ aws:
     sqs:
         enabled: true
         email-queue-url: ${AWS_SQS_EMAIL_QUEUE_URL}
-        notification-queue-url: ${AWS_SQS_NOTIFICATION_QUEUE_URL}
+    eventbridge:
+        enabled: true
+        bus-name: ${AWS_EVENTBRIDGE_BUS_NAME:crm-events}
 
 github:
     oauth2:

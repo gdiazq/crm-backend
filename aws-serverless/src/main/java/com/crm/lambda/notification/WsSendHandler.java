@@ -3,6 +3,7 @@ package com.crm.lambda.notification;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
@@ -40,7 +41,9 @@ public class WsSendHandler implements RequestHandler<SQSEvent, Void> {
 
         for (SQSEvent.SQSMessage msg : event.getRecords()) {
             try {
-                SendNotificationRequest req = mapper.readValue(msg.getBody(), SendNotificationRequest.class);
+                // SQS message body puede venir de SNS (wrapped) o directo
+                String notificationJson = extractNotificationJson(msg.getBody());
+                SendNotificationRequest req = mapper.readValue(notificationJson, SendNotificationRequest.class);
                 List<Long> targetUserIds = req.resolveUserIds();
 
                 if (targetUserIds.isEmpty()) {
@@ -61,6 +64,31 @@ public class WsSendHandler implements RequestHandler<SQSEvent, Void> {
             }
         }
         return null;
+    }
+
+    private String extractNotificationJson(String sqsBody) throws Exception {
+        // SNS wraps the message: { "Message": "{actual json}", "Type": "Notification", ... }
+        // EventBridge → SNS adds: { "detail": {actual json}, "source": "crm.notification", ... }
+        JsonNode node = mapper.readTree(sqsBody);
+
+        // If it came from SNS subscription to SQS
+        if (node.has("Message")) {
+            String snsMessage = node.get("Message").asText();
+            JsonNode snsNode = mapper.readTree(snsMessage);
+            // If SNS received from EventBridge, the payload is in "detail"
+            if (snsNode.has("detail")) {
+                return snsNode.get("detail").toString();
+            }
+            return snsMessage;
+        }
+
+        // If it came from EventBridge directly
+        if (node.has("detail")) {
+            return node.get("detail").toString();
+        }
+
+        // Direct SQS message
+        return sqsBody;
     }
 
     private NotificationResponse saveNotification(Long userId, SendNotificationRequest req) throws Exception {

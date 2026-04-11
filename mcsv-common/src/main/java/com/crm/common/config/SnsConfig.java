@@ -7,11 +7,11 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sns.SnsClient;
 
 @Configuration
-@ConditionalOnProperty(name = "aws.sqs.enabled", havingValue = "true")
-public class SqsConfig {
+@ConditionalOnProperty(name = "aws.sns.enabled", havingValue = "true")
+public class SnsConfig {
 
     @Value("${aws.region:us-east-1}")
     private String region;
@@ -23,8 +23,8 @@ public class SqsConfig {
     private String secretKey;
 
     @Bean
-    public SqsClient sqsClient() {
-        var builder = SqsClient.builder()
+    public SnsClient snsClient() {
+        var builder = SnsClient.builder()
                 .region(Region.of(region));
 
         if (!accessKey.isBlank() && !secretKey.isBlank()) {
