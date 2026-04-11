@@ -21,8 +21,7 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 public class WsSendHandler implements RequestHandler<SQSEvent, Void> {
@@ -42,38 +41,20 @@ public class WsSendHandler implements RequestHandler<SQSEvent, Void> {
         for (SQSEvent.SQSMessage msg : event.getRecords()) {
             try {
                 SendNotificationRequest req = mapper.readValue(msg.getBody(), SendNotificationRequest.class);
-                log.info("Processing notification for userId: {}", req.getUserId());
+                List<Long> targetUserIds = req.resolveUserIds();
 
-                // 1. Guardar en BD
-                NotificationResponse saved = saveNotification(req);
-
-                // 2. Buscar conexiones activas del usuario en DynamoDB
-                String userId = String.valueOf(req.getUserId());
-                QueryResponse queryResult = dynamo.query(QueryRequest.builder()
-                        .tableName(TABLE_NAME)
-                        .indexName("userId-index")
-                        .keyConditionExpression("userId = :uid")
-                        .expressionAttributeValues(Map.of(":uid", AttributeValue.fromS(userId)))
-                        .build());
-
-                // 3. Enviar a cada conexión activa
-                String payload = mapper.writeValueAsString(saved);
-                for (Map<String, AttributeValue> item : queryResult.items()) {
-                    String connectionId = item.get("connectionId").s();
-                    try {
-                        apiGw.postToConnection(PostToConnectionRequest.builder()
-                                .connectionId(connectionId)
-                                .data(SdkBytes.fromUtf8String(payload))
-                                .build());
-                        log.info("Notification pushed to connectionId={}", connectionId);
-                    } catch (GoneException e) {
-                        log.warn("Stale connection {}, removing", connectionId);
-                        dynamo.deleteItem(DeleteItemRequest.builder()
-                                .tableName(TABLE_NAME)
-                                .key(Map.of("connectionId", AttributeValue.fromS(connectionId)))
-                                .build());
-                    }
+                if (targetUserIds.isEmpty()) {
+                    log.warn("No userIds in notification message, skipping");
+                    continue;
                 }
+
+                log.info("Processing notification for {} user(s): {}", targetUserIds.size(), targetUserIds);
+
+                for (Long targetUserId : targetUserIds) {
+                    NotificationResponse saved = saveNotification(targetUserId, req);
+                    pushToWebSocket(apiGw, targetUserId, saved);
+                }
+
             } catch (Exception e) {
                 log.error("Failed to process notification message: {}", msg.getMessageId(), e);
                 throw new RuntimeException("Failed to process notification", e);
@@ -82,14 +63,14 @@ public class WsSendHandler implements RequestHandler<SQSEvent, Void> {
         return null;
     }
 
-    private NotificationResponse saveNotification(SendNotificationRequest req) throws Exception {
+    private NotificationResponse saveNotification(Long userId, SendNotificationRequest req) throws Exception {
         String sql = "INSERT INTO notifications (user_id, title, message, type, is_read, archived, created_at) " +
                      "VALUES (?, ?, ?, ?, false, false, NOW()) RETURNING id, created_at";
 
         try (Connection conn = DbConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setLong(1, req.getUserId());
+            ps.setLong(1, userId);
             ps.setString(2, req.getTitle());
             ps.setString(3, req.getMessage());
             ps.setString(4, req.getType() != null ? req.getType() : "INFO");
@@ -106,6 +87,40 @@ public class WsSendHandler implements RequestHandler<SQSEvent, Void> {
             response.setArchived(false);
             response.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
             return response;
+        }
+    }
+
+    private void pushToWebSocket(ApiGatewayManagementApiClient apiGw, Long userId, NotificationResponse notification) throws Exception {
+        String userIdStr = String.valueOf(userId);
+
+        QueryResponse queryResult = dynamo.query(QueryRequest.builder()
+                .tableName(TABLE_NAME)
+                .indexName("userId-index")
+                .keyConditionExpression("userId = :uid")
+                .expressionAttributeValues(Map.of(":uid", AttributeValue.fromS(userIdStr)))
+                .build());
+
+        if (queryResult.items().isEmpty()) {
+            log.debug("No active WebSocket connections for userId={}", userId);
+            return;
+        }
+
+        String payload = mapper.writeValueAsString(notification);
+        for (Map<String, AttributeValue> item : queryResult.items()) {
+            String connectionId = item.get("connectionId").s();
+            try {
+                apiGw.postToConnection(PostToConnectionRequest.builder()
+                        .connectionId(connectionId)
+                        .data(SdkBytes.fromUtf8String(payload))
+                        .build());
+                log.info("Notification pushed to connectionId={} userId={}", connectionId, userId);
+            } catch (GoneException e) {
+                log.warn("Stale connection {}, removing", connectionId);
+                dynamo.deleteItem(DeleteItemRequest.builder()
+                        .tableName(TABLE_NAME)
+                        .key(Map.of("connectionId", AttributeValue.fromS(connectionId)))
+                        .build());
+            }
         }
     }
 }
