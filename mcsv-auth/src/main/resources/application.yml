@@ -92,11 +92,6 @@ resilience4j:
                 permitted-number-of-calls-in-half-open-state: 3
                 slow-call-duration-threshold: 2s
                 slow-call-rate-threshold: 50
-            mcsv-notification:
-                sliding-window-size: 10
-                failure-rate-threshold: 50
-                wait-duration-in-open-state: 30s
-                permitted-number-of-calls-in-half-open-state: 3
             github-token-client:
                 sliding-window-size: 5
                 minimum-number-of-calls: 3
@@ -116,10 +111,6 @@ resilience4j:
                 wait-duration: 500ms
                 enable-exponential-backoff: true
                 exponential-backoff-multiplier: 2
-            mcsv-notification:
-                max-attempts: 2
-                wait-duration: 500ms
-                enable-exponential-backoff: true
             github-token-client:
                 max-attempts: 2
                 wait-duration: 1s

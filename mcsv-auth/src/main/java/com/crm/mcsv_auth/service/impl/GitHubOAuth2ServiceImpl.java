@@ -1,8 +1,8 @@
 package com.crm.mcsv_auth.service.impl;
 
+import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.mcsv_auth.client.GitHubApiClient;
 import com.crm.mcsv_auth.client.GitHubTokenClient;
-import com.crm.mcsv_auth.client.NotificationClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.GitHubOAuth2Config;
 import com.crm.mcsv_auth.config.JwtConfig;
@@ -44,7 +44,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
     private final TokenService tokenService;
     private final UserSessionRepository userSessionRepository;
     private final JwtConfig jwtConfig;
-    private final NotificationClient notificationClient;
+    private final EventBridgeNotificationClient eventBridgeNotificationClient;
 
     @Override
     public String buildAuthorizationUrl() {
@@ -212,7 +212,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
 
     private void sendWelcomeNotification(Long userId, String username) {
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(userId)
                     .title("Bienvenido a CRM")
                     .message("Hola " + username + ", tu cuenta ha sido creada exitosamente con GitHub.")
@@ -225,7 +225,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
 
     private void sendLoginNotification(Long userId, String username) {
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(userId)
                     .title("Inicio de sesión")
                     .message("Bienvenido de vuelta, " + username + ". Has iniciado sesión con GitHub.")

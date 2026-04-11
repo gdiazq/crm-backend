@@ -1,6 +1,6 @@
 package com.crm.mcsv_auth.service.impl;
 
-import com.crm.mcsv_auth.client.NotificationClient;
+import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.client.SqsEmailClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.JwtConfig;
@@ -55,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserClient userClient;
     private final SqsEmailClient sqsEmailClient;
-    private final NotificationClient notificationClient;
+    private final EventBridgeNotificationClient eventBridgeNotificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
@@ -459,7 +459,7 @@ public class AuthServiceImpl implements AuthService {
         passwordResetTokenRepository.save(passwordToken);
 
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(userId)
                     .title("Email verificado")
                     .message("Tu dirección de correo ha sido verificada exitosamente. Ya puedes acceder a todas las funciones.")
@@ -575,7 +575,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("Password updated successfully for user ID: {}", resetToken.getUserId());
 
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(resetToken.getUserId())
                     .title("Contraseña actualizada")
                     .message("Tu contraseña ha sido actualizada exitosamente. Si no realizaste este cambio, contacta al administrador.")
@@ -592,7 +592,7 @@ public class AuthServiceImpl implements AuthService {
 
     private void sendWelcomeNotification(Long userId, String username) {
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(userId)
                     .title("Bienvenido a CRM")
                     .message("Hola " + username + ", tu cuenta ha sido creada exitosamente. Verifica tu correo para comenzar.")
@@ -605,7 +605,7 @@ public class AuthServiceImpl implements AuthService {
 
     private void sendLoginNotification(Long userId, String username) {
         try {
-            notificationClient.send(SendNotificationRequest.builder()
+            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
                     .userId(userId)
                     .title("Inicio de sesión")
                     .message("Bienvenido de vuelta, " + username + ". Has iniciado sesión exitosamente.")
