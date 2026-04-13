@@ -105,16 +105,16 @@ spring:
                 redis-rate-limiter.burstCapacity: 40
                 key-resolver: "#{@userKeyResolver}"
         - id: mcsv-storage
-          uri: lb://mcsv-storage
+          uri: lb://mcsv-user
           predicates:
             - Path=/v1/api/storage/**
           filters:
-            - StripPrefix=3
+            - StripPrefix=2
             - AuthFilter
             - name: CircuitBreaker
               args:
-                name: mcsv-storage
-                fallbackUri: forward:/fallback/mcsv-storage
+                name: mcsv-user
+                fallbackUri: forward:/fallback/mcsv-user
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -250,13 +250,6 @@ resilience4j:
         failure-rate-threshold: 50
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
-      mcsv-storage:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
       mcsv-rrhh:
         sliding-window-size: 10
         failure-rate-threshold: 50
@@ -283,10 +276,6 @@ resilience4j:
         wait-duration: 500ms
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2
-      mcsv-storage:
-        max-attempts: 2
-        wait-duration: 500ms
-        enable-exponential-backoff: true
       mcsv-rrhh:
         max-attempts: 2
         wait-duration: 500ms
