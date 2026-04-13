@@ -2,7 +2,7 @@ package com.crm.mcsv_user.service.impl;
 
 import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.client.SqsEmailClient;
-import com.crm.mcsv_user.client.StorageClient;
+import com.crm.common.storage.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.common.dto.SendNotificationRequest;
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final StorageClient storageClient;
+    private final StorageService storageService;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final SqsEmailClient sqsEmailClient;
     private final EventBridgeNotificationClient eventBridgeNotificationClient;
@@ -362,11 +362,11 @@ public class UserServiceImpl implements UserService {
         // Delete previous avatar from storage if exists
         if (user.getAvatarUrl() != null) {
             try {
-                ResponseEntity<List<FileMetadataResponse>> existing =
-                        storageClient.listByEntity("USER_AVATAR", userId);
-                if (existing.getBody() != null) {
-                    for (FileMetadataResponse meta : existing.getBody()) {
-                        storageClient.delete(meta.getId(), userId);
+                List<FileMetadataResponse> existing =
+                        storageService.listByEntity("USER_AVATAR", userId);
+                if (existing != null) {
+                    for (FileMetadataResponse meta : existing) {
+                        storageService.delete(meta.getId(), userId);
                     }
                 }
             } catch (Exception e) {
@@ -375,14 +375,14 @@ public class UserServiceImpl implements UserService {
         }
 
         // Upload new avatar to storage (public)
-        ResponseEntity<FileMetadataResponse> uploadResponse =
-                storageClient.upload(file, userId, "USER_AVATAR", userId, true);
+        FileMetadataResponse uploadResponse =
+                storageService.upload(file, userId, "USER_AVATAR", userId, true);
 
-        if (uploadResponse.getBody() == null || uploadResponse.getBody().getUrl() == null) {
+        if (uploadResponse == null || uploadResponse.getUrl() == null) {
             throw new RuntimeException("Failed to upload avatar to storage");
         }
 
-        String avatarUrl = uploadResponse.getBody().getUrl();
+        String avatarUrl = uploadResponse.getUrl();
 
         // Save URL in user
         user.setAvatarUrl(avatarUrl);

@@ -45,8 +45,6 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
     instances:
-      mcsv-storage:
-        baseConfig: default
       mcsv-user:
         baseConfig: default
   timelimiter:
@@ -54,10 +52,16 @@ resilience4j:
       default:
         timeoutDuration: 3s
     instances:
-      mcsv-storage:
-        baseConfig: default
       mcsv-user:
         baseConfig: default
+
+aws:
+    s3:
+        enabled: true
+        bucket: ${AWS_S3_BUCKET:crm-uploads}
+        region: ${AWS_REGION:us-east-1}
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
 
 springdoc:
   api-docs:

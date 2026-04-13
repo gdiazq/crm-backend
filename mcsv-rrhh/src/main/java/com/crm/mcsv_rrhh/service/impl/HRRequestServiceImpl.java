@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.client.StorageClient;
+import com.crm.common.storage.service.StorageService;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
@@ -61,7 +61,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final SafetyComplianceRepository safetyComplianceRepository;
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final UserClient userClient;
-    private final StorageClient storageClient;
+    private final StorageService storageService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -539,10 +539,10 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     private void retagPendingFiles(Long hrRequestId, Long contractId) {
         try {
-            var response = storageClient.listByEntity("CONTRACT_PENDING", hrRequestId);
-            if (response.getBody() != null) {
-                for (FileMetadataResponse file : response.getBody()) {
-                    storageClient.retag(file.getId(), "CONTRACT", contractId);
+            var response = storageService.listByEntity("CONTRACT_PENDING", hrRequestId);
+            if (response != null) {
+                for (FileMetadataResponse file : response) {
+                    storageService.retag(file.getId(), "CONTRACT", contractId);
                 }
             }
         } catch (Exception e) {
@@ -552,13 +552,13 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     private void deletePendingFiles(Long hrRequestId, Long contractId) {
         try {
-            var response = storageClient.listByEntity("CONTRACT_PENDING", hrRequestId);
-            if (response.getBody() != null) {
+            var response = storageService.listByEntity("CONTRACT_PENDING", hrRequestId);
+            if (response != null) {
                 Contract contract = contractRepository.findById(contractId).orElse(null);
                 Long uploadedBy = contract != null ? contract.getEmployeeId() : null;
                 if (uploadedBy != null) {
-                    for (FileMetadataResponse file : response.getBody()) {
-                        storageClient.delete(file.getId(), uploadedBy);
+                    for (FileMetadataResponse file : response) {
+                        storageService.delete(file.getId(), uploadedBy);
                     }
                 }
             }

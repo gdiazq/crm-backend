@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.client.StorageClient;
+import com.crm.common.storage.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
@@ -49,7 +49,7 @@ public class ContractServiceImpl implements ContractService {
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ObjectMapper objectMapper;
-    private final StorageClient storageClient;
+    private final StorageService storageService;
     private final FileUploadHelper fileUploadHelper;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final ContractStatusRepository contractStatusRepository;
@@ -195,14 +195,14 @@ public class ContractServiceImpl implements ContractService {
         if (!contractRepository.existsById(contractId)) {
             throw new ResourceNotFoundException("Contrato no encontrado: " + contractId);
         }
-        storageClient.delete(fileId, userId);
+        storageService.delete(fileId, userId);
     }
 
     private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) return;
         for (MultipartFile file : files) {
             fileUploadHelper.validateFile(file);
-            storageClient.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
+            storageService.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
         }
     }
 
@@ -247,9 +247,8 @@ public class ContractServiceImpl implements ContractService {
 
     private List<FileMetadataResponse> fetchDocuments(Long contractId) {
         try {
-            ResponseEntity<List<FileMetadataResponse>> response =
-                    storageClient.listByEntity(ENTITY_TYPE, contractId);
-            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, contractId);
+            return response != null ? response : Collections.emptyList();
         } catch (Exception e) {
             log.warn("No se pudieron obtener documentos del contrato {}: {}", contractId, e.getMessage());
             return Collections.emptyList();

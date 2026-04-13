@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.client.StorageClient;
+import com.crm.common.storage.service.StorageService;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.SettlementRequest;
@@ -48,7 +48,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TerminationQuizQuestionRepository quizQuestionRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
-    private final StorageClient storageClient;
+    private final StorageService storageService;
     private final FileUploadHelper fileUploadHelper;
     private final HRRequestService hrRequestService;
     private final HRRequestRepository hrRequestRepository;
@@ -240,9 +240,8 @@ public class SettlementServiceImpl implements SettlementService {
 
     private List<FileMetadataResponse> fetchDocuments(Long settlementId) {
         try {
-            ResponseEntity<List<FileMetadataResponse>> response =
-                    storageClient.listByEntity(ENTITY_TYPE, settlementId);
-            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, settlementId);
+            return response != null ? response : Collections.emptyList();
         } catch (Exception e) {
             log.warn("No se pudieron obtener documentos del finiquito {}: {}", settlementId, e.getMessage());
             return Collections.emptyList();
