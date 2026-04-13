@@ -31,14 +31,10 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("Starting data initialization...");
-
         initializePermissions();
         initializeRoles();
-        assignPermissionsToRoles(); // siempre corre, idempotente
+        assignPermissionsToRoles();
         initializeUsers();
-
-        log.info("Data initialization completed.");
     }
 
     // -------------------------------------------------------------------------
@@ -46,7 +42,7 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void initializePermissions() {
-        log.info("Initializing permissions...");
+        if (permissionRepository.count() > 0) return;
 
         createPermissionIfNotExists("USER:CREATE", "Crear nuevos usuarios en el sistema");
         createPermissionIfNotExists("USER:READ",   "Ver y consultar información de usuarios");
@@ -102,7 +98,6 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("TERMINATION:READ",   "Ver y consultar finiquitos");
         createPermissionIfNotExists("TERMINATION:UPDATE", "Modificar finiquitos");
         createPermissionIfNotExists("TERMINATION:DELETE", "Eliminar finiquitos");
-
         log.info("Permissions initialized.");
     }
 
@@ -120,7 +115,7 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void initializeRoles() {
-        log.info("Initializing roles...");
+        if (roleRepository.count() > 0) return;
 
         createRoleIfNotExists("ROLE_ADMIN",   "Administrator with full access");
         createRoleIfNotExists("ROLE_USER",    "Regular user with basic permissions");
@@ -144,7 +139,7 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void assignPermissionsToRoles() {
-        log.info("Assigning permissions to roles...");
+        if (roleRepository.findByName("ROLE_ADMIN").map(r -> !r.getPermissions().isEmpty()).orElse(false)) return;
 
         Permission userCreate = permissionRepository.findByName("USER:CREATE").orElseThrow();
         Permission userRead   = permissionRepository.findByName("USER:READ").orElseThrow();
@@ -180,7 +175,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void assignToRole(String roleName, Set<Permission> permissions) {
-        roleRepository.findByName(roleName).ifPresent(role -> {
+        roleRepository.findByNameWithPermissions(roleName).ifPresent(role -> {
             role.getPermissions().addAll(permissions);
             roleRepository.save(role);
             log.info("Permissions assigned to {}: {}", roleName,
@@ -193,12 +188,7 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void initializeUsers() {
-        log.info("Initializing sample users...");
-
-        if (userRepository.count() > 0) {
-            log.info("Users already exist, skipping user initialization.");
-            return;
-        }
+        if (userRepository.count() > 0) return;
 
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));

@@ -16,6 +16,9 @@ public interface UserClient {
     @GetMapping("/detail/{id}")
     UserDTO getUserById(@PathVariable Long id);
 
+    @GetMapping("/detail/batch")
+    List<UserDTO> getUsersByIds(@RequestParam List<Long> ids);
+
     @GetMapping("/select/users/available")
     List<CatalogItem> getAvailableForEmployee(
             @RequestParam(required = false) String search,

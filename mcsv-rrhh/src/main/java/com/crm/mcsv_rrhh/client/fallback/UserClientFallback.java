@@ -20,6 +20,12 @@ public class UserClientFallback implements UserClient {
     }
 
     @Override
+    public List<UserDTO> getUsersByIds(List<Long> ids) {
+        log.warn("mcsv-user no disponible — retornando lista vacía para getUsersByIds");
+        return Collections.emptyList();
+    }
+
+    @Override
     public List<CatalogItem> getAvailableForEmployee(String search, List<Long> excludeIds) {
         log.warn("mcsv-user no disponible — retornando lista vacía para getAvailableForEmployee");
         return Collections.emptyList();

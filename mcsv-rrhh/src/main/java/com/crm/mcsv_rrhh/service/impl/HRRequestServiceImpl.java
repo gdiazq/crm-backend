@@ -43,6 +43,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -150,16 +151,43 @@ public class HRRequestServiceImpl implements HRRequestService {
                                          LocalDate createdFrom, LocalDate createdTo,
                                          LocalDate approvalFrom, LocalDate approvalTo,
                                          Pageable pageable, String sortBy, String sortDir) {
-        // Para campos de empleado el sort se aplica dentro de la Specification via JOIN
-        // Se pasa un Pageable sin sort para evitar conflicto
         Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
                 ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
                 : pageable;
 
-        return hrRequestRepository.findAll(
+        Page<HRRequest> page = hrRequestRepository.findAll(
                 HRRequestSpecification.withFilters(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, sortBy, sortDir),
-                effectivePageable
-        ).map(this::toResponse);
+                effectivePageable);
+
+        if (page.isEmpty()) return page.map(hr -> toResponse(hr));
+
+        // Batch-load catálogos, empleados y aprobadores en vez de N queries + N HTTP calls
+        Set<Long> typeIds     = page.map(HRRequest::getRequestTypeId).toSet();
+        Set<Long> statusIds   = page.map(HRRequest::getStatusId).toSet();
+        Set<Long> employeeIds = page.map(HRRequest::getIdModule).toSet();
+
+        Set<Long> approverIds = page.stream()
+                .flatMap(hr -> {
+                    java.util.stream.Stream.Builder<Long> b = java.util.stream.Stream.builder();
+                    if (hr.getApproverId() != null) b.add(hr.getApproverId());
+                    if (hr.getHhrrApproverId() != null) b.add(hr.getHhrrApproverId());
+                    return b.build();
+                }).collect(Collectors.toSet());
+
+        Map<Long, String> typeNames = hrRequestTypeRepository.findAllById(typeIds)
+                .stream().collect(Collectors.toMap(t -> t.getId(), t -> t.getName()));
+        Map<Long, String> statusNames = employeeStatusRepository.findAllById(statusIds)
+                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s.getName()));
+        Map<Long, Employee> employees = employeeRepository.findAllById(employeeIds)
+                .stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
+
+        Map<Long, String> approverNames = approverIds.isEmpty() ? Map.of() :
+                userClient.getUsersByIds(new java.util.ArrayList<>(approverIds))
+                        .stream().collect(Collectors.toMap(
+                                u -> u.getId(),
+                                u -> u.getFirstName() + " " + u.getLastName()));
+
+        return page.map(hr -> toResponseBatch(hr, typeNames, statusNames, employees, approverNames));
     }
 
     @Override
@@ -421,11 +449,15 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public Map<String, Long> getStats(Long idModule) {
+        Map<String, Long> statusIdsByName = employeeStatusRepository
+                .findAllByNameIn(List.of("Pendiente de revisión", "Pendiente de aprobación", "Aprobado"))
+                .stream().collect(Collectors.toMap(s -> s.getName(), s -> s.getId()));
+
         List<Long> pendingIds = List.of(
-                resolveStatusId("Pendiente de revisión"),
-                resolveStatusId("Pendiente de aprobación")
+                statusIdsByName.get("Pendiente de revisión"),
+                statusIdsByName.get("Pendiente de aprobación")
         );
-        Long approvedId = resolveStatusId("Aprobado");
+        Long approvedId = statusIdsByName.get("Aprobado");
 
         long total   = idModule != null ? hrRequestRepository.countByIdModule(idModule)                              : hrRequestRepository.count();
         long pending = idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)     : hrRequestRepository.countByStatusIdIn(pendingIds);
@@ -480,6 +512,40 @@ public class HRRequestServiceImpl implements HRRequestService {
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private HRRequestResponse toResponseBatch(HRRequest hr,
+                                               Map<Long, String> typeNames,
+                                               Map<Long, String> statusNames,
+                                               Map<Long, Employee> employees,
+                                               Map<Long, String> approverNames) {
+        HRRequestResponse.HRRequestResponseBuilder builder = HRRequestResponse.builder()
+                .id(hr.getId())
+                .idModule(hr.getIdModule())
+                .requestTypeId(hr.getRequestTypeId())
+                .requestTypeName(typeNames.get(hr.getRequestTypeId()))
+                .statusId(hr.getStatusId())
+                .statusName(statusNames.get(hr.getStatusId()))
+                .action(hr.getAction())
+                .approverId(hr.getApproverId())
+                .approverFullName(hr.getApproverId() != null ? approverNames.get(hr.getApproverId()) : null)
+                .approvalDate(hr.getApprovalDate())
+                .hhrrApproverId(hr.getHhrrApproverId())
+                .hhrrApproverFullName(hr.getHhrrApproverId() != null ? approverNames.get(hr.getHhrrApproverId()) : null)
+                .hhrrApprovalDate(hr.getHhrrApprovalDate())
+                .rejectionDetail(hr.getRejectionDetail())
+                .createdAt(hr.getCreatedAt())
+                .updatedAt(hr.getUpdatedAt());
+
+        Employee emp = employees.get(hr.getIdModule());
+        if (emp != null) {
+            builder.identification(emp.getIdentification())
+                   .firstName(emp.getFirstName())
+                   .paternalLastName(emp.getPaternalLastName())
+                   .maternalLastName(emp.getMaternalLastName());
+        }
+
+        return builder.build();
+    }
 
     private HRRequest findOrThrow(Long id) {
         return hrRequestRepository.findById(id)

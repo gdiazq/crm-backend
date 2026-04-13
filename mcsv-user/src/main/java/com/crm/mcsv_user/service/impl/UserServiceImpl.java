@@ -135,6 +135,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UserDTO> getUsersByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return userRepository.findAllById(ids).stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public UserDTO getUserByUsername(String username) {
         log.info("Fetching user by username: {}", username);
         User user = userRepository.findByUsernameWithRoles(username)

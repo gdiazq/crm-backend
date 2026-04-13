@@ -77,6 +77,12 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @GetMapping("/detail/batch")
+    @Operation(summary = "Get users by IDs (batch)", description = "Retrieve multiple users by their IDs in a single request")
+    public ResponseEntity<List<UserDTO>> getUsersByIds(@RequestParam List<Long> ids) {
+        return ResponseEntity.ok(userService.getUsersByIds(ids));
+    }
+
     @GetMapping("/detail/username/{username}")
     @Operation(summary = "Get user by username", description = "Retrieve a user by their username")
     public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username) {
