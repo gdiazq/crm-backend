@@ -84,6 +84,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeIdentificationTypes() {
+        if (identificationTypeRepository.count() > 0) return;
         createIdentificationTypeIfNotExists("RUT/RUN");
         createIdentificationTypeIfNotExists("DNI");
         createIdentificationTypeIfNotExists("CPF");
@@ -99,6 +100,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeGenders() {
+        if (genderRepository.count() > 0) return;
         createGenderIfNotExists("Masculino");
         createGenderIfNotExists("Femenino");
         createGenderIfNotExists("No binario");
@@ -114,6 +116,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeMaritalStatuses() {
+        if (maritalStatusRepository.count() > 0) return;
         createMaritalStatusIfNotExists("Soltero/a");
         createMaritalStatusIfNotExists("Casado/a");
         createMaritalStatusIfNotExists("Divorciado/a");
@@ -130,6 +133,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeEducationLevels() {
+        if (educationLevelRepository.count() > 0) return;
         createEducationLevelIfNotExists("Educación básica");
         createEducationLevelIfNotExists("Educación media");
         createEducationLevelIfNotExists("Técnico nivel medio");
@@ -146,6 +150,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeDriverLicenses() {
+        if (driverLicenseRepository.count() > 0) return;
         createDriverLicenseIfNotExists("No posee");
         createDriverLicenseIfNotExists("Clase A1");
         createDriverLicenseIfNotExists("Clase A2");
@@ -165,6 +170,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeProfessions() {
+        if (professionRepository.count() > 0) return;
         // Grupo 1 — Directivos y gerentes
         createProfessionIfNotExists("Gerente General");
         createProfessionIfNotExists("Gerente de Área");
@@ -267,6 +273,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeEmergencyContactRelationships() {
+        if (emergencyContactRelationshipRepository.count() > 0) return;
         createEmergencyContactRelationshipIfNotExists("Cónyuge");
         createEmergencyContactRelationshipIfNotExists("Conviviente civil");
         createEmergencyContactRelationshipIfNotExists("Padre");
@@ -289,6 +296,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeRegions() {
+        if (regionRepository.count() > 0) return;
         createRegionIfNotExists("Región de Arica y Parinacota");
         createRegionIfNotExists("Región de Tarapacá");
         createRegionIfNotExists("Región de Antofagasta");
@@ -315,6 +323,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeCommunes() {
+        if (communeRepository.count() > 0) return;
         createCommunesForRegion("Región de Arica y Parinacota",
                 "Arica", "Camarones", "Putre", "General Lagos");
 
@@ -377,6 +386,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeCities() {
+        if (cityRepository.count() > 0) return;
         // Las ciudades son localidades dentro de cada comuna.
         // Se agregan las principales capitales comunales como referencia.
         // El frontend filtra ciudades por communeId.
@@ -442,6 +452,7 @@ public class DataInitializer implements CommandLineRunner {
     // ─── Nuevos catálogos ────────────────────────────────────────────────────
 
     private void initializeNationalities() {
+        if (nationalityRepository.count() > 0) return;
         String[] names = {"Chilena", "Argentina", "Peruana", "Boliviana", "Colombiana",
                 "Venezolana", "Ecuatoriana", "Brasileña", "Uruguaya", "Paraguaya",
                 "Española", "Italiana", "Alemana", "Francesa", "Estadounidense",
@@ -453,6 +464,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeExpats() {
+        if (expatRepository.count() > 0) return;
         String[] names = {"No aplica", "Expatriado", "Inmigrante"};
         for (String name : names)
             if (expatRepository.findByName(name).isEmpty())
@@ -461,6 +473,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeFamilyAllowanceTiers() {
+        if (familyAllowanceTierRepository.count() > 0) return;
         String[] names = {"Tramo A", "Tramo B", "Tramo C", "Tramo D", "Sin carga familiar"};
         for (String name : names)
             if (familyAllowanceTierRepository.findByName(name).isEmpty())
@@ -469,6 +482,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeRetirementStatuses() {
+        if (retirementStatusRepository.count() > 0) return;
         String[] names = {"No jubilado", "Jubilado por vejez", "Pensionado por invalidez"};
         for (String name : names)
             if (retirementStatusRepository.findByName(name).isEmpty())
@@ -477,6 +491,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializePensionStatuses() {
+        if (pensionStatusRepository.count() > 0) return;
         String[] names = {"AFP", "IPS (ex INP)", "Imponente voluntario", "Pensionado", "No cotizante"};
         for (String name : names)
             if (pensionStatusRepository.findByName(name).isEmpty())
@@ -485,6 +500,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeAfps() {
+        if (afpRepository.count() > 0) return;
         String[] names = {"Capital", "Cuprum", "Habitat", "Modelo", "PlanVital", "Provida", "Uno"};
         for (String name : names)
             if (afpRepository.findByName(name).isEmpty())
@@ -493,6 +509,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeHealthInsurances() {
+        if (healthInsuranceRepository.count() > 0) return;
         String[] names = {"Fonasa", "Banmédica", "Colmena Golden Cross", "Consalud",
                 "Cruz Blanca", "Esencial", "MasVida", "Vida Tres"};
         for (String name : names)
@@ -502,6 +519,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeHealthInsuranceTariffs() {
+        if (healthInsuranceTariffRepository.count() > 0) return;
         String[] names = {"UF", "Pesos"};
         for (String name : names)
             if (healthInsuranceTariffRepository.findByName(name).isEmpty())
@@ -510,6 +528,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializePaymentMethods() {
+        if (paymentMethodRepository.count() > 0) return;
         String[] names = {"Transferencia bancaria", "Cheque", "Efectivo", "Vale vista"};
         for (String name : names)
             if (paymentMethodRepository.findByName(name).isEmpty())
@@ -518,6 +537,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeBanks() {
+        if (bankRepository.count() > 0) return;
         String[] names = {"BancoEstado", "Banco de Chile", "Banco Santander", "Banco BCI",
                 "Banco Itaú", "Banco Scotiabank", "Banco BICE", "Banco Internacional",
                 "Banco Falabella", "Banco Ripley", "Banco Security", "Banco Consorcio",
@@ -529,6 +549,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeHRRequestTypes() {
+        if (hrRequestTypeRepository.count() > 0) return;
         record TypeDef(String name, Boolean req) {}
         List<TypeDef> types = List.of(
                 new TypeDef("Trabajador", true),
@@ -546,6 +567,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeContractTypes() {
+        if (contractTypeRepository.count() > 0) return;
         String[] names = {"Indefinido", "Plazo fijo", "Por obra o faena", "A honorarios", "Part-time"};
         for (String name : names)
             if (contractTypeRepository.findByName(name).isEmpty())
@@ -554,6 +576,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeContractStatuses() {
+        if (contractStatusRepository.count() > 0) return;
         String[] names = {"Activo", "Vencido", "Terminado", "Suspendido"};
         for (String name : names)
             if (contractStatusRepository.findByName(name).isEmpty())
@@ -562,6 +585,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeSafetyGroups() {
+        if (safetyGroupRepository.count() > 0) return;
         String[] names = {"ACHS", "Mutual de Seguridad CChC", "IST", "ISL"};
         for (String name : names)
             if (safetyGroupRepository.findByName(name).isEmpty())
@@ -570,6 +594,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeCompanies() {
+        if (companyRepository.count() > 0) return;
         String[] names = {"Empresa Principal S.A.", "Filial Norte Ltda.", "Filial Sur Ltda."};
         for (String name : names)
             if (companyRepository.findByName(name).isEmpty())
@@ -578,6 +603,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeZones() {
+        if (zoneRepository.count() > 0) return;
         String[] names = {"Zona Norte", "Zona Centro", "Zona Sur", "Zona Oriente", "Zona Poniente"};
         for (String name : names)
             if (zoneRepository.findByName(name).isEmpty())
@@ -586,6 +612,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeJobTitles() {
+        if (jobTitleRepository.count() > 0) return;
         String[] names = {
             "Gerente General", "Gerente de RRHH", "Jefe de Operaciones",
             "Analista", "Ingeniero", "Técnico", "Administrativo", "Operario", "Supervisor"
@@ -597,6 +624,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeSites() {
+        if (siteRepository.count() > 0) return;
         String[] names = {"Casa Matriz", "Sucursal Norte", "Sucursal Sur", "Bodega Central"};
         for (String name : names)
             if (siteRepository.findByName(name).isEmpty())
@@ -605,6 +633,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeLaborUnions() {
+        if (laborUnionRepository.count() > 0) return;
         String[] names = {"Sin sindicato", "Sindicato N°1", "Sindicato N°2", "Sindicato Interempresa"};
         for (String name : names)
             if (laborUnionRepository.findByName(name).isEmpty())
@@ -613,6 +642,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeMealTypes() {
+        if (mealTypeRepository.count() > 0) return;
         String[] names = {"Sin colación", "Desayuno", "Almuerzo", "Cena", "Colación completa"};
         for (String name : names)
             if (mealTypeRepository.findByName(name).isEmpty())
@@ -621,6 +651,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeTransportTypes() {
+        if (transportTypeRepository.count() > 0) return;
         String[] names = {"Sin movilización", "Bus", "Metro", "Taxi", "Vehículo propio", "Movilización empresa"};
         for (String name : names)
             if (transportTypeRepository.findByName(name).isEmpty())
@@ -629,6 +660,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeEmployeeStatuses() {
+        if (employeeStatusRepository.count() > 0) return;
         String[] names = {
                 "Pendiente de aprobación",
                 "Pendiente de revisión",

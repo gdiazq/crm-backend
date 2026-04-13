@@ -28,6 +28,18 @@ public class NotificationCrudHandler implements RequestHandler<APIGatewayProxyRe
         String method = event.getHttpMethod();
         String path = event.getPath();
         Map<String, String> headers = event.getHeaders();
+        if ("OPTIONS".equals(method)) {
+            APIGatewayProxyResponseEvent optionsResp = new APIGatewayProxyResponseEvent();
+            optionsResp.setStatusCode(200);
+            optionsResp.setBody("");
+            optionsResp.setHeaders(Map.of(
+                    "Access-Control-Allow-Origin", "*",
+                    "Access-Control-Allow-Headers", "Content-Type, X-User-Id, Authorization",
+                    "Access-Control-Allow-Methods", "GET, PATCH, OPTIONS"
+            ));
+            return optionsResp;
+        }
+
         String userId = headers != null ? headers.get("x-user-id") : null;
 
         if (userId == null || userId.isBlank()) {
@@ -216,7 +228,12 @@ public class NotificationCrudHandler implements RequestHandler<APIGatewayProxyRe
     private APIGatewayProxyResponseEvent response(int statusCode, Object body) {
         APIGatewayProxyResponseEvent resp = new APIGatewayProxyResponseEvent();
         resp.setStatusCode(statusCode);
-        resp.setHeaders(Map.of("Content-Type", "application/json"));
+        resp.setHeaders(Map.of(
+                "Content-Type", "application/json",
+                "Access-Control-Allow-Origin", "*",
+                "Access-Control-Allow-Headers", "Content-Type, X-User-Id, Authorization",
+                "Access-Control-Allow-Methods", "GET, PATCH, OPTIONS"
+        ));
         try {
             resp.setBody(mapper.writeValueAsString(body));
         } catch (Exception e) {
