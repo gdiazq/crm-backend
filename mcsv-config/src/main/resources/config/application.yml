@@ -16,6 +16,8 @@ spring:
             connection-timeout: ${CONNECTION-TIMEOUT:5000}
             idle-timeout: ${IDLE-TIMEOUT:600000}
             max-lifetime: ${MAX-LIFETIME:1800000}
+            data-source-properties:
+                prepareThreshold: 0
 
 eureka:
     instance:
