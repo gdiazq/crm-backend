@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,5 +77,14 @@ public class SettlementController {
             @RequestPart("data") @Valid UpdateSettlementRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         return ResponseEntity.ok(service.update(request, files));
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar finiquitos a CSV")
+    public ResponseEntity<byte[]> exportCsv() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"settlements.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(service.exportCsv());
     }
 }

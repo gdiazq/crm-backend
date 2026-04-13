@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.service.impl;
 
+import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.entity.Contract;
@@ -43,6 +44,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
+    private final ProjectClient projectClient;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
@@ -122,6 +124,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .shoeSize(request.getShoeSize())
                 .pantSize(request.getPantSize())
                 .statusId(pendingStatusId)
+                .costCenter(request.getCostCenter())
                 .rehireEligible(request.getRehireEligible() != null ? request.getRehireEligible() : true)
                 .active(true)
                 .build();
@@ -333,6 +336,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .corporateEmail(e.getCorporateEmail())
                 .phone(e.getPhone())
                 .statusName(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : null)
+                .costCenter(e.getCostCenter())
+                .projectName(resolveProjectName(e.getCostCenter()))
                 .active(e.getActive())
                 .rehireEligible(e.getRehireEligible())
                 .hasContract(e.getHasContract())
@@ -523,6 +528,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .bank(resolve(e.getBankId(), bankRepository))
                 .bankAccount(e.getBankAccount())
                 .status(resolve(e.getStatusId(), employeeStatusRepository))
+                .costCenter(e.getCostCenter())
+                .projectName(resolveProjectName(e.getCostCenter()))
                 .clothingSize(e.getClothingSize())
                 .shoeSize(e.getShoeSize())
                 .pantSize(e.getPantSize())
@@ -541,6 +548,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         builder.hasContract(e.getHasContract());
 
         return builder.build();
+    }
+
+    private String resolveProjectName(Integer costCenter) {
+        if (costCenter == null) return null;
+        try {
+            ProjectClient.ProjectNameDTO dto = projectClient.getByCostCenter(costCenter);
+            return dto != null ? dto.getName() : null;
+        } catch (Exception e) {
+            log.warn("No se pudo resolver nombre de proyecto para costCenter={}: {}", costCenter, e.getMessage());
+            return null;
+        }
     }
 
     private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {

@@ -154,6 +154,7 @@ public class SettlementServiceImpl implements SettlementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] exportCsv() {
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Empleado,RUT,Contrato ID,Fecha Término,Causal Legal,Calidad Trabajo," +

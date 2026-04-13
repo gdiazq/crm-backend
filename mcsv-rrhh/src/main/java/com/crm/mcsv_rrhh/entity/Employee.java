@@ -99,6 +99,7 @@ public class Employee {
 
     // ─── Datos Organizacionales ───────────────────────────────────────────────
     private Long statusId;
+    private Integer costCenter;
 
     // ─── Otros Datos ─────────────────────────────────────────────────────────
     private String clothingSize;

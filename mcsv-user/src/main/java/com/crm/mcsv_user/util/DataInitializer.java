@@ -139,7 +139,7 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void assignPermissionsToRoles() {
-        if (roleRepository.findByName("ROLE_ADMIN").map(r -> !r.getPermissions().isEmpty()).orElse(false)) return;
+        if (roleRepository.findByNameWithPermissions("ROLE_ADMIN").map(r -> !r.getPermissions().isEmpty()).orElse(false)) return;
 
         Permission userCreate = permissionRepository.findByName("USER:CREATE").orElseThrow();
         Permission userRead   = permissionRepository.findByName("USER:READ").orElseThrow();

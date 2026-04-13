@@ -392,6 +392,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         employee.setPantSize(proposed.getPantSize());
                         employee.setActive(proposed.getActive());
                         employee.setRehireEligible(proposed.getRehireEligible());
+                        employee.setCostCenter(proposed.getCostCenter());
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }

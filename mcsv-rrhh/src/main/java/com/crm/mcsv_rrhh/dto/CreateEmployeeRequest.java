@@ -64,6 +64,9 @@ public class CreateEmployeeRequest {
     private Long bankId;
     private String bankAccount;
 
+    // ─── Datos Organizacionales ───────────────────────────────────────────────
+    private Integer costCenter;
+
     // ─── Otros Datos ──────────────────────────────────────────────────────────
     private String clothingSize;
     private String shoeSize;

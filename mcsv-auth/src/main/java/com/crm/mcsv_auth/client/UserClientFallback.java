@@ -2,7 +2,6 @@ package com.crm.mcsv_auth.client;
 
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
