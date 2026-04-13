@@ -11,8 +11,8 @@ spring:
     servlet:
         multipart:
             enabled: true
-            max-file-size: 5MB
-            max-request-size: 5MB
+            max-file-size: 10MB
+            max-request-size: 10MB
 
     cloud:
         config:
@@ -28,6 +28,12 @@ aws:
     eventbridge:
         enabled: true
         bus-name: ${AWS_EVENTBRIDGE_BUS_NAME:crm-events}
+    s3:
+        enabled: true
+        bucket: ${AWS_S3_BUCKET:crm-uploads}
+        region: ${AWS_REGION:us-east-1}
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
 
 info:
   app:
