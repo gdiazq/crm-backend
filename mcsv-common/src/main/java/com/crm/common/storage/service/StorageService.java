@@ -1,0 +1,21 @@
+package com.crm.common.storage.service;
+
+import com.crm.common.dto.FileMetadataResponse;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+public interface StorageService {
+
+    FileMetadataResponse upload(MultipartFile file, Long uploadedBy, String entityType, Long entityId, Boolean isPublic);
+
+    String getPresignedUrl(Long id);
+
+    void delete(Long id, Long userId);
+
+    List<FileMetadataResponse> listByEntity(String entityType, Long entityId);
+
+    FileMetadataResponse getById(Long id);
+
+    void retag(Long id, String newEntityType, Long newEntityId);
+}

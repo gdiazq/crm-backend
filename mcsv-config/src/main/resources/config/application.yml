@@ -11,9 +11,11 @@ spring:
         password: ${DB_PASSWORD}
         driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
         hikari:
-            maximum-pool-size: ${MAXIMUM-POOL-SIZE:3}
-            minimum-idle: ${MINIMUM-IDLE:10}
-            idleTimeout: ${IDLE-TIMEOUT:600000}
+            maximum-pool-size: ${MAXIMUM-POOL-SIZE:10}
+            minimum-idle: ${MINIMUM-IDLE:3}
+            connection-timeout: ${CONNECTION-TIMEOUT:5000}
+            idle-timeout: ${IDLE-TIMEOUT:600000}
+            max-lifetime: ${MAX-LIFETIME:1800000}
 
 eureka:
     instance:
