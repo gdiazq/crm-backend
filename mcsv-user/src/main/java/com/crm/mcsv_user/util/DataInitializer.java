@@ -42,8 +42,6 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void initializePermissions() {
-        if (permissionRepository.count() > 0) return;
-
         createPermissionIfNotExists("USER:CREATE", "Crear nuevos usuarios en el sistema");
         createPermissionIfNotExists("USER:READ",   "Ver y consultar información de usuarios");
         createPermissionIfNotExists("USER:UPDATE", "Modificar información de usuarios existentes");
