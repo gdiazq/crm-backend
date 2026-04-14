@@ -98,6 +98,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("TERMINATION:READ",   "Ver y consultar finiquitos");
         createPermissionIfNotExists("TERMINATION:UPDATE", "Modificar finiquitos");
         createPermissionIfNotExists("TERMINATION:DELETE", "Eliminar finiquitos");
+        createPermissionIfNotExists("TERMINATION_QUIZ_QUESTION:CREATE", "Crear preguntas del cuestionario de finiquito");
+        createPermissionIfNotExists("TERMINATION_QUIZ_QUESTION:READ",   "Ver y consultar preguntas del cuestionario de finiquito");
+        createPermissionIfNotExists("TERMINATION_QUIZ_QUESTION:UPDATE", "Modificar preguntas del cuestionario de finiquito");
+        createPermissionIfNotExists("TERMINATION_QUIZ_QUESTION:DELETE", "Eliminar preguntas del cuestionario de finiquito");
         log.info("Permissions initialized.");
     }
 

@@ -111,7 +111,12 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("GET:/v1/api/rrhh/no-re-hired-cause/export",          "NO_RE_HIRED_CAUSE:READ"),
             Map.entry("GET:/v1/api/rrhh/no-re-hired-cause",                 "NO_RE_HIRED_CAUSE:READ"),
             Map.entry("PUT:/v1/api/rrhh/no-re-hired-cause/update",          "NO_RE_HIRED_CAUSE:UPDATE"),
-            Map.entry("PUT:/v1/api/rrhh/no-re-hired-cause",                 "NO_RE_HIRED_CAUSE:UPDATE")
+            Map.entry("PUT:/v1/api/rrhh/no-re-hired-cause",                 "NO_RE_HIRED_CAUSE:UPDATE"),
+            Map.entry("POST:/v1/api/rrhh/termination-quiz-question/create", "TERMINATION_QUIZ_QUESTION:CREATE"),
+            Map.entry("GET:/v1/api/rrhh/termination-quiz-question/paged",   "TERMINATION_QUIZ_QUESTION:READ"),
+            Map.entry("GET:/v1/api/rrhh/termination-quiz-question",         "TERMINATION_QUIZ_QUESTION:READ"),
+            Map.entry("PUT:/v1/api/rrhh/termination-quiz-question/update",  "TERMINATION_QUIZ_QUESTION:UPDATE"),
+            Map.entry("PUT:/v1/api/rrhh/termination-quiz-question",         "TERMINATION_QUIZ_QUESTION:UPDATE")
     );
 
     private final WebClient.Builder webClient;
