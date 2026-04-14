@@ -14,7 +14,4 @@ public class TerminationQuizOptionRequest {
     @NotBlank(message = "El label de la opción es obligatorio")
     @Schema(description = "Texto de la opción", example = "Siempre")
     private String label;
-
-    @Schema(description = "Orden de visualización", example = "1")
-    private Integer displayOrder;
 }

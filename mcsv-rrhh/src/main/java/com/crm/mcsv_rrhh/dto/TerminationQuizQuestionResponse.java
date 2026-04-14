@@ -19,7 +19,6 @@ public class TerminationQuizQuestionResponse {
     private String question;
     private String questionGroup;
     private Boolean required;
-    private Integer displayOrder;
     private Boolean active;
     private List<TerminationQuizOptionResponse> options;
     private LocalDateTime createdAt;

@@ -76,7 +76,6 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 .question(request.getQuestion())
                 .questionGroup(request.getQuestionGroup())
                 .required(request.getRequired() != null ? request.getRequired() : true)
-                .displayOrder(request.getDisplayOrder())
                 .active(true)
                 .build();
 
@@ -101,7 +100,6 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         if (request.getQuestion() != null)      entity.setQuestion(request.getQuestion());
         if (request.getQuestionGroup() != null) entity.setQuestionGroup(request.getQuestionGroup());
         if (request.getRequired() != null)      entity.setRequired(request.getRequired());
-        if (request.getDisplayOrder() != null)  entity.setDisplayOrder(request.getDisplayOrder());
 
         if (request.getOptions() != null) {
             entity.getOptions().clear();
@@ -133,12 +131,10 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
     private void buildOptions(List<com.crm.mcsv_rrhh.dto.TerminationQuizOptionRequest> optionRequests,
                                TerminationQuizQuestion entity) {
         if (optionRequests == null) return;
-        for (int i = 0; i < optionRequests.size(); i++) {
-            var req = optionRequests.get(i);
+        for (var req : optionRequests) {
             entity.getOptions().add(TerminationQuizOption.builder()
                     .question(entity)
                     .label(req.getLabel())
-                    .displayOrder(req.getDisplayOrder() != null ? req.getDisplayOrder() : i + 1)
                     .build());
         }
     }
@@ -155,13 +151,11 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 .question(e.getQuestion())
                 .questionGroup(e.getQuestionGroup())
                 .required(e.getRequired())
-                .displayOrder(e.getDisplayOrder())
                 .active(e.getActive())
                 .options(e.getOptions().stream()
                         .map(o -> TerminationQuizOptionResponse.builder()
                                 .id(o.getId())
                                 .label(o.getLabel())
-                                .displayOrder(o.getDisplayOrder())
                                 .build())
                         .collect(Collectors.toList()))
                 .createdAt(e.getCreatedAt())

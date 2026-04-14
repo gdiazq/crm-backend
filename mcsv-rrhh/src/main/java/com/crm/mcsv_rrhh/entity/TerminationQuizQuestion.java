@@ -33,15 +33,11 @@ public class TerminationQuizQuestion {
     @Column(nullable = false)
     private Boolean required = true;
 
-    @Column(name = "display_order")
-    private Integer displayOrder;
-
     @Builder.Default
     private Boolean active = true;
 
     @Builder.Default
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("displayOrder ASC")
     private List<TerminationQuizOption> options = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)

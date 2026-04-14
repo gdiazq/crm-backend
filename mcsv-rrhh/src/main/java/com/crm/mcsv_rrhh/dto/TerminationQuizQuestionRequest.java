@@ -30,9 +30,6 @@ public class TerminationQuizQuestionRequest {
     @Schema(description = "Indica si la pregunta es obligatoria", example = "true")
     private Boolean required = true;
 
-    @Schema(description = "Orden de visualización", example = "1")
-    private Integer displayOrder;
-
     @Valid
     @NotEmpty(message = "La pregunta debe tener al menos una opción")
     @Schema(description = "Opciones de respuesta")

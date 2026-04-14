@@ -30,9 +30,6 @@ public class UpdateTerminationQuizQuestionRequest {
     @Schema(description = "Indica si la pregunta es obligatoria")
     private Boolean required;
 
-    @Schema(description = "Orden de visualización")
-    private Integer displayOrder;
-
     @Valid
     @Schema(description = "Opciones de respuesta — reemplaza todas las opciones existentes")
     private List<TerminationQuizOptionRequest> options;

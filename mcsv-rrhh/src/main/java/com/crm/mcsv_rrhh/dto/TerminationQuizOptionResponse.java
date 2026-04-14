@@ -13,5 +13,4 @@ public class TerminationQuizOptionResponse {
 
     private Long id;
     private String label;
-    private Integer displayOrder;
 }

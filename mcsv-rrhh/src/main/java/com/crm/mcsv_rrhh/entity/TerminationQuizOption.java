@@ -19,7 +19,4 @@ public class TerminationQuizOption {
 
     @Column(nullable = false)
     private String label;
-
-    @Column(name = "display_order")
-    private Integer displayOrder;
 }
