@@ -15,6 +15,7 @@ import java.util.List;
 public class TerminationQuizQuestionResponse {
 
     private Long id;
+    private Long employeeId;
     private String question;
     private String questionGroup;
     private Boolean required;

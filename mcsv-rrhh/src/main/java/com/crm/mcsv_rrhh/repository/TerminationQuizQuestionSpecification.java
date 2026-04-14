@@ -13,7 +13,7 @@ public class TerminationQuizQuestionSpecification {
     private TerminationQuizQuestionSpecification() {}
 
     public static Specification<TerminationQuizQuestion> withFilters(String search, Boolean active,
-                                                                      String questionGroup,
+                                                                      String questionGroup, Long employeeId,
                                                                       LocalDateTime createdFrom, LocalDateTime createdTo,
                                                                       LocalDateTime updatedFrom, LocalDateTime updatedTo) {
         return (root, query, cb) -> {
@@ -30,6 +30,7 @@ public class TerminationQuizQuestionSpecification {
             if (active != null)       predicates.add(cb.equal(root.get("active"), active));
             if (questionGroup != null && !questionGroup.isBlank())
                                       predicates.add(cb.equal(root.get("questionGroup"), questionGroup));
+            if (employeeId != null)   predicates.add(cb.equal(root.get("employeeId"), employeeId));
             if (createdFrom != null)  predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFrom));
             if (createdTo != null)    predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdTo));
             if (updatedFrom != null)  predicates.add(cb.greaterThanOrEqualTo(root.get("updatedAt"), updatedFrom));

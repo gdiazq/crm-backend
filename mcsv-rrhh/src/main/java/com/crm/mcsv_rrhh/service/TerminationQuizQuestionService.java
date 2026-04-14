@@ -12,6 +12,7 @@ import java.util.List;
 public interface TerminationQuizQuestionService {
 
     PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, String questionGroup,
+                                                         Long employeeId,
                                                          LocalDate createdFrom, LocalDate createdTo,
                                                          LocalDate updatedFrom, LocalDate updatedTo,
                                                          Pageable pageable);

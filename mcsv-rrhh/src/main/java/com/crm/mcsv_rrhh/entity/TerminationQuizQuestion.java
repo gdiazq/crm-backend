@@ -9,7 +9,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "termination_quiz_question", indexes = {
-        @Index(name = "idx_tqq_active",      columnList = "active"),
+        @Index(name = "idx_tqq_employee_id",  columnList = "employee_id"),
+        @Index(name = "idx_tqq_active",       columnList = "active"),
         @Index(name = "idx_tqq_group",        columnList = "question_group"),
         @Index(name = "idx_tqq_created_at",   columnList = "created_at")
 })
@@ -18,6 +19,9 @@ public class TerminationQuizQuestion {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "employee_id", nullable = false)
+    private Long employeeId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String question;

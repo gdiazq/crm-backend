@@ -18,6 +18,9 @@ public class UpdateTerminationQuizQuestionRequest {
     @Schema(description = "ID de la pregunta")
     private Long id;
 
+    @Schema(description = "ID del empleado asociado al quiz", example = "42")
+    private Long employeeId;
+
     @Schema(description = "Texto de la pregunta")
     private String question;
 

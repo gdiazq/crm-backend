@@ -34,6 +34,7 @@ public class TerminationQuizQuestionController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String questionGroup,
+            @RequestParam(required = false) Long employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedFrom,
@@ -45,7 +46,7 @@ public class TerminationQuizQuestionController {
 
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(service.list(search, active, questionGroup,
+        return ResponseEntity.ok(service.list(search, active, questionGroup, employeeId,
                 createdFrom, createdTo, updatedFrom, updatedTo, pageable));
     }
 

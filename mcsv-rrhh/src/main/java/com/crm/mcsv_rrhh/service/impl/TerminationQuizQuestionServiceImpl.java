@@ -37,6 +37,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
 
     @Override
     public PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, String questionGroup,
+                                                                Long employeeId,
                                                                 LocalDate createdFrom, LocalDate createdTo,
                                                                 LocalDate updatedFrom, LocalDate updatedTo,
                                                                 Pageable pageable) {
@@ -46,11 +47,11 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         LocalDateTime uTo   = DateRangeUtil.endOf(updatedTo);
 
         Specification<TerminationQuizQuestion> spec =
-                TerminationQuizQuestionSpecification.withFilters(search, active, questionGroup, cFrom, cTo, uFrom, uTo);
+                TerminationQuizQuestionSpecification.withFilters(search, active, questionGroup, employeeId, cFrom, cTo, uFrom, uTo);
 
         Page<TerminationQuizQuestion> page = repository.findAll(spec, pageable);
         long totalActive = repository.count(
-                TerminationQuizQuestionSpecification.withFilters(null, true, null, null, null, null, null));
+                TerminationQuizQuestionSpecification.withFilters(null, true, null, null, null, null, null, null));
 
         return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), totalActive);
     }
@@ -71,6 +72,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
             throw new DuplicateResourceException("Ya existe una pregunta con ese texto");
 
         TerminationQuizQuestion entity = TerminationQuizQuestion.builder()
+                .employeeId(request.getEmployeeId())
                 .question(request.getQuestion())
                 .questionGroup(request.getQuestionGroup())
                 .required(request.getRequired() != null ? request.getRequired() : true)
@@ -95,6 +97,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 repository.existsByQuestionAndIdNot(request.getQuestion(), request.getId()))
             throw new DuplicateResourceException("Ya existe una pregunta con ese texto");
 
+        if (request.getEmployeeId() != null)    entity.setEmployeeId(request.getEmployeeId());
         if (request.getQuestion() != null)      entity.setQuestion(request.getQuestion());
         if (request.getQuestionGroup() != null) entity.setQuestionGroup(request.getQuestionGroup());
         if (request.getRequired() != null)      entity.setRequired(request.getRequired());
@@ -148,6 +151,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
     private TerminationQuizQuestionResponse toResponse(TerminationQuizQuestion e) {
         return TerminationQuizQuestionResponse.builder()
                 .id(e.getId())
+                .employeeId(e.getEmployeeId())
                 .question(e.getQuestion())
                 .questionGroup(e.getQuestionGroup())
                 .required(e.getRequired())
