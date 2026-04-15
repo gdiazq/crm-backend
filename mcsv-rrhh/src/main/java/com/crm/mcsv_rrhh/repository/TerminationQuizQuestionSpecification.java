@@ -13,7 +13,7 @@ public class TerminationQuizQuestionSpecification {
     private TerminationQuizQuestionSpecification() {}
 
     public static Specification<TerminationQuizQuestion> withFilters(String search, Boolean active,
-                                                                      String questionGroup, Long employeeId,
+                                                                      Long questionGroupId, Long employeeId,
                                                                       LocalDateTime createdFrom, LocalDateTime createdTo,
                                                                       LocalDateTime updatedFrom, LocalDateTime updatedTo) {
         return (root, query, cb) -> {
@@ -21,15 +21,12 @@ public class TerminationQuizQuestionSpecification {
 
             if (search != null && !search.isBlank()) {
                 String pattern = "%" + search.toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("question")), pattern),
-                        cb.like(cb.lower(root.get("questionGroup")), pattern)
-                ));
+                predicates.add(cb.like(cb.lower(root.get("question")), pattern));
             }
 
-            if (active != null)       predicates.add(cb.equal(root.get("active"), active));
-            if (questionGroup != null && !questionGroup.isBlank())
-                                      predicates.add(cb.equal(root.get("questionGroup"), questionGroup));
+            if (active != null)        predicates.add(cb.equal(root.get("active"), active));
+            if (questionGroupId != null)
+                                       predicates.add(cb.equal(root.get("questionGroup").get("id"), questionGroupId));
             if (employeeId != null)   predicates.add(cb.equal(root.get("employeeId"), employeeId));
             if (createdFrom != null)  predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFrom));
             if (createdTo != null)    predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdTo));

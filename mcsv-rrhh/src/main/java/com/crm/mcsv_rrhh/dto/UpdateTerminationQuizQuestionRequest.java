@@ -21,7 +21,7 @@ public class UpdateTerminationQuizQuestionRequest {
     @Schema(description = "Texto de la pregunta")
     private String question;
 
-    @Schema(description = "Grupo o sección de la pregunta")
+    @Schema(description = "Grupo o sección de la pregunta", example = "Ambiente Laboral")
     private String questionGroup;
 
     @Schema(description = "Indica si la pregunta es obligatoria")

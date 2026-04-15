@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface TerminationQuizQuestionService {
 
-    PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, String questionGroup,
+    PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, Long questionGroupId,
                                                          Long employeeId,
                                                          LocalDate createdFrom, LocalDate createdTo,
                                                          LocalDate updatedFrom, LocalDate updatedTo,

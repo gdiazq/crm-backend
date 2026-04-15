@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Table(name = "termination_quiz_question", indexes = {
         @Index(name = "idx_tqq_employee_id",  columnList = "employee_id"),
         @Index(name = "idx_tqq_active",       columnList = "active"),
-        @Index(name = "idx_tqq_group",        columnList = "question_group"),
+        @Index(name = "idx_tqq_group",        columnList = "question_group_id"),
         @Index(name = "idx_tqq_created_at",   columnList = "created_at")
 })
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
@@ -24,8 +24,9 @@ public class TerminationQuizQuestion {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String question;
 
-    @Column(name = "question_group")
-    private String questionGroup;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_group_id")
+    private QuizQuestionGroup questionGroup;
 
     @Builder.Default
     @Column(nullable = false)

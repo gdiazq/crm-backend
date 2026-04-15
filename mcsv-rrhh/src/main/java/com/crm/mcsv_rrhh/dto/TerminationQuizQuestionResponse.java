@@ -16,7 +16,8 @@ public class TerminationQuizQuestionResponse {
     private Long id;
     private Long employeeId;
     private String question;
-    private String questionGroup;
+    private Long questionGroupId;
+    private String questionGroupName;
     private Boolean required;
     private Boolean active;
     private LocalDateTime createdAt;

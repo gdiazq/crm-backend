@@ -20,7 +20,7 @@ public class TerminationQuizQuestionRequest {
     @Schema(description = "Texto de la pregunta", example = "¿Cómo evaluaría la conducta del trabajador?")
     private String question;
 
-    @Schema(description = "Grupo o sección de la pregunta", example = "Evaluación de Desempeño")
+    @Schema(description = "Grupo o sección de la pregunta", example = "Ambiente Laboral")
     private String questionGroup;
 
     @Schema(description = "Indica si la pregunta es obligatoria", example = "true")

@@ -33,7 +33,7 @@ public class TerminationQuizQuestionController {
     public ResponseEntity<PagedResponse<TerminationQuizQuestionResponse>> paged(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String questionGroup,
+            @RequestParam(required = false) Long questionGroupId,
             @RequestParam(required = false) Long employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
@@ -46,7 +46,7 @@ public class TerminationQuizQuestionController {
 
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(service.list(search, active, questionGroup, employeeId,
+        return ResponseEntity.ok(service.list(search, active, questionGroupId, employeeId,
                 createdFrom, createdTo, updatedFrom, updatedTo, pageable));
     }
 

@@ -1,12 +1,15 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.common.dto.PagedResponse;
+import com.crm.common.exception.DuplicateResourceException;
+import com.crm.common.exception.ResourceNotFoundException;
+import com.crm.common.util.DateRangeUtil;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTerminationQuizQuestionRequest;
+import com.crm.mcsv_rrhh.entity.QuizQuestionGroup;
 import com.crm.mcsv_rrhh.entity.TerminationQuizQuestion;
-import com.crm.common.exception.DuplicateResourceException;
-import com.crm.common.exception.ResourceNotFoundException;
+import com.crm.mcsv_rrhh.repository.QuizQuestionGroupRepository;
 import com.crm.mcsv_rrhh.repository.TerminationQuizQuestionRepository;
 import com.crm.mcsv_rrhh.repository.TerminationQuizQuestionSpecification;
 import com.crm.mcsv_rrhh.service.TerminationQuizQuestionService;
@@ -18,7 +21,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.crm.common.util.DateRangeUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,11 +32,11 @@ import java.util.stream.Collectors;
 public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuestionService {
 
     private final TerminationQuizQuestionRepository repository;
-
-    // ─── List ─────────────────────────────────────────────────────────────────
+    private final QuizQuestionGroupRepository questionGroupRepository;
 
     @Override
-    public PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, String questionGroup,
+    @Transactional(readOnly = true)
+    public PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, Long questionGroupId,
                                                                 Long employeeId,
                                                                 LocalDate createdFrom, LocalDate createdTo,
                                                                 LocalDate updatedFrom, LocalDate updatedTo,
@@ -45,7 +47,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         LocalDateTime uTo   = DateRangeUtil.endOf(updatedTo);
 
         Specification<TerminationQuizQuestion> spec =
-                TerminationQuizQuestionSpecification.withFilters(search, active, questionGroup, employeeId, cFrom, cTo, uFrom, uTo);
+                TerminationQuizQuestionSpecification.withFilters(search, active, questionGroupId, employeeId, cFrom, cTo, uFrom, uTo);
 
         Page<TerminationQuizQuestion> page = repository.findAll(spec, pageable);
         long totalActive = repository.count(
@@ -54,14 +56,11 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), totalActive);
     }
 
-    // ─── GetById ──────────────────────────────────────────────────────────────
-
     @Override
+    @Transactional(readOnly = true)
     public TerminationQuizQuestionResponse getById(Long id) {
         return toResponse(findOrThrow(id));
     }
-
-    // ─── Create ───────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -69,18 +68,18 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         if (repository.existsByQuestion(request.getQuestion()))
             throw new DuplicateResourceException("Ya existe una pregunta con ese texto");
 
+        QuizQuestionGroup group = resolveGroup(request.getQuestionGroup());
+
         TerminationQuizQuestion entity = TerminationQuizQuestion.builder()
                 .employeeId(request.getEmployeeId())
                 .question(request.getQuestion())
-                .questionGroup(request.getQuestionGroup())
+                .questionGroup(group)
                 .required(request.getRequired() != null ? request.getRequired() : true)
                 .active(true)
                 .build();
 
         return toResponse(repository.save(entity));
     }
-
-    // ─── Update ───────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -94,13 +93,12 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
 
         if (request.getEmployeeId() != null)    entity.setEmployeeId(request.getEmployeeId());
         if (request.getQuestion() != null)      entity.setQuestion(request.getQuestion());
-        if (request.getQuestionGroup() != null) entity.setQuestionGroup(request.getQuestionGroup());
+        if (request.getQuestionGroup() != null)
+            entity.setQuestionGroup(resolveGroup(request.getQuestionGroup()));
         if (request.getRequired() != null)      entity.setRequired(request.getRequired());
 
         return toResponse(repository.save(entity));
     }
-
-    // ─── UpdateStatus ─────────────────────────────────────────────────────────
 
     @Override
     public void updateStatus(Long id, Boolean active) {
@@ -109,15 +107,19 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         repository.save(entity);
     }
 
-    // ─── GetActiveQuestions ───────────────────────────────────────────────────
-
     @Override
+    @Transactional(readOnly = true)
     public List<TerminationQuizQuestionResponse> getActiveQuestions() {
         return repository.findByActiveTrueOrderByCreatedAtDesc()
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
+    private QuizQuestionGroup resolveGroup(String name) {
+        if (name == null || name.isBlank()) return null;
+        return questionGroupRepository.findByName(name.trim())
+                .orElseGet(() -> questionGroupRepository.save(
+                        QuizQuestionGroup.builder().name(name.trim()).active(true).build()));
+    }
 
     private TerminationQuizQuestion findOrThrow(Long id) {
         return repository.findById(id)
@@ -129,7 +131,8 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 .id(e.getId())
                 .employeeId(e.getEmployeeId())
                 .question(e.getQuestion())
-                .questionGroup(e.getQuestionGroup())
+                .questionGroupId(e.getQuestionGroup() != null ? e.getQuestionGroup().getId() : null)
+                .questionGroupName(e.getQuestionGroup() != null ? e.getQuestionGroup().getName() : null)
                 .required(e.getRequired())
                 .active(e.getActive())
                 .createdAt(e.getCreatedAt())

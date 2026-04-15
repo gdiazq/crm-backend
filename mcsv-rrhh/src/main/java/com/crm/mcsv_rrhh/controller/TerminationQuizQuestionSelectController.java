@@ -21,8 +21,9 @@ public class TerminationQuizQuestionSelectController {
     private final TerminationQuizQuestionService service;
 
     @GetMapping("/termination-quiz-questions")
-    @Operation(summary = "Obtener preguntas activas con sus opciones para el cuestionario")
+    @Operation(summary = "Obtener preguntas activas del cuestionario")
     public ResponseEntity<List<TerminationQuizQuestionResponse>> getActiveQuestions() {
         return ResponseEntity.ok(service.getActiveQuestions());
     }
+
 }
