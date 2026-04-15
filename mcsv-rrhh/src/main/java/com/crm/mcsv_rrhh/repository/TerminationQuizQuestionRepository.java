@@ -13,4 +13,6 @@ public interface TerminationQuizQuestionRepository extends JpaRepository<Termina
     boolean existsByQuestionAndIdNot(String question, Long id);
 
     List<TerminationQuizQuestion> findByActiveTrueOrderByCreatedAtDesc();
+
+    List<TerminationQuizQuestion> findByActiveTrueAndEmployeeIdOrderByCreatedAtDesc(Long employeeId);
 }

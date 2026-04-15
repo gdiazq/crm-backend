@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.service;
 
 import com.crm.common.dto.PagedResponse;
+import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionGroupedResponse;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTerminationQuizQuestionRequest;
@@ -26,4 +27,6 @@ public interface TerminationQuizQuestionService {
     void updateStatus(Long id, Boolean active);
 
     List<TerminationQuizQuestionResponse> getActiveQuestions();
+
+    List<TerminationQuizQuestionGroupedResponse> getGroupedQuestions(Long employeeId);
 }

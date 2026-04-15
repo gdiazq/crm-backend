@@ -4,6 +4,7 @@ import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.common.util.DateRangeUtil;
+import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionGroupedResponse;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTerminationQuizQuestionRequest;
@@ -27,6 +28,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -115,6 +118,27 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
     public List<TerminationQuizQuestionResponse> getActiveQuestions() {
         return repository.findByActiveTrueOrderByCreatedAtDesc()
                 .stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TerminationQuizQuestionGroupedResponse> getGroupedQuestions(Long employeeId) {
+        Map<Long, TerminationQuizQuestionGroupedResponse> map = new LinkedHashMap<>();
+
+        repository.findByActiveTrueAndEmployeeIdOrderByCreatedAtDesc(employeeId).forEach(q -> {
+            Long groupId = q.getQuestionGroup() != null ? q.getQuestionGroup().getId() : null;
+            String groupName = q.getQuestionGroup() != null ? q.getQuestionGroup().getName() : null;
+
+            map.computeIfAbsent(groupId, k -> TerminationQuizQuestionGroupedResponse.builder()
+                    .groupId(groupId)
+                    .groupName(groupName)
+                    .questions(new java.util.ArrayList<>())
+                    .build())
+                .getQuestions()
+                .add(new TerminationQuizQuestionGroupedResponse.Item(q.getId(), q.getQuestion()));
+        });
+
+        return new java.util.ArrayList<>(map.values());
     }
 
     private String resolveEmployeeName(Long employeeId) {
