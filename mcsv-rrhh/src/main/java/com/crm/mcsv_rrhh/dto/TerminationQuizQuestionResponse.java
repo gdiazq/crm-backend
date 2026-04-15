@@ -15,6 +15,7 @@ public class TerminationQuizQuestionResponse {
 
     private Long id;
     private Long employeeId;
+    private String employeeName;
     private String question;
     private Long questionGroupId;
     private String questionGroupName;

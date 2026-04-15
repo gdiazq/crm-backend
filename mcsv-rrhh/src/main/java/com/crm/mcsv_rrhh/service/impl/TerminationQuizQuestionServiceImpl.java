@@ -7,8 +7,10 @@ import com.crm.common.util.DateRangeUtil;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTerminationQuizQuestionRequest;
+import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.QuizQuestionGroup;
 import com.crm.mcsv_rrhh.entity.TerminationQuizQuestion;
+import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.QuizQuestionGroupRepository;
 import com.crm.mcsv_rrhh.repository.TerminationQuizQuestionRepository;
 import com.crm.mcsv_rrhh.repository.TerminationQuizQuestionSpecification;
@@ -33,6 +35,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
 
     private final TerminationQuizQuestionRepository repository;
     private final QuizQuestionGroupRepository questionGroupRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -114,6 +117,13 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    private String resolveEmployeeName(Long employeeId) {
+        if (employeeId == null) return null;
+        return employeeRepository.findById(employeeId)
+                .map(e -> e.getFirstName() + " " + e.getPaternalLastName())
+                .orElse(null);
+    }
+
     private QuizQuestionGroup resolveGroup(String name) {
         if (name == null || name.isBlank()) return null;
         return questionGroupRepository.findByName(name.trim())
@@ -130,6 +140,7 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         return TerminationQuizQuestionResponse.builder()
                 .id(e.getId())
                 .employeeId(e.getEmployeeId())
+                .employeeName(resolveEmployeeName(e.getEmployeeId()))
                 .question(e.getQuestion())
                 .questionGroupId(e.getQuestionGroup() != null ? e.getQuestionGroup().getId() : null)
                 .questionGroupName(e.getQuestionGroup() != null ? e.getQuestionGroup().getName() : null)
