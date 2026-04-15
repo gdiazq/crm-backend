@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Data
 @Builder
@@ -37,4 +38,15 @@ public class SettlementResponse {
     private Long hrRequestId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<QuizAnswerItem> quizAnswers;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QuizAnswerItem {
+        private Long questionId;
+        private String questionText;
+        private String questionGroupName;
+        private String answer;
+    }
 }

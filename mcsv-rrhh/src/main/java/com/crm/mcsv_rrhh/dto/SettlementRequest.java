@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -38,4 +39,17 @@ public class SettlementRequest {
 
     @Schema(description = "Observaciones adicionales")
     private String observations;
+
+    @Schema(description = "Respuestas del cuestionario de finiquito")
+    private List<QuizAnswerItem> quizAnswers;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QuizAnswerItem {
+        @Schema(description = "ID de la pregunta")
+        private Long questionId;
+        @Schema(description = "Respuesta del empleado")
+        private String answer;
+    }
 }

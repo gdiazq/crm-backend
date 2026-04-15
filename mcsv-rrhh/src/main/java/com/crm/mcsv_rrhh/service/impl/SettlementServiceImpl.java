@@ -7,6 +7,7 @@ import com.crm.mcsv_rrhh.dto.SettlementRequest;
 import com.crm.mcsv_rrhh.dto.SettlementResponse;
 import com.crm.mcsv_rrhh.dto.UpdateSettlementRequest;
 import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.repository.TerminationQuizAnswerRepository;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.HRRequestService;
@@ -47,6 +48,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final SafetyComplianceRepository safetyComplianceRepository;
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TerminationQuizQuestionRepository quizQuestionRepository;
+    private final TerminationQuizAnswerRepository quizAnswerRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final StorageService storageService;
     private final FileUploadHelper fileUploadHelper;
@@ -124,8 +126,17 @@ public class SettlementServiceImpl implements SettlementService {
         Settlement saved = repository.save(entity);
         HRRequest hrReq = hrRequestService.createForSettlement(saved.getId(), saved.getEmployeeId(), "CREATE", null);
 
-        // TODO (Parte 3): generar SettlementQuiz por cada pregunta activa
-        // quizService.generateQuizForSettlement(saved.getId());
+        if (request.getQuizAnswers() != null && !request.getQuizAnswers().isEmpty()) {
+            request.getQuizAnswers().forEach(item -> {
+                TerminationQuizQuestion question = quizQuestionRepository.findById(item.getQuestionId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Pregunta no encontrada con id: " + item.getQuestionId()));
+                quizAnswerRepository.save(TerminationQuizAnswer.builder()
+                        .settlementId(saved.getId())
+                        .question(question)
+                        .answer(item.getAnswer())
+                        .build());
+            });
+        }
 
         List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
         String statusName = resolveStatusName(hrReq.getStatusId());
@@ -232,6 +243,13 @@ public class SettlementServiceImpl implements SettlementService {
                 .hrRequestId(requestId)
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
+                .quizAnswers(quizAnswerRepository.findBySettlementIdOrderByIdAsc(e.getId()).stream()
+                        .map(a -> new SettlementResponse.QuizAnswerItem(
+                                a.getQuestion().getId(),
+                                a.getQuestion().getQuestion(),
+                                a.getQuestion().getQuestionGroup() != null ? a.getQuestion().getQuestionGroup().getName() : null,
+                                a.getAnswer()))
+                        .toList())
                 .build();
     }
 
