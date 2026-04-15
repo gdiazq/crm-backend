@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "termination_quiz_question", indexes = {
@@ -35,10 +33,6 @@ public class TerminationQuizQuestion {
 
     @Builder.Default
     private Boolean active = true;
-
-    @Builder.Default
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TerminationQuizOption> options = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

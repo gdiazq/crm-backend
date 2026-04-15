@@ -1,13 +1,10 @@
 package com.crm.mcsv_rrhh.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -29,8 +26,4 @@ public class UpdateTerminationQuizQuestionRequest {
 
     @Schema(description = "Indica si la pregunta es obligatoria")
     private Boolean required;
-
-    @Valid
-    @Schema(description = "Opciones de respuesta — reemplaza todas las opciones existentes")
-    private List<TerminationQuizOptionRequest> options;
 }

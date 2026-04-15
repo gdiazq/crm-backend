@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -20,7 +19,6 @@ public class TerminationQuizQuestionResponse {
     private String questionGroup;
     private Boolean required;
     private Boolean active;
-    private List<TerminationQuizOptionResponse> options;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

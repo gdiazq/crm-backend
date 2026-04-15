@@ -1,11 +1,9 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.TerminationQuizOptionResponse;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionRequest;
 import com.crm.mcsv_rrhh.dto.TerminationQuizQuestionResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTerminationQuizQuestionRequest;
-import com.crm.mcsv_rrhh.entity.TerminationQuizOption;
 import com.crm.mcsv_rrhh.entity.TerminationQuizQuestion;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
@@ -79,8 +77,6 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 .active(true)
                 .build();
 
-        buildOptions(request.getOptions(), entity);
-
         return toResponse(repository.save(entity));
     }
 
@@ -101,11 +97,6 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
         if (request.getQuestionGroup() != null) entity.setQuestionGroup(request.getQuestionGroup());
         if (request.getRequired() != null)      entity.setRequired(request.getRequired());
 
-        if (request.getOptions() != null) {
-            entity.getOptions().clear();
-            buildOptions(request.getOptions(), entity);
-        }
-
         return toResponse(repository.save(entity));
     }
 
@@ -122,22 +113,11 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
 
     @Override
     public List<TerminationQuizQuestionResponse> getActiveQuestions() {
-        return repository.findByActiveTrueOrderByDisplayOrderAsc()
+        return repository.findByActiveTrueOrderByCreatedAtDesc()
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
-
-    private void buildOptions(List<com.crm.mcsv_rrhh.dto.TerminationQuizOptionRequest> optionRequests,
-                               TerminationQuizQuestion entity) {
-        if (optionRequests == null) return;
-        for (var req : optionRequests) {
-            entity.getOptions().add(TerminationQuizOption.builder()
-                    .question(entity)
-                    .label(req.getLabel())
-                    .build());
-        }
-    }
 
     private TerminationQuizQuestion findOrThrow(Long id) {
         return repository.findById(id)
@@ -152,12 +132,6 @@ public class TerminationQuizQuestionServiceImpl implements TerminationQuizQuesti
                 .questionGroup(e.getQuestionGroup())
                 .required(e.getRequired())
                 .active(e.getActive())
-                .options(e.getOptions().stream()
-                        .map(o -> TerminationQuizOptionResponse.builder()
-                                .id(o.getId())
-                                .label(o.getLabel())
-                                .build())
-                        .collect(Collectors.toList()))
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
