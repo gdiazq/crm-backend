@@ -56,6 +56,9 @@ public class HRRequest {
     private Long settlementId;
 
     @Column
+    private Long transferId;
+
+    @Column
     private String action;
 
     @Column(columnDefinition = "TEXT")
