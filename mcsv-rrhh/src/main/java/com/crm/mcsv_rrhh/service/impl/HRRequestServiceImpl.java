@@ -378,10 +378,10 @@ public class HRRequestServiceImpl implements HRRequestService {
                         if (proposed.getToCostCenter() != null) transfer.setToCostCenter(proposed.getToCostCenter());
                         if (proposed.getEffectiveDate() != null) transfer.setEffectiveDate(proposed.getEffectiveDate());
                         if (proposed.getReason() != null) transfer.setReason(proposed.getReason());
-                        if (proposed.getDocumentUrl() != null) transfer.setDocumentUrl(proposed.getDocumentUrl());
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
+                    retagPendingTransferFiles(hr.getId(), transfer.getId());
                 } else {
                     Employee employee = employeeRepository.findById(transfer.getEmployeeId())
                             .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + transfer.getEmployeeId()));
@@ -475,8 +475,10 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .map(HRRequestType::getName).orElse(null);
 
         if ("UPDATE".equals(hr.getAction()) && "Contrato".equals(requestTypeName)) {
-            // Eliminar archivos pendientes que no se aprobaron
             deletePendingFiles(hr.getId(), hr.getContractId());
+        }
+        if ("UPDATE".equals(hr.getAction()) && "Traspaso".equals(requestTypeName)) {
+            deletePendingTransferFiles(hr.getId(), hr.getTransferId());
         }
 
         if ("CREATE".equals(hr.getAction())) {
@@ -686,6 +688,36 @@ public class HRRequestServiceImpl implements HRRequestService {
             }
         } catch (Exception e) {
             log.warn("Error deleting pending files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void retagPendingTransferFiles(Long hrRequestId, Long transferId) {
+        try {
+            var response = storageService.listByEntity("TRANSFER_PENDING", hrRequestId);
+            if (response != null) {
+                for (FileMetadataResponse file : response) {
+                    storageService.retag(file.getId(), "TRANSFER", transferId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error retagging pending transfer files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void deletePendingTransferFiles(Long hrRequestId, Long transferId) {
+        try {
+            var response = storageService.listByEntity("TRANSFER_PENDING", hrRequestId);
+            if (response != null) {
+                Transfer transfer = transferRepository.findById(transferId).orElse(null);
+                Long uploadedBy = transfer != null ? transfer.getEmployeeId() : null;
+                if (uploadedBy != null) {
+                    for (FileMetadataResponse file : response) {
+                        storageService.delete(file.getId(), uploadedBy);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error deleting pending transfer files for hrRequest {}: {}", hrRequestId, e.getMessage());
         }
     }
 

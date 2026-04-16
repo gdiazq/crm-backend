@@ -14,5 +14,6 @@ public interface TransferService {
     TransferResponse getById(Long id);
     TransferResponse create(TransferRequest request, List<MultipartFile> files);
     TransferResponse update(UpdateTransferRequest request, List<MultipartFile> files);
+    void deleteDocument(Long transferId, Long fileId, Long userId);
     byte[] exportCsv();
 }

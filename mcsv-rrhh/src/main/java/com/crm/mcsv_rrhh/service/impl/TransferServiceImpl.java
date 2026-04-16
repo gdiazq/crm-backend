@@ -41,6 +41,7 @@ import java.util.Optional;
 public class TransferServiceImpl implements TransferService {
 
     private static final String ENTITY_TYPE = "TRANSFER";
+    private static final int MAX_DOCUMENTS = 5;
 
     private final TransferRepository repository;
     private final EmployeeRepository employeeRepository;
@@ -124,12 +125,24 @@ public class TransferServiceImpl implements TransferService {
         }
 
         HRRequest hrReq = hrRequestService.createForTransfer(entity.getId(), entity.getEmployeeId(), "UPDATE", proposedData);
-        repository.save(entity);
 
-        uploadFiles(entity.getId(), entity.getEmployeeId(), files);
+        // Archivos pendientes de aprobación: se suben con TRANSFER_PENDING + hrRequestId
+        uploadPendingFiles(hrReq.getId(), entity.getEmployeeId(), files);
+
+        Long requestId = hrRequestRepository.findTopByTransferIdOrderByCreatedAtDesc(entity.getId())
+                .map(HRRequest::getId).orElse(hrReq.getId());
+
         List<FileMetadataResponse> documents = fetchDocuments(entity.getId());
         String statusName = resolveStatusName(hrReq.getStatusId());
-        return toResponse(entity, documents, hrReq.getId(), statusName);
+        return toResponse(entity, documents, requestId, statusName);
+    }
+
+    @Override
+    public void deleteDocument(Long transferId, Long fileId, Long userId) {
+        if (!repository.existsById(transferId)) {
+            throw new ResourceNotFoundException("Traspaso no encontrado: " + transferId);
+        }
+        storageService.delete(fileId, userId);
     }
 
     @Override
@@ -156,6 +169,38 @@ public class TransferServiceImpl implements TransferService {
         });
 
         return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    // ─── File helpers ─────────────────────────────────────────────────────────
+
+    private List<FileMetadataResponse> uploadFiles(Long transferId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return Collections.emptyList();
+
+        List<FileMetadataResponse> existing = fetchDocuments(transferId);
+        if (existing.size() + files.size() > MAX_DOCUMENTS) {
+            throw new IllegalArgumentException(
+                    "El traspaso ya tiene " + existing.size() + " documento(s). " +
+                    "Máximo permitido: " + MAX_DOCUMENTS + ".");
+        }
+        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, transferId);
+    }
+
+    private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return;
+        for (MultipartFile file : files) {
+            fileUploadHelper.validateFile(file);
+            storageService.upload(file, uploadedBy, "TRANSFER_PENDING", hrRequestId, false);
+        }
+    }
+
+    private List<FileMetadataResponse> fetchDocuments(Long transferId) {
+        try {
+            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, transferId);
+            return response != null ? response : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener documentos del traspaso {}: {}", transferId, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -185,20 +230,6 @@ public class TransferServiceImpl implements TransferService {
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
-    }
-
-    private List<FileMetadataResponse> uploadFiles(Long transferId, Long uploadedBy, List<MultipartFile> files) {
-        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, transferId);
-    }
-
-    private List<FileMetadataResponse> fetchDocuments(Long transferId) {
-        try {
-            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, transferId);
-            return response != null ? response : Collections.emptyList();
-        } catch (Exception e) {
-            log.warn("No se pudieron obtener documentos del traspaso {}: {}", transferId, e.getMessage());
-            return Collections.emptyList();
-        }
     }
 
     private Specification<Transfer> buildSpec(Long employeeId, Long statusId) {
