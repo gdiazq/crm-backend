@@ -8,6 +8,9 @@ import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
+import com.crm.mcsv_rrhh.entity.Transfer;
+import com.crm.mcsv_rrhh.repository.TransferRepository;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +64,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final QualityOfWorkRepository qualityOfWorkRepository;
     private final SafetyComplianceRepository safetyComplianceRepository;
     private final NoReHiredCauseRepository noReHiredCauseRepository;
+    private final TransferRepository transferRepository;
     private final UserClient userClient;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
@@ -364,6 +368,28 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 settlementRepository.save(settlement);
 
+            } else if ("Traspaso".equals(requestTypeName)) {
+                Transfer transfer = transferRepository.findById(hr.getTransferId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Traspaso no encontrado: " + hr.getTransferId()));
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    try {
+                        UpdateTransferRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateTransferRequest.class);
+                        if (proposed.getToCostCenter() != null) transfer.setToCostCenter(proposed.getToCostCenter());
+                        if (proposed.getEffectiveDate() != null) transfer.setEffectiveDate(proposed.getEffectiveDate());
+                        if (proposed.getReason() != null) transfer.setReason(proposed.getReason());
+                        if (proposed.getDocumentUrl() != null) transfer.setDocumentUrl(proposed.getDocumentUrl());
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                    }
+                } else {
+                    Employee employee = employeeRepository.findById(transfer.getEmployeeId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + transfer.getEmployeeId()));
+                    employee.setCostCenter(transfer.getToCostCenter());
+                    employeeRepository.save(employee);
+                }
+                transferRepository.save(transfer);
+
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
@@ -462,6 +488,9 @@ public class HRRequestServiceImpl implements HRRequestService {
             } else if ("Finiquito".equals(requestTypeName)) {
                 if (hr.getSettlementId() != null)
                     settlementRepository.deleteById(hr.getSettlementId());
+            } else if ("Traspaso".equals(requestTypeName)) {
+                if (hr.getTransferId() != null)
+                    transferRepository.deleteById(hr.getTransferId());
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
