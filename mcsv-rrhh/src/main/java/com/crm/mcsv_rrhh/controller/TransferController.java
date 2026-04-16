@@ -17,6 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/transfers")
@@ -47,16 +50,20 @@ public class TransferController {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    @PostMapping("/create")
-    @Operation(summary = "Crear traspaso")
-    public ResponseEntity<TransferResponse> create(@RequestBody @Valid TransferRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Crear traspaso (con documentos opcionales)")
+    public ResponseEntity<TransferResponse> create(
+            @RequestPart("data") @Valid TransferRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request, files));
     }
 
-    @PutMapping("/update")
-    @Operation(summary = "Actualizar traspaso (genera HRRequest de actualización)")
-    public ResponseEntity<TransferResponse> update(@RequestBody @Valid UpdateTransferRequest request) {
-        return ResponseEntity.ok(service.update(request));
+    @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Actualizar traspaso (genera HRRequest de actualización, con documentos opcionales)")
+    public ResponseEntity<TransferResponse> update(
+            @RequestPart("data") @Valid UpdateTransferRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(service.update(request, files));
     }
 
     @GetMapping("/export/csv")

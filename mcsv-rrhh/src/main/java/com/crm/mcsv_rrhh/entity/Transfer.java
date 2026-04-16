@@ -37,8 +37,6 @@ public class Transfer {
     @Column(columnDefinition = "TEXT")
     private String reason;
 
-    private String documentUrl;
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -1,7 +1,9 @@
 package com.crm.mcsv_rrhh.service.impl;
 
+import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
+import com.crm.common.storage.service.StorageService;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.dto.TransferRequest;
 import com.crm.mcsv_rrhh.dto.TransferResponse;
@@ -15,6 +17,7 @@ import com.crm.mcsv_rrhh.repository.HRRequestRepository;
 import com.crm.mcsv_rrhh.repository.TransferRepository;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.TransferService;
+import com.crm.mcsv_rrhh.util.FileUploadHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +26,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,12 +40,16 @@ import java.util.Optional;
 @Slf4j
 public class TransferServiceImpl implements TransferService {
 
+    private static final String ENTITY_TYPE = "TRANSFER";
+
     private final TransferRepository repository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ProjectClient projectClient;
+    private final StorageService storageService;
+    private final FileUploadHelper fileUploadHelper;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -58,7 +68,7 @@ public class TransferServiceImpl implements TransferService {
             Optional<HRRequest> hrReq = hrRequestRepository.findTopByTransferIdOrderByCreatedAtDesc(e.getId());
             Long reqId = hrReq.map(HRRequest::getId).orElse(null);
             String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
-            return toResponse(e, reqId, statusName);
+            return toResponse(e, Collections.emptyList(), reqId, statusName);
         }), total, approved);
     }
 
@@ -69,12 +79,12 @@ public class TransferServiceImpl implements TransferService {
         Optional<HRRequest> hrReq = hrRequestRepository.findTopByTransferIdOrderByCreatedAtDesc(id);
         Long requestId = hrReq.map(HRRequest::getId).orElse(null);
         String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
-        return toResponse(entity, requestId, statusName);
+        return toResponse(entity, fetchDocuments(id), requestId, statusName);
     }
 
     @Override
     @Transactional
-    public TransferResponse create(TransferRequest request) {
+    public TransferResponse create(TransferRequest request, List<MultipartFile> files) {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + request.getEmployeeId()));
 
@@ -91,19 +101,19 @@ public class TransferServiceImpl implements TransferService {
                 .toCostCenter(request.getToCostCenter())
                 .effectiveDate(request.getEffectiveDate())
                 .reason(request.getReason())
-                .documentUrl(request.getDocumentUrl())
                 .build();
 
         Transfer saved = repository.save(entity);
         HRRequest hrReq = hrRequestService.createForTransfer(saved.getId(), saved.getEmployeeId(), "CREATE", null);
 
+        List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
         String statusName = resolveStatusName(hrReq.getStatusId());
-        return toResponse(saved, hrReq.getId(), statusName);
+        return toResponse(saved, documents, hrReq.getId(), statusName);
     }
 
     @Override
     @Transactional
-    public TransferResponse update(UpdateTransferRequest request) {
+    public TransferResponse update(UpdateTransferRequest request, List<MultipartFile> files) {
         Transfer entity = findOrThrow(request.getId());
 
         String proposedData;
@@ -116,8 +126,10 @@ public class TransferServiceImpl implements TransferService {
         HRRequest hrReq = hrRequestService.createForTransfer(entity.getId(), entity.getEmployeeId(), "UPDATE", proposedData);
         repository.save(entity);
 
+        uploadFiles(entity.getId(), entity.getEmployeeId(), files);
+        List<FileMetadataResponse> documents = fetchDocuments(entity.getId());
         String statusName = resolveStatusName(hrReq.getStatusId());
-        return toResponse(entity, hrReq.getId(), statusName);
+        return toResponse(entity, documents, hrReq.getId(), statusName);
     }
 
     @Override
@@ -153,7 +165,8 @@ public class TransferServiceImpl implements TransferService {
                 .orElseThrow(() -> new ResourceNotFoundException("Traspaso no encontrado con id: " + id));
     }
 
-    private TransferResponse toResponse(Transfer e, Long requestId, String statusName) {
+    private TransferResponse toResponse(Transfer e, List<FileMetadataResponse> documents,
+                                         Long requestId, String statusName) {
         Employee emp = e.getEmployee();
         return TransferResponse.builder()
                 .id(e.getId())
@@ -167,11 +180,25 @@ public class TransferServiceImpl implements TransferService {
                 .toCostCenterName(resolveProjectName(e.getToCostCenter()))
                 .effectiveDate(e.getEffectiveDate())
                 .reason(e.getReason())
-                .documentUrl(e.getDocumentUrl())
+                .documents(documents)
                 .hrRequestId(requestId)
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
                 .build();
+    }
+
+    private List<FileMetadataResponse> uploadFiles(Long transferId, Long uploadedBy, List<MultipartFile> files) {
+        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, transferId);
+    }
+
+    private List<FileMetadataResponse> fetchDocuments(Long transferId) {
+        try {
+            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, transferId);
+            return response != null ? response : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener documentos del traspaso {}: {}", transferId, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     private Specification<Transfer> buildSpec(Long employeeId, Long statusId) {

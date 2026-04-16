@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.dto;
 
+import com.crm.common.dto.FileMetadataResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -25,7 +27,7 @@ public class TransferResponse {
     private String toCostCenterName;
     private LocalDate effectiveDate;
     private String reason;
-    private String documentUrl;
+    private List<FileMetadataResponse> documents;
     private Long hrRequestId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

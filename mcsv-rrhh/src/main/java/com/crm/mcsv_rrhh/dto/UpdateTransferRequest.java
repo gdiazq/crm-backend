@@ -27,7 +27,4 @@ public class UpdateTransferRequest {
 
     @Schema(description = "Motivo del traspaso")
     private String reason;
-
-    @Schema(description = "URL del documento de traspaso")
-    private String documentUrl;
 }
