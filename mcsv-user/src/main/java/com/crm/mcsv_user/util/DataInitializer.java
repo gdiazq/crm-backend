@@ -60,6 +60,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("CONTRACT:CREATE", "Crear contratos laborales");
         createPermissionIfNotExists("CONTRACT:READ",   "Ver y consultar contratos laborales");
         createPermissionIfNotExists("CONTRACT:UPDATE", "Modificar contratos laborales");
+        createPermissionIfNotExists("TRANSFER:CREATE", "Crear traspasos de centro de costo");
+        createPermissionIfNotExists("TRANSFER:READ",   "Ver y consultar traspasos de centro de costo");
+        createPermissionIfNotExists("TRANSFER:UPDATE", "Modificar traspasos de centro de costo");
+        createPermissionIfNotExists("TRANSFER:DELETE", "Eliminar documentos asociados a traspasos");
         createPermissionIfNotExists("PROJECT_TYPE:CREATE", "Crear tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:READ",   "Ver y consultar tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:UPDATE", "Modificar tipos de proyecto");

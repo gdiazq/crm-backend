@@ -119,7 +119,8 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("PUT:/v1/api/rrhh/termination-quiz-question",         "TERMINATION_QUIZ_QUESTION:UPDATE"),
             Map.entry("POST:/v1/api/rrhh/transfers/create",                 "TRANSFER:CREATE"),
             Map.entry("GET:/v1/api/rrhh/transfers",                         "TRANSFER:READ"),
-            Map.entry("PUT:/v1/api/rrhh/transfers/update",                  "TRANSFER:UPDATE")
+            Map.entry("PUT:/v1/api/rrhh/transfers/update",                  "TRANSFER:UPDATE"),
+            Map.entry("DELETE:/v1/api/rrhh/transfers",                      "TRANSFER:DELETE")
     );
 
     private final WebClient.Builder webClient;
