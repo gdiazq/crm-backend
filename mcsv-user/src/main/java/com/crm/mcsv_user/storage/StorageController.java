@@ -1,7 +1,7 @@
 package com.crm.mcsv_user.storage;
 
 import com.crm.common.dto.FileMetadataResponse;
-import com.crm.common.storage.service.StorageService;
+import com.crm.common.service.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.crm.common.storage.exception;
+package com.crm.common.exception;
 
 public class StorageException extends RuntimeException {
 

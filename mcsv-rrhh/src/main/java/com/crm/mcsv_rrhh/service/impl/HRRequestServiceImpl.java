@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.common.storage.service.StorageService;
+import com.crm.common.service.StorageService;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.CatalogItem;

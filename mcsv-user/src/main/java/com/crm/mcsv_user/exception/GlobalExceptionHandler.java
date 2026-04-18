@@ -2,7 +2,7 @@ package com.crm.mcsv_user.exception;
 
 import com.crm.common.exception.BaseGlobalExceptionHandler;
 import com.crm.common.exception.ErrorResponse;
-import com.crm.common.storage.exception.StorageException;
+import com.crm.common.exception.StorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

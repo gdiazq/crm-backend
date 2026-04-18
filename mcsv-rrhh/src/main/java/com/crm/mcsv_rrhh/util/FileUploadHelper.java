@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.util;
 
 import com.crm.common.dto.FileMetadataResponse;
-import com.crm.common.storage.service.StorageService;
+import com.crm.common.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

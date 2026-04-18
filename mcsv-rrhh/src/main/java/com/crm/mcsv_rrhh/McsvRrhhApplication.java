@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {"com.crm.mcsv_rrhh", "com.crm.common"})
 @EnableDiscoveryClient
 @EnableFeignClients
-@EnableJpaRepositories(basePackages = {"com.crm.mcsv_rrhh", "com.crm.common.storage.repository"})
-@EntityScan(basePackages = {"com.crm.mcsv_rrhh", "com.crm.common.storage.entity"})
+@EnableJpaRepositories(basePackages = {"com.crm.mcsv_rrhh", "com.crm.common.repository"})
+@EntityScan(basePackages = {"com.crm.mcsv_rrhh", "com.crm.common.entity"})
 public class McsvRrhhApplication {
 
 	public static void main(String[] args) {

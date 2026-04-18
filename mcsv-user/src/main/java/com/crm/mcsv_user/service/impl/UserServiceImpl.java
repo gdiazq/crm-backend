@@ -2,7 +2,7 @@ package com.crm.mcsv_user.service.impl;
 
 import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.client.SqsEmailClient;
-import com.crm.common.storage.service.StorageService;
+import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.common.dto.SendNotificationRequest;

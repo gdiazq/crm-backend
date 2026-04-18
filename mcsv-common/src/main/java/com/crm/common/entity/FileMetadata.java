@@ -1,4 +1,4 @@
-package com.crm.common.storage.entity;
+package com.crm.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

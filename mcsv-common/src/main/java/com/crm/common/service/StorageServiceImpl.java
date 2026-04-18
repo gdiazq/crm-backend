@@ -1,9 +1,9 @@
-package com.crm.common.storage.service;
+package com.crm.common.service;
 
 import com.crm.common.dto.FileMetadataResponse;
-import com.crm.common.storage.entity.FileMetadata;
-import com.crm.common.storage.exception.StorageException;
-import com.crm.common.storage.repository.FileMetadataRepository;
+import com.crm.common.entity.FileMetadata;
+import com.crm.common.exception.StorageException;
+import com.crm.common.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

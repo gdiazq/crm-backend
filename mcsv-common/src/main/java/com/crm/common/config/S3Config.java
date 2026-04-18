@@ -1,4 +1,4 @@
-package com.crm.common.storage.config;
+package com.crm.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

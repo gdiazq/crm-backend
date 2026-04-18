@@ -3,7 +3,7 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.common.storage.service.StorageService;
+import com.crm.common.service.StorageService;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.dto.TransferRequest;
 import com.crm.mcsv_rrhh.dto.TransferResponse;
@@ -11,10 +11,7 @@ import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.Transfer;
-import com.crm.mcsv_rrhh.repository.EmployeeRepository;
-import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
-import com.crm.mcsv_rrhh.repository.HRRequestRepository;
-import com.crm.mcsv_rrhh.repository.TransferRepository;
+import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.TransferService;
 import com.crm.mcsv_rrhh.util.FileUploadHelper;
@@ -55,12 +52,12 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<TransferResponse> list(Long employeeId, String status, Pageable pageable) {
+    public PagedResponse<TransferResponse> list(String search, String status, Pageable pageable) {
         Long statusId = status != null && !status.isBlank()
                 ? employeeStatusRepository.findByName(status).map(s -> s.getId()).orElse(null)
                 : null;
 
-        Specification<Transfer> spec = buildSpec(employeeId, statusId);
+        Specification<Transfer> spec = TransferSpecification.withFilters(search, statusId);
         Page<Transfer> page = repository.findAll(spec, pageable);
         long total = repository.count();
         long approved = resolveApprovedCount();

@@ -32,7 +32,7 @@ public class TransferController {
     @GetMapping("/paged")
     @Operation(summary = "Listar traspasos (paginado)")
     public ResponseEntity<PagedResponse<TransferResponse>> paged(
-            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -41,7 +41,7 @@ public class TransferController {
 
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(service.list(employeeId, status, pageable));
+        return ResponseEntity.ok(service.list(search, status, pageable));
     }
 
     @GetMapping("/{id}")
