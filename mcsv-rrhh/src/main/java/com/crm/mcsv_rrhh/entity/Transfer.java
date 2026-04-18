@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,6 +43,9 @@ public class Transfer {
 
     @Column
     private LocalDateTime updatedAt;
+
+    @Formula("(SELECT es.name FROM hr_requests hr JOIN employee_statuses es ON es.id = hr.status_id WHERE hr.transfer_id = id ORDER BY hr.created_at DESC LIMIT 1)")
+    private String currentStatusName;
 
     @PrePersist
     protected void onCreate() {

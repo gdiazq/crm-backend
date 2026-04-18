@@ -5,6 +5,7 @@ import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.common.service.StorageService;
 import com.crm.mcsv_rrhh.client.ProjectClient;
+import com.crm.mcsv_rrhh.client.ProjectClient.ProjectNameDTO;
 import com.crm.mcsv_rrhh.dto.TransferRequest;
 import com.crm.mcsv_rrhh.dto.TransferResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
@@ -26,11 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +42,7 @@ public class TransferServiceImpl implements TransferService {
 
     private static final String ENTITY_TYPE = "TRANSFER";
     private static final int MAX_DOCUMENTS = 5;
+    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     private final TransferRepository repository;
     private final EmployeeRepository employeeRepository;
@@ -52,14 +56,23 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<TransferResponse> list(String search, String status, Pageable pageable) {
+    public PagedResponse<TransferResponse> list(String search, String status,
+                                                 LocalDate effectiveDateFrom, LocalDate effectiveDateTo,
+                                                 LocalDate createdFrom, LocalDate createdTo,
+                                                 LocalDate updatedFrom, LocalDate updatedTo,
+                                                 Pageable pageable, String sortBy, String sortDir) {
         Long statusId = status != null && !status.isBlank()
                 ? employeeStatusRepository.findByName(status).map(s -> s.getId()).orElse(null)
                 : null;
 
-        Specification<Transfer> spec = TransferSpecification.withFilters(search, statusId);
-        Page<Transfer> page = repository.findAll(spec, pageable);
-        long total = repository.count();
+        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
+                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                : pageable;
+
+        Specification<Transfer> spec = TransferSpecification.withFilters(search, statusId,
+                effectiveDateFrom, effectiveDateTo, createdFrom, createdTo, updatedFrom, updatedTo, sortBy, sortDir);
+        Page<Transfer> page = repository.findAll(spec, effectivePageable);
+        long total = page.getTotalElements();
         long approved = resolveApprovedCount();
 
         return PagedResponse.of(page.map(e -> {
@@ -166,6 +179,22 @@ public class TransferServiceImpl implements TransferService {
         });
 
         return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProjectNameDTO> getToCostCenterOptions() {
+        return repository.findDistinctToCostCenters().stream()
+                .map(costCenter -> {
+                    try {
+                        ProjectNameDTO dto = projectClient.getByCostCenter(costCenter);
+                        return dto != null ? dto : new ProjectNameDTO(costCenter, null);
+                    } catch (Exception e) {
+                        log.warn("No se pudo resolver nombre para costCenter={}: {}", costCenter, e.getMessage());
+                        return new ProjectNameDTO(costCenter, null);
+                    }
+                })
+                .toList();
     }
 
     // ─── File helpers ─────────────────────────────────────────────────────────

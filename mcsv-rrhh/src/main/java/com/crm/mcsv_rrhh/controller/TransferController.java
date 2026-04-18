@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.common.dto.PagedResponse;
+import com.crm.mcsv_rrhh.client.ProjectClient.ProjectNameDTO;
 import com.crm.mcsv_rrhh.dto.TransferRequest;
 import com.crm.mcsv_rrhh.dto.TransferResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,13 +21,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/transfers")
 @RequiredArgsConstructor
 @Tag(name = "Transfer", description = "Gestión de traspasos de centro de costo")
 public class TransferController {
+
+    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     private final TransferService service;
 
@@ -34,14 +40,24 @@ public class TransferController {
     public ResponseEntity<PagedResponse<TransferResponse>> paged(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveDateTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedTo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        String effectiveSortBy = "status".equals(sortBy) ? "currentStatusName" : sortBy;
+        Sort sort = EMPLOYEE_SORT_FIELDS.contains(sortBy)
+                ? Sort.unsorted()
+                : (sortDir.equalsIgnoreCase("asc") ? Sort.by(effectiveSortBy).ascending() : Sort.by(effectiveSortBy).descending());
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(service.list(search, status, pageable));
+        return ResponseEntity.ok(service.list(search, status, effectiveDateFrom, effectiveDateTo,
+                createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
     }
 
     @GetMapping("/{id}")
@@ -74,6 +90,12 @@ public class TransferController {
             @RequestParam("userId") Long userId) {
         service.deleteDocument(id, fileId, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/select/to-cost-centers")
+    @Operation(summary = "Centros de costo destino usados en traspasos (para select)")
+    public ResponseEntity<List<ProjectNameDTO>> toCostCenterOptions() {
+        return ResponseEntity.ok(service.getToCostCenterOptions());
     }
 
     @GetMapping("/export/csv")
