@@ -26,7 +26,6 @@ public class ContractAnnexResponse {
     private String annexTypeName;
     private Boolean requireApproval;
     private LocalDate date;
-    private LocalDate effectiveDate;
     private String description;
     private List<FileMetadataResponse> documents;
     private Long hrRequestId;

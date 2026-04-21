@@ -43,8 +43,6 @@ public class ContractAnnexController {
             @RequestParam(required = false) Long contractId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveDateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveDateTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedFrom,
@@ -61,8 +59,7 @@ public class ContractAnnexController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return ResponseEntity.ok(service.list(search, status, annexTypeId, contractId,
-                dateFrom, dateTo, effectiveDateFrom, effectiveDateTo,
-                createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
+                dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
     }
 
     @GetMapping("/{id}")

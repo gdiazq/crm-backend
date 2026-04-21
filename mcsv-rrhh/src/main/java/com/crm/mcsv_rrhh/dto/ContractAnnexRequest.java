@@ -25,11 +25,8 @@ public class ContractAnnexRequest {
     @Schema(description = "ID del tipo de anexo")
     private Long annexTypeId;
 
-    @Schema(description = "Fecha del documento")
-    private LocalDate date;
-
     @Schema(description = "Fecha de vigencia")
-    private LocalDate effectiveDate;
+    private LocalDate date;
 
     @Schema(description = "Descripción del anexo")
     private String description;

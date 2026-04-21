@@ -14,7 +14,6 @@ public interface ContractAnnexService {
     PagedResponse<ContractAnnexResponse> list(String search, String status,
                                                Long annexTypeId, Long contractId,
                                                LocalDate dateFrom, LocalDate dateTo,
-                                               LocalDate effectiveDateFrom, LocalDate effectiveDateTo,
                                                LocalDate createdFrom, LocalDate createdTo,
                                                LocalDate updatedFrom, LocalDate updatedTo,
                                                Pageable pageable, String sortBy, String sortDir);

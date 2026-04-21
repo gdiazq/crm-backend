@@ -24,7 +24,6 @@ public class ContractAnnexSpecification {
     public static Specification<ContractAnnex> withFilters(String search, Long statusId,
                                                             Long annexTypeId, Long contractId,
                                                             LocalDate dateFrom, LocalDate dateTo,
-                                                            LocalDate effectiveDateFrom, LocalDate effectiveDateTo,
                                                             LocalDate createdFrom, LocalDate createdTo,
                                                             LocalDate updatedFrom, LocalDate updatedTo,
                                                             String sortBy, String sortDir) {
@@ -71,10 +70,6 @@ public class ContractAnnexSpecification {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("date"), dateFrom));
             if (dateTo != null)
                 predicates.add(cb.lessThanOrEqualTo(root.get("date"), dateTo));
-            if (effectiveDateFrom != null)
-                predicates.add(cb.greaterThanOrEqualTo(root.get("effectiveDate"), effectiveDateFrom));
-            if (effectiveDateTo != null)
-                predicates.add(cb.lessThanOrEqualTo(root.get("effectiveDate"), effectiveDateTo));
             if (createdFrom != null)
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFrom.atStartOfDay()));
             if (createdTo != null)

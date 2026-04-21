@@ -39,9 +39,6 @@ public class ContractAnnex {
     @Column(name = "date")
     private LocalDate date;
 
-    @Column(name = "effective_date")
-    private LocalDate effectiveDate;
-
     @Column(columnDefinition = "TEXT")
     private String description;
 

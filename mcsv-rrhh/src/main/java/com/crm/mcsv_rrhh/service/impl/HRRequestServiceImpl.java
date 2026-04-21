@@ -429,7 +429,6 @@ public class HRRequestServiceImpl implements HRRequestService {
                         UpdateContractAnnexRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractAnnexRequest.class);
                         if (proposed.getAnnexTypeId() != null) annex.setAnnexTypeId(proposed.getAnnexTypeId());
                         if (proposed.getDate() != null) annex.setDate(proposed.getDate());
-                        if (proposed.getEffectiveDate() != null) annex.setEffectiveDate(proposed.getEffectiveDate());
                         if (proposed.getDescription() != null) annex.setDescription(proposed.getDescription());
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());

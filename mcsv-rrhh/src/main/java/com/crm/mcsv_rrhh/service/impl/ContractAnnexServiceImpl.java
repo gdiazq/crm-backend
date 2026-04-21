@@ -57,7 +57,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     public PagedResponse<ContractAnnexResponse> list(String search, String status,
                                                       Long annexTypeId, Long contractId,
                                                       LocalDate dateFrom, LocalDate dateTo,
-                                                      LocalDate effectiveDateFrom, LocalDate effectiveDateTo,
                                                       LocalDate createdFrom, LocalDate createdTo,
                                                       LocalDate updatedFrom, LocalDate updatedTo,
                                                       Pageable pageable, String sortBy, String sortDir) {
@@ -71,8 +70,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
 
         Page<ContractAnnex> page = repository.findAll(
                 ContractAnnexSpecification.withFilters(search, statusId, annexTypeId, contractId,
-                        dateFrom, dateTo, effectiveDateFrom, effectiveDateTo,
-                        createdFrom, createdTo, updatedFrom, updatedTo, sortBy, sortDir),
+                        dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, sortBy, sortDir),
                 effectivePageable);
 
         long total = page.getTotalElements();
@@ -104,7 +102,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
                 .contractId(request.getContractId())
                 .annexTypeId(request.getAnnexTypeId())
                 .date(request.getDate())
-                .effectiveDate(request.getEffectiveDate())
                 .description(request.getDescription())
                 .build();
 
@@ -152,7 +149,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     @Transactional(readOnly = true)
     public byte[] exportCsv() {
         StringBuilder csv = new StringBuilder();
-        csv.append("ID,Empleado,RUT,Contrato,Tipo Anexo,Fecha,Fecha Vigencia,Descripción,Estado,Fecha Creación\n");
+        csv.append("ID,Empleado,RUT,Contrato,Tipo Anexo,Fecha,Descripción,Estado,Fecha Creación\n");
 
         repository.findAll().forEach(e -> {
             String statusName = hrRequestRepository.findTopByAnnexIdOrderByCreatedAtDesc(e.getId())
@@ -165,7 +162,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
                .append(e.getContractId()).append(",")
                .append(escape(annexTypeName)).append(",")
                .append(e.getDate() != null ? e.getDate() : "").append(",")
-               .append(e.getEffectiveDate() != null ? e.getEffectiveDate() : "").append(",")
                .append(escape(e.getDescription())).append(",")
                .append(escape(statusName)).append(",")
                .append(formatDate(e.getCreatedAt())).append("\n");
@@ -241,7 +237,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
                 .annexTypeName(annexType != null ? annexType.getName() : null)
                 .requireApproval(annexType != null ? annexType.getRequireApproval() : null)
                 .date(e.getDate())
-                .effectiveDate(e.getEffectiveDate())
                 .description(e.getDescription())
                 .documents(documents)
                 .hrRequestId(requestId)
