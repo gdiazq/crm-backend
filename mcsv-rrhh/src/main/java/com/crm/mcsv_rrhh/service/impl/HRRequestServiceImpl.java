@@ -9,7 +9,10 @@ import com.crm.mcsv_rrhh.dto.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
+import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
+import com.crm.mcsv_rrhh.entity.ContractAnnex;
 import com.crm.mcsv_rrhh.entity.Transfer;
+import com.crm.mcsv_rrhh.repository.ContractAnnexRepository;
 import com.crm.mcsv_rrhh.repository.TransferRepository;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
@@ -65,6 +68,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final SafetyComplianceRepository safetyComplianceRepository;
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TransferRepository transferRepository;
+    private final ContractAnnexRepository contractAnnexRepository;
     private final UserClient userClient;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
@@ -167,6 +171,32 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .requireApproval(type.getRequireApproval())
                 .idModule(employeeId)
                 .transferId(transferId)
+                .action(action)
+                .proposedData(proposedData)
+                .build();
+
+        return hrRequestRepository.save(request);
+    }
+
+    @Override
+    public HRRequest createForAnnex(Long annexId, Long employeeId, String action, String proposedData) {
+        HRRequestType type = hrRequestTypeRepository.findByName("Anexo")
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Anexo"));
+
+        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
+                ? "Pendiente de revisión"
+                : "Pendiente de aprobación";
+
+        Long statusId = employeeStatusRepository.findByName(initialStatusName)
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
+
+        HRRequest request = HRRequest.builder()
+                .requestTypeId(type.getId())
+                .statusId(statusId)
+                .requireApproval(type.getRequireApproval())
+                .idModule(employeeId)
+                .annexId(annexId)
                 .action(action)
                 .proposedData(proposedData)
                 .build();
@@ -390,6 +420,24 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 transferRepository.save(transfer);
 
+            } else if ("Anexo".equals(requestTypeName)) {
+                ContractAnnex annex = contractAnnexRepository.findById(hr.getAnnexId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Anexo no encontrado: " + hr.getAnnexId()));
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    try {
+                        UpdateContractAnnexRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractAnnexRequest.class);
+                        if (proposed.getAnnexTypeId() != null) annex.setAnnexTypeId(proposed.getAnnexTypeId());
+                        if (proposed.getDate() != null) annex.setDate(proposed.getDate());
+                        if (proposed.getEffectiveDate() != null) annex.setEffectiveDate(proposed.getEffectiveDate());
+                        if (proposed.getDescription() != null) annex.setDescription(proposed.getDescription());
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                    }
+                    retagPendingAnnexFiles(hr.getId(), annex.getId());
+                }
+                contractAnnexRepository.save(annex);
+
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
@@ -480,6 +528,9 @@ public class HRRequestServiceImpl implements HRRequestService {
         if ("UPDATE".equals(hr.getAction()) && "Traspaso".equals(requestTypeName)) {
             deletePendingTransferFiles(hr.getId(), hr.getTransferId());
         }
+        if ("UPDATE".equals(hr.getAction()) && "Anexo".equals(requestTypeName)) {
+            deletePendingAnnexFiles(hr.getId(), hr.getAnnexId());
+        }
 
         if ("CREATE".equals(hr.getAction())) {
             if ("Contrato".equals(requestTypeName)) {
@@ -493,6 +544,9 @@ public class HRRequestServiceImpl implements HRRequestService {
             } else if ("Traspaso".equals(requestTypeName)) {
                 if (hr.getTransferId() != null)
                     transferRepository.deleteById(hr.getTransferId());
+            } else if ("Anexo".equals(requestTypeName)) {
+                if (hr.getAnnexId() != null)
+                    contractAnnexRepository.deleteById(hr.getAnnexId());
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
@@ -718,6 +772,36 @@ public class HRRequestServiceImpl implements HRRequestService {
             }
         } catch (Exception e) {
             log.warn("Error deleting pending transfer files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void retagPendingAnnexFiles(Long hrRequestId, Long annexId) {
+        try {
+            var response = storageService.listByEntity("ANNEX_PENDING", hrRequestId);
+            if (response != null) {
+                for (FileMetadataResponse file : response) {
+                    storageService.retag(file.getId(), "ANNEX", annexId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error retagging pending annex files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void deletePendingAnnexFiles(Long hrRequestId, Long annexId) {
+        try {
+            var response = storageService.listByEntity("ANNEX_PENDING", hrRequestId);
+            if (response != null) {
+                ContractAnnex annex = contractAnnexRepository.findById(annexId).orElse(null);
+                Long uploadedBy = annex != null ? annex.getEmployeeId() : null;
+                if (uploadedBy != null) {
+                    for (FileMetadataResponse file : response) {
+                        storageService.delete(file.getId(), uploadedBy);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error deleting pending annex files for hrRequest {}: {}", hrRequestId, e.getMessage());
         }
     }
 
