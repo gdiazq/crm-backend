@@ -46,6 +46,7 @@ public class DataInitializer implements CommandLineRunner {
     private final LaborUnionRepository laborUnionRepository;
     private final MealTypeRepository mealTypeRepository;
     private final TransportTypeRepository transportTypeRepository;
+    private final ContractAnnexTypeRepository contractAnnexTypeRepository;
 
     @Override
     public void run(String... args) {
@@ -81,6 +82,7 @@ public class DataInitializer implements CommandLineRunner {
         initializeLaborUnions();
         initializeMealTypes();
         initializeTransportTypes();
+        initializeContractAnnexTypes();
     }
 
     private void initializeIdentificationTypes() {
@@ -656,6 +658,31 @@ public class DataInitializer implements CommandLineRunner {
             if (transportTypeRepository.findByName(name).isEmpty())
                 transportTypeRepository.save(TransportType.builder().name(name).build());
         log.info("Transport types initialized.");
+    }
+
+    private void initializeContractAnnexTypes() {
+        record AnnexDef(String name, String description, boolean requireApproval) {}
+        java.util.List<AnnexDef> types = java.util.List.of(
+            new AnnexDef("Plazo fijo a faena", "Conversión de contrato a plazo fijo por duración de faena", false),
+            new AnnexDef("Cambio de cargo", "Modificación del cargo o puesto del trabajador", true),
+            new AnnexDef("Cambio de sueldo", "Modificación de la remuneración base del trabajador", true),
+            new AnnexDef("Cambio de sueldo y cargo", "Modificación simultánea de remuneración y cargo", true),
+            new AnnexDef("Turno de noche", "Incorporación o modificación de jornada nocturna", false),
+            new AnnexDef("Prórroga plazo fijo", "Extensión del período de un contrato a plazo fijo", false),
+            new AnnexDef("Cambio a indefinido", "Conversión de contrato plazo fijo a indefinido", false),
+            new AnnexDef("Cambio de ITO", "Cambio del inspector técnico de obra asignado", false),
+            new AnnexDef("Modificación de jornada laboral", "Cambio en los días u horas de la jornada de trabajo", true),
+            new AnnexDef("Modificación de funciones", "Ajuste de las funciones o responsabilidades del cargo", false),
+            new AnnexDef("Asignación de beneficios", "Incorporación de beneficios adicionales al contrato", false),
+            new AnnexDef("Extensión de contrato", "Extensión general del plazo o condiciones del contrato", false),
+            new AnnexDef("Otro", "Otro tipo de anexo no clasificado", false)
+        );
+        for (AnnexDef t : types)
+            if (contractAnnexTypeRepository.findByName(t.name()).isEmpty())
+                contractAnnexTypeRepository.save(ContractAnnexType.builder()
+                        .name(t.name()).description(t.description())
+                        .requireApproval(t.requireApproval()).active(true).build());
+        log.info("Contract annex types initialized.");
     }
 
     private void initializeEmployeeStatuses() {
