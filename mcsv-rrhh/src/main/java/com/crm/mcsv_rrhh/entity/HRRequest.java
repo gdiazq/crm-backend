@@ -59,6 +59,9 @@ public class HRRequest {
     private Long transferId;
 
     @Column
+    private Long annexId;
+
+    @Column
     private String action;
 
     @Column(columnDefinition = "TEXT")

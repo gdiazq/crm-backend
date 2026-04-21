@@ -22,6 +22,7 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
     Optional<HRRequest> findTopByContractIdOrderByCreatedAtDesc(Long contractId);
     Optional<HRRequest> findTopBySettlementIdOrderByCreatedAtDesc(Long settlementId);
     Optional<HRRequest> findTopByTransferIdOrderByCreatedAtDesc(Long transferId);
+    Optional<HRRequest> findTopByAnnexIdOrderByCreatedAtDesc(Long annexId);
 
     @Query("SELECT COUNT(DISTINCT h.settlementId) FROM HRRequest h " +
            "WHERE h.settlementId IS NOT NULL AND h.statusId = :statusId " +
