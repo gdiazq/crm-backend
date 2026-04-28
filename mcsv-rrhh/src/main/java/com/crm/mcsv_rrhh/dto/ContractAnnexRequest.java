@@ -17,10 +17,6 @@ public class ContractAnnexRequest {
     @Schema(description = "ID del empleado")
     private Long employeeId;
 
-    @NotNull(message = "El contrato es obligatorio")
-    @Schema(description = "ID del contrato")
-    private Long contractId;
-
     @NotNull(message = "El tipo de anexo es obligatorio")
     @Schema(description = "ID del tipo de anexo")
     private Long annexTypeId;

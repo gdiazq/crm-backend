@@ -7,8 +7,10 @@ import com.crm.common.service.StorageService;
 import com.crm.mcsv_rrhh.dto.ContractAnnexRequest;
 import com.crm.mcsv_rrhh.dto.ContractAnnexResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
+import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.ContractAnnex;
 import com.crm.mcsv_rrhh.entity.ContractAnnexType;
+import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.repository.*;
@@ -41,9 +43,12 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     private static final String ENTITY_TYPE = "ANNEX";
     private static final int MAX_DOCUMENTS = 5;
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
+    private static final String ACTIVE_CONTRACT_STATUS = "Activo";
 
     private final ContractAnnexRepository repository;
     private final ContractAnnexTypeRepository annexTypeRepository;
+    private final ContractRepository contractRepository;
+    private final ContractStatusRepository contractStatusRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
     private final HRRequestRepository hrRequestRepository;
@@ -97,9 +102,13 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     @Override
     @Transactional
     public ContractAnnexResponse create(ContractAnnexRequest request, List<MultipartFile> files) {
+        Employee employee = employeeRepository.findById(request.getEmployeeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + request.getEmployeeId()));
+        Long contractId = resolveActiveContractId(employee.getId());
+
         ContractAnnex entity = ContractAnnex.builder()
-                .employeeId(request.getEmployeeId())
-                .contractId(request.getContractId())
+                .employeeId(employee.getId())
+                .contractId(contractId)
                 .annexTypeId(request.getAnnexTypeId())
                 .date(request.getDate())
                 .description(request.getDescription())
@@ -220,6 +229,24 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     private ContractAnnex findOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Anexo no encontrado con id: " + id));
+    }
+
+    private Long resolveActiveContractId(Long employeeId) {
+        Long activeContractStatusId = contractStatusRepository.findByName(ACTIVE_CONTRACT_STATUS)
+                .map(ContractStatus::getId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ACTIVE_CONTRACT_STATUS));
+
+        List<Contract> activeContracts = contractRepository.findByEmployeeId(employeeId).stream()
+                .filter(contract -> activeContractStatusId.equals(contract.getContractStatusId()))
+                .toList();
+
+        if (activeContracts.isEmpty()) {
+            throw new IllegalStateException("El empleado no tiene un contrato activo");
+        }
+        if (activeContracts.size() > 1) {
+            throw new IllegalStateException("El empleado tiene más de un contrato activo");
+        }
+        return activeContracts.getFirst().getId();
     }
 
     private ContractAnnexResponse toResponse(ContractAnnex e, List<FileMetadataResponse> documents,
