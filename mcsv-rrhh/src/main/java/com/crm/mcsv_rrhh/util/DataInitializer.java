@@ -47,6 +47,7 @@ public class DataInitializer implements CommandLineRunner {
     private final MealTypeRepository mealTypeRepository;
     private final TransportTypeRepository transportTypeRepository;
     private final ContractAnnexTypeRepository contractAnnexTypeRepository;
+    private final LeaveTypeRepository leaveTypeRepository;
 
     @Override
     public void run(String... args) {
@@ -83,6 +84,7 @@ public class DataInitializer implements CommandLineRunner {
         initializeMealTypes();
         initializeTransportTypes();
         initializeContractAnnexTypes();
+        initializeLeaveTypes();
     }
 
     private void initializeIdentificationTypes() {
@@ -558,12 +560,18 @@ public class DataInitializer implements CommandLineRunner {
                 new TypeDef("Finiquito", true),
                 new TypeDef("Anexo", true),
                 new TypeDef("Traspaso", true),
-                new TypeDef("Permiso", false)
+                new TypeDef("Permiso", true)
         );
-        for (TypeDef t : types)
-            if (hrRequestTypeRepository.findByName(t.name()).isEmpty())
+        for (TypeDef t : types) {
+            HRRequestType existing = hrRequestTypeRepository.findByName(t.name()).orElse(null);
+            if (existing == null) {
                 hrRequestTypeRepository.save(HRRequestType.builder()
                         .name(t.name()).requireApproval(t.req()).build());
+            } else if (!java.util.Objects.equals(existing.getRequireApproval(), t.req())) {
+                existing.setRequireApproval(t.req());
+                hrRequestTypeRepository.save(existing);
+            }
+        }
         log.info("HR request types initialized.");
     }
 
@@ -683,6 +691,68 @@ public class DataInitializer implements CommandLineRunner {
                         .name(t.name()).description(t.description())
                         .requireApproval(t.requireApproval()).active(true).build());
         log.info("Contract annex types initialized.");
+    }
+
+    private void initializeLeaveTypes() {
+        record LeaveDef(String name, String description, boolean paid, boolean requiresDocument, boolean requireApproval,
+                        Integer maxDaysPerYear) {}
+
+        List<LeaveDef> types = List.of(
+                new LeaveDef("Licencia médica", "Permiso por enfermedad con licencia médica", true, true, true, null),
+                new LeaveDef("Pre/post natal", "Permiso de maternidad legal", true, true, true, null),
+                new LeaveDef("Permiso paternal", "Permiso paternal por nacimiento (Art. 195)", true, false, true, 5),
+                new LeaveDef("Fallecimiento cónyuge/hijo", "Fallecimiento de cónyuge o hijo (Art. 66)", true, true, true, 7),
+                new LeaveDef("Fallecimiento padre/madre", "Fallecimiento de padre o madre (Art. 66)", true, true, true, 3),
+                new LeaveDef("Matrimonio", "Permiso por matrimonio (Art. 207 bis)", true, true, true, 5),
+                new LeaveDef("Vacaciones legales", "Feriado anual (Art. 67)", true, false, true, 15)
+        );
+
+        for (LeaveDef t : types) {
+            LeaveType existing = leaveTypeRepository.findByName(t.name()).orElse(null);
+            if (existing == null) {
+                leaveTypeRepository.save(LeaveType.builder()
+                        .name(t.name())
+                        .description(t.description())
+                        .paid(t.paid())
+                        .requiresDocument(t.requiresDocument())
+                        .requireApproval(t.requireApproval())
+                        .maxDaysPerYear(t.maxDaysPerYear())
+                        .active(true)
+                        .build());
+                continue;
+            }
+
+            boolean changed = false;
+            if (!java.util.Objects.equals(existing.getDescription(), t.description())) {
+                existing.setDescription(t.description());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getPaid(), t.paid())) {
+                existing.setPaid(t.paid());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getRequiresDocument(), t.requiresDocument())) {
+                existing.setRequiresDocument(t.requiresDocument());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getRequireApproval(), t.requireApproval())) {
+                existing.setRequireApproval(t.requireApproval());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getMaxDaysPerYear(), t.maxDaysPerYear())) {
+                existing.setMaxDaysPerYear(t.maxDaysPerYear());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getActive(), true)) {
+                existing.setActive(true);
+                changed = true;
+            }
+
+            if (changed) {
+                leaveTypeRepository.save(existing);
+            }
+        }
+        log.info("Leave types initialized.");
     }
 
     private void initializeEmployeeStatuses() {

@@ -68,6 +68,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("ANNEX:READ",   "Ver y consultar anexos de contrato");
         createPermissionIfNotExists("ANNEX:UPDATE", "Modificar anexos de contrato");
         createPermissionIfNotExists("ANNEX:DELETE", "Eliminar documentos asociados a anexos");
+        createPermissionIfNotExists("LEAVE:CREATE", "Crear permisos de empleado");
+        createPermissionIfNotExists("LEAVE:READ",   "Ver y consultar permisos de empleado");
+        createPermissionIfNotExists("LEAVE:UPDATE", "Modificar permisos de empleado");
+        createPermissionIfNotExists("LEAVE:DELETE", "Eliminar documentos asociados a permisos");
         createPermissionIfNotExists("PROJECT_TYPE:CREATE", "Crear tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:READ",   "Ver y consultar tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:UPDATE", "Modificar tipos de proyecto");
@@ -149,8 +153,6 @@ public class DataInitializer implements CommandLineRunner {
     // -------------------------------------------------------------------------
 
     private void assignPermissionsToRoles() {
-        if (roleRepository.findByNameWithPermissions("ROLE_ADMIN").map(r -> !r.getPermissions().isEmpty()).orElse(false)) return;
-
         Permission userCreate = permissionRepository.findByName("USER:CREATE").orElseThrow();
         Permission userRead   = permissionRepository.findByName("USER:READ").orElseThrow();
         Permission userUpdate = permissionRepository.findByName("USER:UPDATE").orElseThrow();
@@ -167,19 +169,25 @@ public class DataInitializer implements CommandLineRunner {
         Permission hrRequestRead    = permissionRepository.findByName("HR_REQUEST:READ").orElseThrow();
         Permission hrRequestApprove = permissionRepository.findByName("HR_REQUEST:APPROVE").orElseThrow();
         Permission hrRequestReject  = permissionRepository.findByName("HR_REQUEST:REJECT").orElseThrow();
+        Permission leaveCreate = permissionRepository.findByName("LEAVE:CREATE").orElseThrow();
+        Permission leaveRead   = permissionRepository.findByName("LEAVE:READ").orElseThrow();
+        Permission leaveUpdate = permissionRepository.findByName("LEAVE:UPDATE").orElseThrow();
+        Permission leaveDelete = permissionRepository.findByName("LEAVE:DELETE").orElseThrow();
 
         assignToRole("ROLE_ADMIN", new HashSet<>(Set.of(
                 userCreate, userRead, userUpdate, userDelete,
                 roleCreate, roleRead, roleUpdate, roleDelete,
                 employeeCreate, employeeRead, employeeUpdate, employeeDelete,
-                hrRequestRead, hrRequestApprove, hrRequestReject)));
+                hrRequestRead, hrRequestApprove, hrRequestReject,
+                leaveCreate, leaveRead, leaveUpdate, leaveDelete)));
 
         assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(
                 userRead, userUpdate,
                 employeeCreate, employeeRead, employeeUpdate,
-                hrRequestRead, hrRequestApprove, hrRequestReject)));
+                hrRequestRead, hrRequestApprove, hrRequestReject,
+                leaveCreate, leaveRead, leaveUpdate)));
 
-        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead, hrRequestRead)));
+        assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead, hrRequestRead, leaveRead)));
 
         log.info("Permissions assigned to roles.");
     }
