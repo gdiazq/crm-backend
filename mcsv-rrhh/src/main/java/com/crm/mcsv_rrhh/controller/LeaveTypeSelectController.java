@@ -27,10 +27,6 @@ public class LeaveTypeSelectController {
                 .map(e -> LeaveTypeResponse.builder()
                         .id(e.getId())
                         .name(e.getName())
-                        .paid(e.getPaid())
-                        .requiresDocument(e.getRequiresDocument())
-                        .requireApproval(e.getRequireApproval())
-                        .maxDaysPerYear(e.getMaxDaysPerYear())
                         .build())
                 .toList();
         return ResponseEntity.ok(result);

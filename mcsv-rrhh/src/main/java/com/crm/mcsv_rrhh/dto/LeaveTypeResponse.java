@@ -13,8 +13,4 @@ public class LeaveTypeResponse {
 
     private Long id;
     private String name;
-    private Boolean paid;
-    private Boolean requiresDocument;
-    private Boolean requireApproval;
-    private Integer maxDaysPerYear;
 }
