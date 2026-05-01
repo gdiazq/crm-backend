@@ -16,6 +16,7 @@ public interface HRRequestService {
     HRRequest createForSettlement(Long settlementId, Long employeeId, String action, String proposedData);
     HRRequest createForTransfer(Long transferId, Long employeeId, String action, String proposedData);
     HRRequest createForAnnex(Long annexId, Long employeeId, String action, String proposedData);
+    HRRequest createForLeave(Long leaveId, Long employeeId, String action, String proposedData);
     Page<HRRequestResponse> list(Long idModule, Long statusId,
                                   LocalDate createdFrom, LocalDate createdTo,
                                   LocalDate approvalFrom, LocalDate approvalTo,

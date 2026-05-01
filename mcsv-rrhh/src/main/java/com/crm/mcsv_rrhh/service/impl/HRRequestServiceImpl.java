@@ -8,11 +8,14 @@ import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.UpdateEmployeeLeaveRequest;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
 import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
 import com.crm.mcsv_rrhh.entity.ContractAnnex;
+import com.crm.mcsv_rrhh.entity.EmployeeLeave;
 import com.crm.mcsv_rrhh.entity.Transfer;
 import com.crm.mcsv_rrhh.repository.ContractAnnexRepository;
+import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
 import com.crm.mcsv_rrhh.repository.TransferRepository;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
@@ -36,6 +39,8 @@ import com.crm.mcsv_rrhh.repository.NoReHiredCauseRepository;
 import com.crm.mcsv_rrhh.repository.QualityOfWorkRepository;
 import com.crm.mcsv_rrhh.repository.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.service.HRRequestService;
+import com.crm.mcsv_rrhh.util.LeaveCalculator;
+import com.crm.mcsv_rrhh.util.LeaveValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -69,8 +74,10 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TransferRepository transferRepository;
     private final ContractAnnexRepository contractAnnexRepository;
+    private final EmployeeLeaveRepository employeeLeaveRepository;
     private final UserClient userClient;
     private final StorageService storageService;
+    private final LeaveValidator leaveValidator;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -204,6 +211,32 @@ public class HRRequestServiceImpl implements HRRequestService {
         return hrRequestRepository.save(request);
     }
 
+    @Override
+    public HRRequest createForLeave(Long leaveId, Long employeeId, String action, String proposedData) {
+        HRRequestType type = hrRequestTypeRepository.findByName("Permiso")
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Permiso"));
+
+        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
+                ? "Pendiente de revisión"
+                : "Pendiente de aprobación";
+
+        Long statusId = employeeStatusRepository.findByName(initialStatusName)
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
+
+        HRRequest request = HRRequest.builder()
+                .requestTypeId(type.getId())
+                .statusId(statusId)
+                .requireApproval(type.getRequireApproval())
+                .idModule(employeeId)
+                .leaveId(leaveId)
+                .action(action)
+                .proposedData(proposedData)
+                .build();
+
+        return hrRequestRepository.save(request);
+    }
+
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     @Override
@@ -306,11 +339,7 @@ public class HRRequestServiceImpl implements HRRequestService {
             return toResponse(hr);
 
         } else if ("Pendiente de aprobación".equals(currentStatus)) {
-            hr.setHhrrApproverId(approverId);
-            hr.setHhrrApprovalDate(LocalDateTime.now());
             Long approvedStatusId = resolveStatusId("Aprobado");
-            hr.setStatusId(approvedStatusId);
-            hrRequestRepository.save(hr);
 
             String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
                     .map(HRRequestType::getName).orElse(null);
@@ -437,6 +466,27 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 contractAnnexRepository.save(annex);
 
+            } else if ("Permiso".equals(requestTypeName)) {
+                EmployeeLeave leave = employeeLeaveRepository.findById(hr.getLeaveId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado: " + hr.getLeaveId()));
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    UpdateEmployeeLeaveRequest proposed;
+                    try {
+                        proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeLeaveRequest.class);
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                        throw new RuntimeException("Error deserializando la actualización del permiso", e);
+                    }
+                    EmployeeLeave candidate = mergeLeaveCandidate(leave, proposed);
+                    leaveValidator.validate(candidate, null, leave.getId(), hr.getId());
+                    applyLeaveChanges(leave, candidate);
+                    retagPendingLeaveFiles(hr.getId(), leave.getId());
+                } else {
+                    leaveValidator.validate(leave, null, leave.getId(), null);
+                }
+                employeeLeaveRepository.save(leave);
+
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
@@ -501,6 +551,11 @@ public class HRRequestServiceImpl implements HRRequestService {
                 employeeRepository.save(employee);
             }
 
+            hr.setHhrrApproverId(approverId);
+            hr.setHhrrApprovalDate(LocalDateTime.now());
+            hr.setStatusId(approvedStatusId);
+            hrRequestRepository.save(hr);
+
             return toResponse(hr);
 
         } else {
@@ -530,6 +585,9 @@ public class HRRequestServiceImpl implements HRRequestService {
         if ("UPDATE".equals(hr.getAction()) && "Anexo".equals(requestTypeName)) {
             deletePendingAnnexFiles(hr.getId(), hr.getAnnexId());
         }
+        if ("UPDATE".equals(hr.getAction()) && "Permiso".equals(requestTypeName)) {
+            deletePendingLeaveFiles(hr.getId(), hr.getLeaveId());
+        }
 
         if ("CREATE".equals(hr.getAction())) {
             if ("Contrato".equals(requestTypeName)) {
@@ -546,6 +604,11 @@ public class HRRequestServiceImpl implements HRRequestService {
             } else if ("Anexo".equals(requestTypeName)) {
                 if (hr.getAnnexId() != null)
                     contractAnnexRepository.deleteById(hr.getAnnexId());
+            } else if ("Permiso".equals(requestTypeName)) {
+                if (hr.getLeaveId() != null) {
+                    deleteLeaveFiles(hr.getLeaveId());
+                    employeeLeaveRepository.deleteById(hr.getLeaveId());
+                }
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
@@ -801,6 +864,82 @@ public class HRRequestServiceImpl implements HRRequestService {
             }
         } catch (Exception e) {
             log.warn("Error deleting pending annex files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private EmployeeLeave mergeLeaveCandidate(EmployeeLeave current, UpdateEmployeeLeaveRequest proposed) {
+        var startDate = proposed.getStartDate() != null ? proposed.getStartDate() : current.getStartDate();
+        var endDate = proposed.getEndDate() != null ? proposed.getEndDate() : current.getEndDate();
+        var halfDay = proposed.getHalfDay() != null ? proposed.getHalfDay() : current.getHalfDay();
+
+        return EmployeeLeave.builder()
+                .id(current.getId())
+                .employeeId(current.getEmployeeId())
+                .contractId(current.getContractId())
+                .leaveTypeId(proposed.getLeaveTypeId() != null ? proposed.getLeaveTypeId() : current.getLeaveTypeId())
+                .startDate(startDate)
+                .endDate(endDate)
+                .halfDay(Boolean.TRUE.equals(halfDay))
+                .totalDays(LeaveCalculator.computeTotalDays(startDate, endDate, halfDay))
+                .reason(proposed.getReason() != null ? proposed.getReason() : current.getReason())
+                .createdAt(current.getCreatedAt())
+                .updatedAt(current.getUpdatedAt())
+                .build();
+    }
+
+    private void applyLeaveChanges(EmployeeLeave target, EmployeeLeave source) {
+        target.setLeaveTypeId(source.getLeaveTypeId());
+        target.setStartDate(source.getStartDate());
+        target.setEndDate(source.getEndDate());
+        target.setHalfDay(source.getHalfDay());
+        target.setTotalDays(source.getTotalDays());
+        target.setReason(source.getReason());
+    }
+
+    private void retagPendingLeaveFiles(Long hrRequestId, Long leaveId) {
+        try {
+            var response = storageService.listByEntity("LEAVE_PENDING", hrRequestId);
+            if (response != null) {
+                for (FileMetadataResponse file : response) {
+                    storageService.retag(file.getId(), "LEAVE", leaveId);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error retagging pending leave files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void deletePendingLeaveFiles(Long hrRequestId, Long leaveId) {
+        try {
+            var response = storageService.listByEntity("LEAVE_PENDING", hrRequestId);
+            if (response != null) {
+                EmployeeLeave leave = employeeLeaveRepository.findById(leaveId).orElse(null);
+                Long uploadedBy = leave != null ? leave.getEmployeeId() : null;
+                if (uploadedBy != null) {
+                    for (FileMetadataResponse file : response) {
+                        storageService.delete(file.getId(), uploadedBy);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error deleting pending leave files for hrRequest {}: {}", hrRequestId, e.getMessage());
+        }
+    }
+
+    private void deleteLeaveFiles(Long leaveId) {
+        try {
+            var response = storageService.listByEntity("LEAVE", leaveId);
+            if (response != null) {
+                EmployeeLeave leave = employeeLeaveRepository.findById(leaveId).orElse(null);
+                Long uploadedBy = leave != null ? leave.getEmployeeId() : null;
+                if (uploadedBy != null) {
+                    for (FileMetadataResponse file : response) {
+                        storageService.delete(file.getId(), uploadedBy);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error deleting leave files for leave {}: {}", leaveId, e.getMessage());
         }
     }
 

@@ -29,6 +29,12 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
            "WHERE h.settlementId IS NOT NULL AND h.statusId = :statusId " +
            "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.settlementId = h.settlementId)")
     long countSettlementsWithLatestStatusId(@Param("statusId") Long statusId);
+
+    @Query("SELECT COUNT(DISTINCT h.leaveId) FROM HRRequest h " +
+           "WHERE h.leaveId IS NOT NULL AND h.statusId = :statusId " +
+           "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.leaveId = h.leaveId)")
+    long countLeavesWithLatestStatusId(@Param("statusId") Long statusId);
+
     long countByIdModule(Long idModule);
     long countByStatusId(Long statusId);
     long countByIdModuleAndStatusId(Long idModule, Long statusId);
