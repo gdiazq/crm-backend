@@ -13,9 +13,7 @@ import com.crm.mcsv_auth.dto.GitHubUserInfo;
 import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.entity.RefreshToken;
-import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
-import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.GitHubOAuth2Service;
 import com.crm.mcsv_auth.service.TokenService;
 import com.crm.mcsv_auth.util.JwtUtil;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,9 +39,9 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
     private final GitHubOAuth2Config gitHubOAuth2Config;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
-    private final UserSessionRepository userSessionRepository;
     private final JwtConfig jwtConfig;
     private final EventBridgeNotificationClient eventBridgeNotificationClient;
+    private final UserSessionManager userSessionManager;
 
     @Override
     public String buildAuthorizationUrl() {
@@ -108,22 +105,7 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
         RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
 
-        // 6. Revocar sesión anterior del mismo dispositivo si aplica
-        if (deviceId != null && !deviceId.isBlank()) {
-            userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(user.getId(), deviceId)
-                    .ifPresent(oldSession -> {
-                        oldSession.setRevoked(true);
-                        oldSession.setRevokedAt(LocalDateTime.now());
-                        userSessionRepository.save(oldSession);
-                    });
-        }
-
-        userSessionRepository.save(UserSession.builder()
-                .userId(user.getId())
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .deviceId(deviceId)
-                .build());
+        userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
 
         // 7. Enviar notificación
         if (isNewUser[0]) {

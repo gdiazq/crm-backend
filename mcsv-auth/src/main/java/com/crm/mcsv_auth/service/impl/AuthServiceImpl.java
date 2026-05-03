@@ -19,7 +19,6 @@ import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
-import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.exception.MfaRequiredException;
 import com.crm.mcsv_auth.exception.TokenException;
@@ -64,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserSessionRepository userSessionRepository;
     private final MfaService mfaService;
     private final JwtConfig jwtConfig;
+    private final UserSessionManager userSessionManager;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -165,22 +165,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User logged in successfully: {}", user.getUsername());
 
-        // Revocar sesión anterior del mismo dispositivo
-        if (deviceId != null && !deviceId.isBlank()) {
-            userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(user.getId(), deviceId)
-                    .ifPresent(oldSession -> {
-                        oldSession.setRevoked(true);
-                        oldSession.setRevokedAt(LocalDateTime.now());
-                        userSessionRepository.save(oldSession);
-                    });
-        }
-
-        userSessionRepository.save(UserSession.builder()
-                .userId(user.getId())
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .deviceId(deviceId)
-                .build());
+        userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
 
         // Enviar notificación de bienvenida al login
         sendLoginNotification(user.getId(), user.getUsername());
@@ -205,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
+    public AuthResponse refreshToken(RefreshTokenRequest request, String ipAddress, String userAgent, String deviceId) {
         log.info("Refresh token request");
 
         // Validar refresh token
@@ -231,6 +216,7 @@ public class AuthServiceImpl implements AuthService {
         // Rotar refresh token
         tokenService.revokeRefreshToken(request.getRefreshToken());
         RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId());
+        userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
 
@@ -253,7 +239,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void logout(String refreshToken, boolean logoutAll) {
+    public void logout(String refreshToken, boolean logoutAll, String ipAddress, String userAgent, String deviceId) {
         log.info("Logout request");
         RefreshToken token = tokenService.validateRefreshToken(refreshToken);
         if (logoutAll) {
@@ -268,13 +254,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("User logged out from all devices");
         } else {
             tokenService.revokeRefreshToken(refreshToken);
-            // Revocar la sesión más reciente del usuario
-            userSessionRepository.findFirstByUserIdAndRevokedFalseOrderByCreatedAtDesc(token.getUserId())
-                    .ifPresent(session -> {
-                        session.setRevoked(true);
-                        session.setRevokedAt(LocalDateTime.now());
-                        userSessionRepository.save(session);
-                    });
+            userSessionManager.revokeCurrentSession(token.getUserId(), ipAddress, userAgent, deviceId);
             log.info("User logged out successfully");
         }
     }
@@ -346,27 +326,13 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logoutSession(Long userId, Long sessionId) {
-        UserSession session = userSessionRepository.findByIdAndUserIdAndRevokedFalse(sessionId, userId)
-                .orElseThrow(() -> new AuthenticationException("Session not found"));
-        session.setRevoked(true);
-        session.setRevokedAt(LocalDateTime.now());
-        userSessionRepository.save(session);
+        userSessionManager.revokeSessionGroup(userId, sessionId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public java.util.List<com.crm.mcsv_auth.dto.UserSessionDto> listActiveSessions(Long userId) {
-        return userSessionRepository.findByUserIdAndRevokedFalse(userId)
-                .stream()
-                .map(session -> com.crm.mcsv_auth.dto.UserSessionDto.builder()
-                        .id(session.getId())
-                        .ipAddress(session.getIpAddress())
-                        .userAgent(session.getUserAgent())
-                        .deviceId(session.getDeviceId())
-                        .createdAt(session.getCreatedAt())
-                        .lastSeenAt(session.getLastSeenAt())
-                        .build())
-                .collect(java.util.stream.Collectors.toList());
+        return userSessionManager.listVisibleSessions(userId);
     }
 
     private UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {

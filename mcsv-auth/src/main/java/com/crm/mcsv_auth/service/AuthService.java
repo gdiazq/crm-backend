@@ -20,9 +20,9 @@ public interface AuthService {
 
     AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId);
 
-    AuthResponse refreshToken(RefreshTokenRequest request);
+    AuthResponse refreshToken(RefreshTokenRequest request, String ipAddress, String userAgent, String deviceId);
 
-    void logout(String refreshToken, boolean logoutAll);
+    void logout(String refreshToken, boolean logoutAll, String ipAddress, String userAgent, String deviceId);
 
     void forgotPassword(ForgotPasswordRequest request);
 

@@ -194,7 +194,8 @@ public class AuthController {
     @Operation(summary = "Refresh access token", description = "Generate new access token using refresh token from cookie")
     public ResponseEntity<AuthResponse> refreshToken(
             @CookieValue(name = "refresh_token", required = false) String refreshTokenCookie,
-            @RequestBody(required = false) RefreshTokenRequest request
+            @RequestBody(required = false) RefreshTokenRequest request,
+            HttpServletRequest httpRequest
     ) {
         String refreshToken = refreshTokenCookie;
         if (refreshToken == null || refreshToken.isBlank()) {
@@ -208,7 +209,11 @@ public class AuthController {
         RefreshTokenRequest tokenRequest = RefreshTokenRequest.builder()
                 .refreshToken(refreshToken)
                 .build();
-        AuthResponse response = authService.refreshToken(tokenRequest);
+        AuthResponse response = authService.refreshToken(
+                tokenRequest,
+                getClientIp(httpRequest),
+                httpRequest.getHeader("User-Agent"),
+                httpRequest.getHeader("X-Device-Id"));
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieUtil.createAccessTokenCookie(response.getAccessToken()).toString())
@@ -220,7 +225,8 @@ public class AuthController {
     @Operation(summary = "User logout", description = "Logout user and revoke refresh token, clear cookies")
     public ResponseEntity<Map<String, String>> logout(
             @CookieValue(name = "refresh_token", required = false) String refreshTokenCookie,
-            @RequestBody(required = false) RefreshTokenRequest request
+            @RequestBody(required = false) RefreshTokenRequest request,
+            HttpServletRequest httpRequest
     ) {
         String refreshToken = refreshTokenCookie;
         boolean logoutAll = false;
@@ -235,7 +241,12 @@ public class AuthController {
         }
 
         if (refreshToken != null && !refreshToken.isBlank()) {
-            authService.logout(refreshToken, logoutAll);
+            authService.logout(
+                    refreshToken,
+                    logoutAll,
+                    getClientIp(httpRequest),
+                    httpRequest.getHeader("User-Agent"),
+                    httpRequest.getHeader("X-Device-Id"));
         }
 
         Map<String, String> response = new HashMap<>();
