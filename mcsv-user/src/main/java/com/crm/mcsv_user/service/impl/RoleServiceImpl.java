@@ -1,6 +1,5 @@
 package com.crm.mcsv_user.service.impl;
 
-import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
@@ -10,6 +9,7 @@ import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
+import com.crm.mcsv_user.event.NotificationBatchEvent;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
@@ -20,6 +20,7 @@ import com.crm.mcsv_user.service.RoleService;
 import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +44,7 @@ public class RoleServiceImpl implements RoleService {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
     private final UserMapper userMapper;
-    private final EventBridgeNotificationClient eventBridgeNotificationClient;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,21 +99,16 @@ public class RoleServiceImpl implements RoleService {
         Role savedRole = roleRepository.save(role);
         log.info("Role created successfully with id: {}", savedRole.getId());
 
-        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole -> {
-            List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
-            admins.forEach(admin -> {
-                try {
-                    eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                            .userId(admin.getId())
-                            .title("Nuevo rol creado")
-                            .message("Se ha creado el rol \"" + savedRole.getName() + "\" en el sistema.")
-                            .type("INFO")
-                            .build());
-                } catch (Exception e) {
-                    log.warn("Failed to send new role notification to userId: {}", admin.getId(), e);
-                }
-            });
-        });
+        List<SendNotificationRequest> notifications = new ArrayList<>();
+        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole ->
+                userRepository.findAllByRolesId(adminRole.getId()).forEach(admin ->
+                        notifications.add(SendNotificationRequest.builder()
+                                .userId(admin.getId())
+                                .title("Nuevo rol creado")
+                                .message("Se ha creado el rol \"" + savedRole.getName() + "\" en el sistema.")
+                                .type("INFO")
+                                .build())));
+        publishNotifications(notifications);
 
         return userMapper.roleToDTO(savedRole);
     }
@@ -139,18 +136,15 @@ public class RoleServiceImpl implements RoleService {
         log.info("Role updated successfully with id: {}", updatedRole.getId());
 
         List<User> users = userRepository.findAllByRolesId(updatedRole.getId());
-        users.forEach(u -> {
-            try {
-                eventBridgeNotificationClient.send(SendNotificationRequest.builder()
+        List<SendNotificationRequest> notifications = users.stream()
+                .map(u -> SendNotificationRequest.builder()
                         .userId(u.getId())
                         .title("Rol actualizado")
                         .message("Tu rol \"" + updatedRole.getName() + "\" ha sido actualizado por un administrador.")
                         .type("INFO")
-                        .build());
-            } catch (Exception e) {
-                log.warn("Failed to send role updated notification to userId: {}", u.getId(), e);
-            }
-        });
+                        .build())
+                .collect(Collectors.toList());
+        publishNotifications(notifications);
 
         return userMapper.roleToDTO(updatedRole);
     }
@@ -200,36 +194,25 @@ public class RoleServiceImpl implements RoleService {
                 : "Tu cuenta ha sido desactivada porque el rol \"" + role.getName() + "\" fue desactivado.";
         String userType = Boolean.TRUE.equals(enabled) ? "SUCCESS" : "WARNING";
 
-        // Notificar a los usuarios afectados
-        users.forEach(u -> {
-            try {
-                eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                        .userId(u.getId())
-                        .title(userTitle)
-                        .message(userMessage)
-                        .type(userType)
-                        .build());
-            } catch (Exception e) {
-                log.warn("Failed to send status notification to userId: {}", u.getId(), e);
-            }
-        });
+        List<SendNotificationRequest> notifications = new ArrayList<>();
 
-        // Notificar a los admins
-        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole -> {
-            List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
-            admins.forEach(admin -> {
-                try {
-                    eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                            .userId(admin.getId())
-                            .title("Rol " + statusLabel)
-                            .message("El rol \"" + role.getName() + "\" ha sido " + statusLabel + ". " + users.size() + " usuario(s) afectado(s).")
-                            .type("INFO")
-                            .build());
-                } catch (Exception e) {
-                    log.warn("Failed to send role status notification to admin userId: {}", admin.getId(), e);
-                }
-            });
-        });
+        users.forEach(u -> notifications.add(SendNotificationRequest.builder()
+                .userId(u.getId())
+                .title(userTitle)
+                .message(userMessage)
+                .type(userType)
+                .build()));
+
+        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole ->
+                userRepository.findAllByRolesId(adminRole.getId()).forEach(admin ->
+                        notifications.add(SendNotificationRequest.builder()
+                                .userId(admin.getId())
+                                .title("Rol " + statusLabel)
+                                .message("El rol \"" + role.getName() + "\" ha sido " + statusLabel + ". " + users.size() + " usuario(s) afectado(s).")
+                                .type("INFO")
+                                .build())));
+
+        publishNotifications(notifications);
     }
 
     @Override
@@ -285,35 +268,32 @@ public class RoleServiceImpl implements RoleService {
 
     private void notifyPermissionChange(Role role, String userMessage) {
         List<User> users = userRepository.findAllByRolesId(role.getId());
+        List<SendNotificationRequest> notifications = new ArrayList<>();
 
-        users.forEach(u -> {
-            try {
-                eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                        .userId(u.getId())
-                        .title("Permisos actualizados")
-                        .message(userMessage)
-                        .type("INFO")
-                        .build());
-            } catch (Exception e) {
-                log.warn("Failed to send permission change notification to userId: {}", u.getId(), e);
-            }
-        });
+        users.forEach(u -> notifications.add(SendNotificationRequest.builder()
+                .userId(u.getId())
+                .title("Permisos actualizados")
+                .message(userMessage)
+                .type("INFO")
+                .build()));
 
-        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole -> {
-            List<User> admins = userRepository.findAllByRolesId(adminRole.getId());
-            admins.forEach(admin -> {
-                try {
-                    eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                            .userId(admin.getId())
-                            .title("Permisos de rol actualizados")
-                            .message("Los permisos del rol \"" + role.getName() + "\" han sido modificados. " + users.size() + " usuario(s) afectado(s).")
-                            .type("INFO")
-                            .build());
-                } catch (Exception e) {
-                    log.warn("Failed to send permission change notification to admin userId: {}", admin.getId(), e);
-                }
-            });
-        });
+        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole ->
+                userRepository.findAllByRolesId(adminRole.getId()).forEach(admin ->
+                        notifications.add(SendNotificationRequest.builder()
+                                .userId(admin.getId())
+                                .title("Permisos de rol actualizados")
+                                .message("Los permisos del rol \"" + role.getName() + "\" han sido modificados. " + users.size() + " usuario(s) afectado(s).")
+                                .type("INFO")
+                                .build())));
+
+        publishNotifications(notifications);
+    }
+
+    private void publishNotifications(List<SendNotificationRequest> notifications) {
+        if (notifications == null || notifications.isEmpty()) {
+            return;
+        }
+        eventPublisher.publishEvent(new NotificationBatchEvent(notifications));
     }
 
     @Override
