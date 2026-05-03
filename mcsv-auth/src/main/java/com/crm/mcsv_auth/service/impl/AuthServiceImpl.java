@@ -19,6 +19,7 @@ import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
+import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.exception.MfaRequiredException;
 import com.crm.mcsv_auth.exception.TokenException;
@@ -161,11 +162,10 @@ public class AuthServiceImpl implements AuthService {
 
         // Generar tokens
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
-        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
+        UserSession session = userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
+        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
 
         log.info("User logged in successfully: {}", user.getUsername());
-
-        userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
 
         // Enviar notificación de bienvenida al login
         sendLoginNotification(user.getId(), user.getUsername());
@@ -215,8 +215,13 @@ public class AuthServiceImpl implements AuthService {
 
         // Rotar refresh token
         tokenService.revokeRefreshToken(request.getRefreshToken());
-        RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId());
-        userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
+        UserSession session = userSessionManager.attachSession(
+                user.getId(),
+                refreshToken.getSessionId(),
+                ipAddress,
+                userAgent,
+                deviceId);
+        RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
 
@@ -254,7 +259,11 @@ public class AuthServiceImpl implements AuthService {
             log.info("User logged out from all devices");
         } else {
             tokenService.revokeRefreshToken(refreshToken);
-            userSessionManager.revokeCurrentSession(token.getUserId(), ipAddress, userAgent, deviceId);
+            if (token.getSessionId() != null) {
+                userSessionManager.revokeSessionExact(token.getUserId(), token.getSessionId());
+            } else {
+                userSessionManager.revokeCurrentSession(token.getUserId(), ipAddress, userAgent, deviceId);
+            }
             log.info("User logged out successfully");
         }
     }

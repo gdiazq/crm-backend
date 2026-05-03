@@ -61,6 +61,23 @@ public class UserSessionManager {
     }
 
     @Transactional
+    public UserSession attachSession(Long userId, Long sessionId, String ipAddress, String userAgent, String deviceId) {
+        if (sessionId != null) {
+            UserSession session = userSessionRepository.findByIdAndUserIdAndRevokedFalse(sessionId, userId).orElse(null);
+            if (session != null) {
+                session.setIpAddress(ipAddress);
+                session.setUserAgent(userAgent);
+                if (!isBlank(deviceId)) {
+                    session.setDeviceId(deviceId.trim());
+                }
+                return userSessionRepository.save(session);
+            }
+        }
+
+        return registerSession(userId, ipAddress, userAgent, deviceId);
+    }
+
+    @Transactional
     public void revokeSessionGroup(Long userId, Long sessionId) {
         UserSession selected = userSessionRepository.findByIdAndUserIdAndRevokedFalse(sessionId, userId)
                 .orElseThrow(() -> new AuthenticationException("Session not found"));
@@ -95,6 +112,14 @@ public class UserSessionManager {
         }
 
         matchingSessions.forEach(this::revoke);
+    }
+
+    @Transactional
+    public void revokeSessionExact(Long userId, Long sessionId) {
+        if (sessionId == null) {
+            return;
+        }
+        revokeSessionGroup(userId, sessionId);
     }
 
     @Transactional(readOnly = true)

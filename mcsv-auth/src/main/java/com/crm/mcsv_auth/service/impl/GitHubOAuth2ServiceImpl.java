@@ -13,6 +13,7 @@ import com.crm.mcsv_auth.dto.GitHubUserInfo;
 import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.entity.RefreshToken;
+import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.service.GitHubOAuth2Service;
 import com.crm.mcsv_auth.service.TokenService;
@@ -103,9 +104,8 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
                 .collect(Collectors.toSet());
 
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
-        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId());
-
-        userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
+        UserSession session = userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
+        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
 
         // 7. Enviar notificación
         if (isNewUser[0]) {
