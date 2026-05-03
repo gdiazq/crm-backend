@@ -26,7 +26,7 @@ import java.util.Set;
 public class UserSessionManager {
 
     // Mantener alineado con la vigencia del refresh token.
-    private static final long ACTIVE_SESSION_WINDOW_DAYS = 7;
+    private static final long SESSION_EXPIRY_DAYS = 7;
 
     private final UserSessionRepository userSessionRepository;
 
@@ -45,16 +45,12 @@ public class UserSessionManager {
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
                     .deviceId(normalize(deviceId))
+                    .expiresAt(resolveNextExpiry())
                     .build());
         }
 
         UserSession primary = matchingSessions.getFirst();
-        primary.setIpAddress(ipAddress);
-        primary.setUserAgent(userAgent);
-        if (isBlank(primary.getDeviceId()) && !isBlank(deviceId)) {
-            primary.setDeviceId(deviceId.trim());
-        }
-        UserSession saved = userSessionRepository.save(primary);
+        UserSession saved = touch(primary, ipAddress, userAgent, deviceId);
 
         revokeDuplicates(matchingSessions, saved.getId());
         return saved;
@@ -63,14 +59,11 @@ public class UserSessionManager {
     @Transactional
     public UserSession attachSession(Long userId, Long sessionId, String ipAddress, String userAgent, String deviceId) {
         if (sessionId != null) {
-            UserSession session = userSessionRepository.findByIdAndUserIdAndRevokedFalse(sessionId, userId).orElse(null);
+            UserSession session = userSessionRepository
+                    .findByIdAndUserIdAndRevokedFalseAndExpiresAtAfter(sessionId, userId, LocalDateTime.now())
+                    .orElse(null);
             if (session != null) {
-                session.setIpAddress(ipAddress);
-                session.setUserAgent(userAgent);
-                if (!isBlank(deviceId)) {
-                    session.setDeviceId(deviceId.trim());
-                }
-                return userSessionRepository.save(session);
+                return touch(session, ipAddress, userAgent, deviceId);
             }
         }
 
@@ -119,7 +112,9 @@ public class UserSessionManager {
         if (sessionId == null) {
             return;
         }
-        revokeSessionGroup(userId, sessionId);
+        UserSession session = userSessionRepository.findByIdAndUserIdAndRevokedFalse(sessionId, userId)
+                .orElseThrow(() -> new AuthenticationException("Session not found"));
+        revoke(session);
     }
 
     @Transactional(readOnly = true)
@@ -141,17 +136,19 @@ public class UserSessionManager {
                         .deviceId(session.getDeviceId())
                         .createdAt(session.getCreatedAt())
                         .lastSeenAt(session.getLastSeenAt())
+                        .expiresAt(session.getExpiresAt())
                         .build())
                 .toList();
     }
 
     private List<UserSession> findActiveSessions(Long userId) {
-        return userSessionRepository.findByUserIdAndRevokedFalseOrderByLastSeenAtDescCreatedAtDesc(userId);
+        return userSessionRepository.findByUserIdAndRevokedFalseAndExpiresAtAfterOrderByLastSeenAtDescCreatedAtDesc(
+                userId,
+                LocalDateTime.now());
     }
 
     private boolean isWithinActiveWindow(UserSession session) {
-        LocalDateTime reference = session.getLastSeenAt() != null ? session.getLastSeenAt() : session.getCreatedAt();
-        return reference != null && !reference.isBefore(LocalDateTime.now().minusDays(ACTIVE_SESSION_WINDOW_DAYS));
+        return !session.isExpired();
     }
 
     private void revokeDuplicates(List<UserSession> sessions, Long keepId) {
@@ -173,6 +170,17 @@ public class UserSessionManager {
         session.setRevoked(true);
         session.setRevokedAt(LocalDateTime.now());
         userSessionRepository.save(session);
+    }
+
+    private UserSession touch(UserSession session, String ipAddress, String userAgent, String deviceId) {
+        session.setIpAddress(ipAddress);
+        session.setUserAgent(userAgent);
+        if (!isBlank(deviceId)) {
+            session.setDeviceId(deviceId.trim());
+        }
+        session.setLastSeenAt(LocalDateTime.now());
+        session.setExpiresAt(resolveNextExpiry());
+        return userSessionRepository.save(session);
     }
 
     private boolean matches(UserSession session, Set<String> candidateKeys) {
@@ -215,6 +223,10 @@ public class UserSessionManager {
 
     private String normalize(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private LocalDateTime resolveNextExpiry() {
+        return LocalDateTime.now().plusDays(SESSION_EXPIRY_DAYS);
     }
 
     private boolean isBlank(String value) {

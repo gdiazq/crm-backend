@@ -260,6 +260,7 @@ public class AuthServiceImpl implements AuthService {
         } else {
             tokenService.revokeRefreshToken(refreshToken);
             if (token.getSessionId() != null) {
+                tokenService.revokeSessionTokens(token.getSessionId());
                 userSessionManager.revokeSessionExact(token.getUserId(), token.getSessionId());
             } else {
                 userSessionManager.revokeCurrentSession(token.getUserId(), ipAddress, userAgent, deviceId);
@@ -326,6 +327,7 @@ public class AuthServiceImpl implements AuthService {
     public void logoutDevice(Long userId, String deviceId) {
         userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(userId, deviceId)
                 .ifPresent(session -> {
+                    tokenService.revokeSessionTokens(session.getId());
                     session.setRevoked(true);
                     session.setRevokedAt(LocalDateTime.now());
                     userSessionRepository.save(session);
@@ -335,7 +337,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logoutSession(Long userId, Long sessionId) {
-        userSessionManager.revokeSessionGroup(userId, sessionId);
+        tokenService.revokeSessionTokens(sessionId);
+        userSessionManager.revokeSessionExact(userId, sessionId);
     }
 
     @Override

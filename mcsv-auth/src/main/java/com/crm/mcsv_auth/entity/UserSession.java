@@ -18,7 +18,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_sessions", indexes = {
-    @Index(name = "idx_user_session_user_id", columnList = "user_id")
+    @Index(name = "idx_user_session_user_id", columnList = "user_id"),
+    @Index(name = "idx_user_session_user_revoked_expires", columnList = "user_id, revoked, expires_at"),
+    @Index(name = "idx_user_session_user_device_revoked", columnList = "user_id, device_id, revoked")
 })
 @Data
 @NoArgsConstructor
@@ -48,6 +50,9 @@ public class UserSession {
     @Column(name = "last_seen_at", nullable = false)
     private LocalDateTime lastSeenAt;
 
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean revoked = false;
@@ -59,10 +64,17 @@ public class UserSession {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         lastSeenAt = createdAt;
+        if (expiresAt == null) {
+            expiresAt = createdAt.plusDays(7);
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         lastSeenAt = LocalDateTime.now();
+    }
+
+    public boolean isExpired() {
+        return expiresAt != null && LocalDateTime.now().isAfter(expiresAt);
     }
 }

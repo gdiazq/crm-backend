@@ -3,6 +3,7 @@ package com.crm.mcsv_auth.service.impl;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.exception.TokenException;
 import com.crm.mcsv_auth.repository.RefreshTokenRepository;
+import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import java.util.Base64;
 public class TokenServiceImpl implements TokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserSessionRepository userSessionRepository;
 
     private static final long REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
@@ -64,6 +66,18 @@ public class TokenServiceImpl implements TokenService {
             throw new TokenException("Refresh token has expired");
         }
 
+        if (refreshToken.getSessionId() != null) {
+            boolean sessionActive = userSessionRepository
+                    .findByIdAndUserIdAndRevokedFalseAndExpiresAtAfter(
+                            refreshToken.getSessionId(),
+                            refreshToken.getUserId(),
+                            LocalDateTime.now())
+                    .isPresent();
+            if (!sessionActive) {
+                throw new TokenException("Refresh token session is no longer active");
+            }
+        }
+
         return refreshToken;
     }
 
@@ -96,6 +110,27 @@ public class TokenServiceImpl implements TokenService {
         }
 
         refreshTokenRepository.saveAll(userTokens);
+    }
+
+    @Override
+    @Transactional
+    public void revokeSessionTokens(Long sessionId) {
+        if (sessionId == null) {
+            return;
+        }
+
+        List<RefreshToken> sessionTokens = refreshTokenRepository.findBySessionIdAndRevokedFalse(sessionId);
+        if (sessionTokens.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        for (RefreshToken token : sessionTokens) {
+            token.setRevoked(true);
+            token.setRevokedAt(now);
+        }
+
+        refreshTokenRepository.saveAll(sessionTokens);
     }
 
     @Override

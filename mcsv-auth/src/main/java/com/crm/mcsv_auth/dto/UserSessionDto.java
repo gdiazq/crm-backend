@@ -18,4 +18,5 @@ public class UserSessionDto {
     private String deviceId;
     private LocalDateTime createdAt;
     private LocalDateTime lastSeenAt;
+    private LocalDateTime expiresAt;
 }
