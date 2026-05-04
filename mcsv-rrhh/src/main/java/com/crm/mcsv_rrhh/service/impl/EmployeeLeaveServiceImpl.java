@@ -71,6 +71,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     public PagedResponse<EmployeeLeaveResponse> list(String search, String status,
                                                      Long leaveTypeId, Long employeeId, Long contractId,
                                                      LocalDate startFrom, LocalDate startTo,
+                                                     LocalDate endFrom, LocalDate endTo,
                                                      LocalDate createdFrom, LocalDate createdTo,
                                                      LocalDate updatedFrom, LocalDate updatedTo,
                                                      Pageable pageable, String sortBy, String sortDir) {
@@ -84,7 +85,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
         Page<EmployeeLeave> page = repository.findAll(
                 EmployeeLeaveSpecification.withFilters(search, statusId, leaveTypeId, employeeId, contractId,
-                        startFrom, startTo, createdFrom, createdTo, updatedFrom, updatedTo, sortBy, sortDir),
+                        startFrom, startTo, endFrom, endTo, createdFrom, createdTo, updatedFrom, updatedTo, sortBy, sortDir),
                 effectivePageable);
 
         long total = page.getTotalElements();

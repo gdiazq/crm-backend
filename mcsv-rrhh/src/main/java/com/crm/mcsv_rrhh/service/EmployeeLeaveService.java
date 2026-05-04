@@ -14,6 +14,7 @@ public interface EmployeeLeaveService {
     PagedResponse<EmployeeLeaveResponse> list(String search, String status,
                                               Long leaveTypeId, Long employeeId, Long contractId,
                                               LocalDate startFrom, LocalDate startTo,
+                                              LocalDate endFrom, LocalDate endTo,
                                               LocalDate createdFrom, LocalDate createdTo,
                                               LocalDate updatedFrom, LocalDate updatedTo,
                                               Pageable pageable, String sortBy, String sortDir);

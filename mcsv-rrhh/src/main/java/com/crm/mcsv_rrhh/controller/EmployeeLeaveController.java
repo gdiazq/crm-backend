@@ -52,6 +52,8 @@ public class EmployeeLeaveController {
             @RequestParam(required = false) Long contractId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startTo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedFrom,
@@ -68,7 +70,7 @@ public class EmployeeLeaveController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return ResponseEntity.ok(service.list(search, status, leaveTypeId, employeeId, contractId,
-                startFrom, startTo, createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
+                startFrom, startTo, endFrom, endTo, createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
     }
 
     @GetMapping("/{id}")

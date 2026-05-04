@@ -25,6 +25,7 @@ public class EmployeeLeaveSpecification {
     public static Specification<EmployeeLeave> withFilters(String search, Long statusId,
                                                            Long leaveTypeId, Long employeeId, Long contractId,
                                                            LocalDate startFrom, LocalDate startTo,
+                                                           LocalDate endFrom, LocalDate endTo,
                                                            LocalDate createdFrom, LocalDate createdTo,
                                                            LocalDate updatedFrom, LocalDate updatedTo,
                                                            String sortBy, String sortDir) {
@@ -77,6 +78,12 @@ public class EmployeeLeaveSpecification {
             }
             if (startTo != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("startDate"), startTo));
+            }
+            if (endFrom != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), endFrom));
+            }
+            if (endTo != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("endDate"), endTo));
             }
             if (createdFrom != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFrom.atStartOfDay()));
