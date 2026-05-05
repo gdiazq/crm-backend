@@ -72,6 +72,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("LEAVE:READ",   "Ver y consultar permisos de empleado");
         createPermissionIfNotExists("LEAVE:UPDATE", "Modificar permisos de empleado");
         createPermissionIfNotExists("LEAVE:DELETE", "Eliminar documentos asociados a permisos");
+        createPermissionIfNotExists("PROJECT_ASSIGNMENT:CREATE", "Crear asignaciones históricas de empleados a centros de costo");
+        createPermissionIfNotExists("PROJECT_ASSIGNMENT:READ",   "Ver historial de asignaciones de empleados a centros de costo");
+        createPermissionIfNotExists("PROJECT_ASSIGNMENT:UPDATE", "Modificar asignaciones históricas de empleados a centros de costo");
+        createPermissionIfNotExists("PROJECT_ASSIGNMENT:DELETE", "Desactivar asignaciones históricas de empleados a centros de costo");
         createPermissionIfNotExists("PROJECT_TYPE:CREATE", "Crear tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:READ",   "Ver y consultar tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:UPDATE", "Modificar tipos de proyecto");
@@ -173,19 +177,25 @@ public class DataInitializer implements CommandLineRunner {
         Permission leaveRead   = permissionRepository.findByName("LEAVE:READ").orElseThrow();
         Permission leaveUpdate = permissionRepository.findByName("LEAVE:UPDATE").orElseThrow();
         Permission leaveDelete = permissionRepository.findByName("LEAVE:DELETE").orElseThrow();
+        Permission projectAssignmentCreate = permissionRepository.findByName("PROJECT_ASSIGNMENT:CREATE").orElseThrow();
+        Permission projectAssignmentRead   = permissionRepository.findByName("PROJECT_ASSIGNMENT:READ").orElseThrow();
+        Permission projectAssignmentUpdate = permissionRepository.findByName("PROJECT_ASSIGNMENT:UPDATE").orElseThrow();
+        Permission projectAssignmentDelete = permissionRepository.findByName("PROJECT_ASSIGNMENT:DELETE").orElseThrow();
 
         assignToRole("ROLE_ADMIN", new HashSet<>(Set.of(
                 userCreate, userRead, userUpdate, userDelete,
                 roleCreate, roleRead, roleUpdate, roleDelete,
                 employeeCreate, employeeRead, employeeUpdate, employeeDelete,
                 hrRequestRead, hrRequestApprove, hrRequestReject,
-                leaveCreate, leaveRead, leaveUpdate, leaveDelete)));
+                leaveCreate, leaveRead, leaveUpdate, leaveDelete,
+                projectAssignmentCreate, projectAssignmentRead, projectAssignmentUpdate, projectAssignmentDelete)));
 
         assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(
                 userRead, userUpdate,
                 employeeCreate, employeeRead, employeeUpdate,
                 hrRequestRead, hrRequestApprove, hrRequestReject,
-                leaveCreate, leaveRead, leaveUpdate)));
+                leaveCreate, leaveRead, leaveUpdate,
+                projectAssignmentCreate, projectAssignmentRead, projectAssignmentUpdate)));
 
         assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead, hrRequestRead, leaveRead)));
 
