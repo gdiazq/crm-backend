@@ -1,19 +1,15 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.ProjectAssignmentRequest;
 import com.crm.mcsv_rrhh.dto.ProjectAssignmentResponse;
-import com.crm.mcsv_rrhh.dto.UpdateProjectAssignmentRequest;
 import com.crm.mcsv_rrhh.service.ProjectAssignmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,25 +58,6 @@ public class ProjectAssignmentController {
     @Operation(summary = "Obtener asignación por ID")
     public ResponseEntity<ProjectAssignmentResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
-    }
-
-    @PostMapping("/create")
-    @Operation(summary = "Crear asignación histórica o regularización")
-    public ResponseEntity<ProjectAssignmentResponse> create(@RequestBody @Valid ProjectAssignmentRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
-    }
-
-    @PutMapping("/update")
-    @Operation(summary = "Actualizar asignación de proyecto")
-    public ResponseEntity<ProjectAssignmentResponse> update(@RequestBody @Valid UpdateProjectAssignmentRequest request) {
-        return ResponseEntity.ok(service.update(request));
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Desactivar asignación")
-    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
-        service.deactivate(id);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/select/by-employee/{employeeId}")

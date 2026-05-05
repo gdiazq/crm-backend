@@ -3,9 +3,7 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.dto.ProjectAssignmentRequest;
 import com.crm.mcsv_rrhh.dto.ProjectAssignmentResponse;
-import com.crm.mcsv_rrhh.dto.UpdateProjectAssignmentRequest;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.ProjectAssignment;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
@@ -27,7 +25,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProjectAssignmentServiceImpl implements ProjectAssignmentService {
 
-    private static final LocalDate OPEN_END_DATE = LocalDate.of(9999, 12, 31);
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     private final ProjectAssignmentRepository repository;
@@ -65,73 +62,6 @@ public class ProjectAssignmentServiceImpl implements ProjectAssignmentService {
     @Transactional(readOnly = true)
     public ProjectAssignmentResponse getById(Long id) {
         return toResponse(findOrThrow(id));
-    }
-
-    @Override
-    @Transactional
-    public ProjectAssignmentResponse create(ProjectAssignmentRequest request) {
-        Employee employee = validateEmployee(request.getEmployeeId());
-        validateCostCenter(request.getCostCenter());
-        validateDates(request.getStartDate(), request.getEndDate());
-        validateManualCreatePolicy(request);
-        validateNoActiveOverlap(employee.getId(), request.getCostCenter(), request.getStartDate(), request.getEndDate(), null);
-
-        ProjectAssignment entity = ProjectAssignment.builder()
-                .employeeId(employee.getId())
-                .costCenter(request.getCostCenter())
-                .roleOnProject(request.getRoleOnProject())
-                .allocationPercent(request.getAllocationPercent())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .active(request.getActive() == null || request.getActive())
-                .build();
-
-        return toResponse(repository.save(entity));
-    }
-
-    @Override
-    @Transactional
-    public ProjectAssignmentResponse update(UpdateProjectAssignmentRequest request) {
-        ProjectAssignment entity = findOrThrow(request.getId());
-
-        Long employeeId = request.getEmployeeId() != null ? request.getEmployeeId() : entity.getEmployeeId();
-        Integer costCenter = request.getCostCenter() != null ? request.getCostCenter() : entity.getCostCenter();
-        LocalDate startDate = request.getStartDate() != null ? request.getStartDate() : entity.getStartDate();
-        LocalDate endDate = request.getEndDate() != null ? request.getEndDate() : entity.getEndDate();
-        Boolean active = request.getActive() != null ? request.getActive() : entity.getActive();
-
-        validateEmployee(employeeId);
-        validateCostCenter(costCenter);
-        validateDates(startDate, endDate);
-        if (Boolean.TRUE.equals(active)) {
-            validateNoActiveOverlap(employeeId, costCenter, startDate, endDate, entity.getId());
-        }
-
-        entity.setEmployeeId(employeeId);
-        entity.setCostCenter(costCenter);
-        entity.setStartDate(startDate);
-        entity.setEndDate(endDate);
-        entity.setActive(active);
-
-        if (request.getRoleOnProject() != null) {
-            entity.setRoleOnProject(request.getRoleOnProject());
-        }
-        if (request.getAllocationPercent() != null) {
-            entity.setAllocationPercent(request.getAllocationPercent());
-        }
-
-        return toResponse(repository.save(entity));
-    }
-
-    @Override
-    @Transactional
-    public void deactivate(Long id) {
-        ProjectAssignment entity = findOrThrow(id);
-        entity.setActive(false);
-        if (entity.getEndDate() == null) {
-            entity.setEndDate(LocalDate.now());
-        }
-        repository.save(entity);
     }
 
     @Override
@@ -176,30 +106,6 @@ public class ProjectAssignmentServiceImpl implements ProjectAssignmentService {
         }
         if (project == null || project.getId() == null) {
             throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
-        }
-    }
-
-    private void validateDates(LocalDate startDate, LocalDate endDate) {
-        if (startDate == null) {
-            throw new IllegalArgumentException("La fecha de inicio es obligatoria");
-        }
-        if (endDate != null && endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("La fecha de término no puede ser anterior a la fecha de inicio");
-        }
-    }
-
-    private void validateManualCreatePolicy(ProjectAssignmentRequest request) {
-        boolean isCurrentOrFuture = request.getEndDate() == null || !request.getEndDate().isBefore(LocalDate.now());
-        if (isCurrentOrFuture && !Boolean.TRUE.equals(request.getRegularization())) {
-            throw new IllegalStateException("La creación manual de asignaciones vigentes requiere regularization=true");
-        }
-    }
-
-    private void validateNoActiveOverlap(Long employeeId, Integer costCenter, LocalDate startDate, LocalDate endDate, Long excludeId) {
-        LocalDate effectiveEndDate = endDate != null ? endDate : OPEN_END_DATE;
-        List<ProjectAssignment> overlaps = repository.findActiveOverlaps(employeeId, costCenter, startDate, effectiveEndDate, excludeId);
-        if (!overlaps.isEmpty()) {
-            throw new IllegalStateException("Ya existe una asignación activa solapada para este empleado y centro de costo");
         }
     }
 

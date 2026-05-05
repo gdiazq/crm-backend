@@ -40,22 +40,6 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
             """)
     List<ProjectAssignment> findOpenActiveByEmployee(@Param("employeeId") Long employeeId);
 
-    @Query("""
-            SELECT pa
-            FROM ProjectAssignment pa
-            WHERE pa.employeeId = :employeeId
-              AND pa.costCenter = :costCenter
-              AND pa.active = true
-              AND (:excludeId IS NULL OR pa.id <> :excludeId)
-              AND pa.startDate <= :endDate
-              AND (pa.endDate IS NULL OR pa.endDate >= :startDate)
-            """)
-    List<ProjectAssignment> findActiveOverlaps(@Param("employeeId") Long employeeId,
-                                               @Param("costCenter") Integer costCenter,
-                                               @Param("startDate") LocalDate startDate,
-                                               @Param("endDate") LocalDate endDate,
-                                               @Param("excludeId") Long excludeId);
-
     Optional<ProjectAssignment> findFirstByEmployeeIdAndCostCenterAndActiveTrueAndEndDateIsNullOrderByStartDateDesc(Long employeeId,
                                                                                                                     Integer costCenter);
 }
