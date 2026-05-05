@@ -39,6 +39,7 @@ import com.crm.mcsv_rrhh.repository.NoReHiredCauseRepository;
 import com.crm.mcsv_rrhh.repository.QualityOfWorkRepository;
 import com.crm.mcsv_rrhh.repository.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.service.HRRequestService;
+import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
 import com.crm.mcsv_rrhh.util.LeaveCalculator;
 import com.crm.mcsv_rrhh.util.LeaveValidator;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final StorageService storageService;
     private final LeaveValidator leaveValidator;
     private final ObjectMapper objectMapper;
+    private final ProjectAssignmentSyncService projectAssignmentSyncService;
 
     @Override
     @Transactional
@@ -444,8 +446,14 @@ public class HRRequestServiceImpl implements HRRequestService {
                 } else {
                     Employee employee = employeeRepository.findById(transfer.getEmployeeId())
                             .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + transfer.getEmployeeId()));
+                    Integer previousCostCenter = employee.getCostCenter();
                     employee.setCostCenter(transfer.getToCostCenter());
                     employeeRepository.save(employee);
+                    projectAssignmentSyncService.syncCostCenterChange(
+                            employee,
+                            previousCostCenter,
+                            transfer.getToCostCenter(),
+                            transfer.getEffectiveDate() != null ? transfer.getEffectiveDate() : LocalDate.now());
                 }
                 transferRepository.save(transfer);
 
@@ -490,6 +498,8 @@ public class HRRequestServiceImpl implements HRRequestService {
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
+                Integer previousCostCenter = employee.getCostCenter();
+                Integer approvedCostCenter = employee.getCostCenter();
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
                     try {
@@ -542,13 +552,16 @@ public class HRRequestServiceImpl implements HRRequestService {
                         employee.setActive(proposed.getActive());
                         employee.setRehireEligible(proposed.getRehireEligible());
                         employee.setCostCenter(proposed.getCostCenter());
+                        approvedCostCenter = proposed.getCostCenter();
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
                 } else {
                     employee.setStatusId(approvedStatusId);
+                    approvedCostCenter = employee.getCostCenter();
                 }
                 employeeRepository.save(employee);
+                projectAssignmentSyncService.syncCostCenterChange(employee, previousCostCenter, approvedCostCenter, LocalDate.now());
             }
 
             hr.setHhrrApproverId(approverId);
