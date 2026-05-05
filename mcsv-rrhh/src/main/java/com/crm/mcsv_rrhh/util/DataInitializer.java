@@ -48,6 +48,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TransportTypeRepository transportTypeRepository;
     private final ContractAnnexTypeRepository contractAnnexTypeRepository;
     private final LeaveTypeRepository leaveTypeRepository;
+    private final AttendanceStatusRepository attendanceStatusRepository;
 
     @Override
     public void run(String... args) {
@@ -85,6 +86,7 @@ public class DataInitializer implements CommandLineRunner {
         initializeTransportTypes();
         initializeContractAnnexTypes();
         initializeLeaveTypes();
+        initializeAttendanceStatuses();
     }
 
     private void initializeIdentificationTypes() {
@@ -768,5 +770,24 @@ public class DataInitializer implements CommandLineRunner {
             if (employeeStatusRepository.findByName(name).isEmpty())
                 employeeStatusRepository.save(EmployeeStatus.builder().name(name).build());
         log.info("Employee statuses initialized.");
+    }
+
+    private void initializeAttendanceStatuses() {
+        createAttendanceStatusIfNotExists("Presente", "PRESENT", "Jornada presente");
+        createAttendanceStatusIfNotExists("Ausente", "ABSENT", "Jornada ausente");
+        createAttendanceStatusIfNotExists("Atraso", "LATE", "Jornada con atraso");
+        createAttendanceStatusIfNotExists("Justificado", "JUSTIFIED", "Jornada justificada");
+        log.info("Attendance statuses initialized.");
+    }
+
+    private void createAttendanceStatusIfNotExists(String name, String code, String description) {
+        if (attendanceStatusRepository.findByCode(code).isEmpty()) {
+            attendanceStatusRepository.save(AttendanceStatus.builder()
+                    .name(name)
+                    .code(code)
+                    .description(description)
+                    .active(true)
+                    .build());
+        }
     }
 }
