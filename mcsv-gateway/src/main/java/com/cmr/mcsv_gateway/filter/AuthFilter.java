@@ -81,6 +81,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("GET:/v1/api/project/project-specialty",               "PROJECT_SPECIALTY:READ"),
             Map.entry("POST:/v1/api/project/project/create",  "PROJECT:CREATE"),
             Map.entry("POST:/v1/api/project/project/import",  "PROJECT:CREATE"),
+            Map.entry("GET:/v1/api/project/project/cost-center", "PROJECT:READ"),
             Map.entry("GET:/v1/api/project/project",          "PROJECT:READ"),
             Map.entry("PUT:/v1/api/project/project/update",   "PROJECT:UPDATE"),
             Map.entry("PUT:/v1/api/project/project",          "PROJECT:UPDATE"),

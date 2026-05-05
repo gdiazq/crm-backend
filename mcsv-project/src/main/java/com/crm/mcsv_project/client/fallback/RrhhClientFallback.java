@@ -1,5 +1,7 @@
 package com.crm.mcsv_project.client.fallback;
 
+import com.crm.common.dto.PagedResponse;
+import com.crm.mcsv_project.client.EmployeeResponseDTO;
 import com.crm.mcsv_project.client.PersonSelectItem;
 import com.crm.mcsv_project.client.RrhhClient;
 import lombok.extern.slf4j.Slf4j;
@@ -52,5 +54,27 @@ public class RrhhClientFallback implements RrhhClient {
     public List<PersonSelectItem> getNoReHiredCauses() {
         log.warn("mcsv-rrhh no disponible — retornando lista vacía para getNoReHiredCauses");
         return Collections.emptyList();
+    }
+
+    @Override
+    public PagedResponse<EmployeeResponseDTO> getEmployeesByCostCenter(Integer costCenter,
+                                                                     String search,
+                                                                     Boolean active,
+                                                                     Long statusId,
+                                                                     int page,
+                                                                     int size,
+                                                                     String sortBy,
+                                                                     String sortDir) {
+        log.warn("mcsv-rrhh no disponible — retornando página vacía para getEmployeesByCostCenter costCenter={}", costCenter);
+        return PagedResponse.<EmployeeResponseDTO>builder()
+                .content(Collections.emptyList())
+                .page(page)
+                .size(size)
+                .totalElements(0)
+                .totalPages(0)
+                .last(true)
+                .total(0)
+                .active(0)
+                .build();
     }
 }

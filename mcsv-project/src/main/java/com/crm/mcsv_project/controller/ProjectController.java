@@ -2,6 +2,7 @@ package com.crm.mcsv_project.controller;
 
 import com.crm.common.dto.BulkImportResult;
 import com.crm.common.dto.PagedResponse;
+import com.crm.mcsv_project.client.EmployeeResponseDTO;
 import com.crm.mcsv_project.dto.ProjectRequest;
 import com.crm.mcsv_project.dto.ProjectResponse;
 import com.crm.mcsv_project.dto.UpdateProjectRequest;
@@ -59,6 +60,21 @@ public class ProjectController {
     @Operation(summary = "Obtener proyecto por ID")
     public ResponseEntity<ProjectResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(projectService.getById(id));
+    }
+
+    @GetMapping("/cost-center/{costCenter}/employees/paged")
+    @Operation(summary = "Listar empleados del centro de costo del proyecto (paginado)")
+    public ResponseEntity<PagedResponse<EmployeeResponseDTO>> employeesByCostCenter(
+            @PathVariable Integer costCenter,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Long statusId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        return ResponseEntity.ok(projectService.listEmployeesByCostCenter(
+                costCenter, search, active, statusId, page, size, sortBy, sortDir));
     }
 
     @PostMapping("/create")

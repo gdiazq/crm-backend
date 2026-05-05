@@ -1,5 +1,6 @@
 package com.crm.mcsv_project.service.impl;
 
+import com.crm.mcsv_project.client.EmployeeResponseDTO;
 import com.crm.mcsv_project.client.PersonSelectItem;
 import com.crm.mcsv_project.client.RrhhClient;
 import com.crm.mcsv_project.client.UserClient;
@@ -82,6 +83,19 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
     public ProjectResponse getById(Long id) {
         Project project = findOrThrow(id);
         return toResponse(project, fetchVisitorMap(), fetchSupervisorMap(), fetchCompanyRepMap());
+    }
+
+    @Override
+    public PagedResponse<EmployeeResponseDTO> listEmployeesByCostCenter(Integer costCenter, String search, Boolean active,
+                                                                      Long statusId, int page, int size,
+                                                                      String sortBy, String sortDir) {
+        if (costCenter == null || costCenter <= 0) {
+            throw new IllegalArgumentException("El centro de costo es obligatorio y debe ser mayor a 0");
+        }
+        if (!projectRepository.existsByCostCenter(costCenter)) {
+            throw new ResourceNotFoundException("Proyecto no encontrado para centro de costo: " + costCenter);
+        }
+        return rrhhClient.getEmployeesByCostCenter(costCenter, search, active, statusId, page, size, sortBy, sortDir);
     }
 
     // ─── Create ───────────────────────────────────────────────────────────────

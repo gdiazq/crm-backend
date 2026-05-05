@@ -5,6 +5,7 @@ import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectRequest;
 import com.crm.mcsv_project.dto.ProjectResponse;
 import com.crm.mcsv_project.dto.UpdateProjectRequest;
+import com.crm.mcsv_project.client.EmployeeResponseDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +20,10 @@ public interface ProjectService {
                                         Pageable pageable);
 
     ProjectResponse getById(Long id);
+
+    PagedResponse<EmployeeResponseDTO> listEmployeesByCostCenter(Integer costCenter, String search, Boolean active,
+                                                               Long statusId, int page, int size,
+                                                               String sortBy, String sortDir);
 
     ProjectResponse create(ProjectRequest request);
 
