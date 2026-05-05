@@ -71,7 +71,7 @@ public class ProjectAssignmentSyncServiceImpl implements ProjectAssignmentSyncSe
         if (employeeId == null || date == null) {
             return null;
         }
-        List<ProjectAssignment> matches = repository.findActiveByEmployeeAtDate(employeeId, date);
+        List<ProjectAssignment> matches = repository.findByEmployeeAtDate(employeeId, date);
         return matches.size() == 1 ? matches.getFirst() : null;
     }
 
