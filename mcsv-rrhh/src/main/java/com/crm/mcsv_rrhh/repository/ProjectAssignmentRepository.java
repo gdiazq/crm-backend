@@ -22,13 +22,12 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
             SELECT pa
             FROM ProjectAssignment pa
             WHERE pa.employeeId = :employeeId
-              AND pa.active = true
               AND pa.startDate <= :date
               AND (pa.endDate IS NULL OR pa.endDate >= :date)
             ORDER BY pa.startDate DESC, pa.id DESC
             """)
-    List<ProjectAssignment> findActiveByEmployeeAtDate(@Param("employeeId") Long employeeId,
-                                                       @Param("date") LocalDate date);
+    List<ProjectAssignment> findByEmployeeAtDate(@Param("employeeId") Long employeeId,
+                                                 @Param("date") LocalDate date);
 
     @Query("""
             SELECT pa
