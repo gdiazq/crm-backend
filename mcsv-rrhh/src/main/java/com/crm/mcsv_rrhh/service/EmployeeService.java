@@ -19,7 +19,7 @@ public interface EmployeeService {
 
     EmployeeDetailResponse getEmployeeByUserId(Long userId);
 
-    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
+    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId, Integer costCenter,
                                            java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                            Pageable pageable);
 

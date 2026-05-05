@@ -13,6 +13,7 @@ public class EmployeeSpecification {
     private EmployeeSpecification() {}
 
     public static Specification<Employee> withFilters(String search, Boolean active, Long excludeStatusId, Long statusId,
+                                                      Integer costCenter,
                                                       LocalDate createdFrom, LocalDate createdTo) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -38,6 +39,10 @@ public class EmployeeSpecification {
                         cb.isNull(root.get("statusId")),
                         cb.notEqual(root.get("statusId"), excludeStatusId)
                 ));
+            }
+
+            if (costCenter != null) {
+                predicates.add(cb.equal(root.get("costCenter"), costCenter));
             }
 
             if (createdFrom != null) {
