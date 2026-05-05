@@ -23,7 +23,7 @@ public interface EmployeeService {
                                            java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                            Pageable pageable);
 
-    Map<String, Long> getEmployeeStats();
+    Map<String, Long> getEmployeeStats(Integer costCenter);
     byte[] exportCsv();
     BulkImportResult importFromCsv(MultipartFile file);
 

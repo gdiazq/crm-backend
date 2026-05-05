@@ -56,7 +56,7 @@ public class EmployeeController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<EmployeeResponse> result = employeeService.filterEmployees(search, active, statusId, costCenter, createdFrom, createdTo, pageable);
-        Map<String, Long> stats = employeeService.getEmployeeStats();
+        Map<String, Long> stats = employeeService.getEmployeeStats(costCenter);
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
     }
