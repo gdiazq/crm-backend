@@ -73,6 +73,14 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("LEAVE:UPDATE", "Modificar permisos de empleado");
         createPermissionIfNotExists("LEAVE:DELETE", "Eliminar documentos asociados a permisos");
         createPermissionIfNotExists("PROJECT_ASSIGNMENT:READ",   "Ver historial de asignaciones de empleados a centros de costo");
+        createPermissionIfNotExists("ATTENDANCE:CREATE", "Crear asistencia diaria");
+        createPermissionIfNotExists("ATTENDANCE:READ",   "Ver asistencia diaria");
+        createPermissionIfNotExists("ATTENDANCE:UPDATE", "Modificar asistencia diaria");
+        createPermissionIfNotExists("ATTENDANCE:DELETE", "Eliminar asistencia diaria");
+        createPermissionIfNotExists("ATTENDANCE_STATUS:CREATE", "Crear estados de asistencia");
+        createPermissionIfNotExists("ATTENDANCE_STATUS:READ",   "Ver estados de asistencia");
+        createPermissionIfNotExists("ATTENDANCE_STATUS:UPDATE", "Modificar estados de asistencia");
+        createPermissionIfNotExists("ATTENDANCE_STATUS:DELETE", "Eliminar estados de asistencia");
         createPermissionIfNotExists("PROJECT_TYPE:CREATE", "Crear tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:READ",   "Ver y consultar tipos de proyecto");
         createPermissionIfNotExists("PROJECT_TYPE:UPDATE", "Modificar tipos de proyecto");
@@ -175,6 +183,14 @@ public class DataInitializer implements CommandLineRunner {
         Permission leaveUpdate = permissionRepository.findByName("LEAVE:UPDATE").orElseThrow();
         Permission leaveDelete = permissionRepository.findByName("LEAVE:DELETE").orElseThrow();
         Permission projectAssignmentRead   = permissionRepository.findByName("PROJECT_ASSIGNMENT:READ").orElseThrow();
+        Permission attendanceCreate = permissionRepository.findByName("ATTENDANCE:CREATE").orElseThrow();
+        Permission attendanceRead   = permissionRepository.findByName("ATTENDANCE:READ").orElseThrow();
+        Permission attendanceUpdate = permissionRepository.findByName("ATTENDANCE:UPDATE").orElseThrow();
+        Permission attendanceDelete = permissionRepository.findByName("ATTENDANCE:DELETE").orElseThrow();
+        Permission attendanceStatusCreate = permissionRepository.findByName("ATTENDANCE_STATUS:CREATE").orElseThrow();
+        Permission attendanceStatusRead   = permissionRepository.findByName("ATTENDANCE_STATUS:READ").orElseThrow();
+        Permission attendanceStatusUpdate = permissionRepository.findByName("ATTENDANCE_STATUS:UPDATE").orElseThrow();
+        Permission attendanceStatusDelete = permissionRepository.findByName("ATTENDANCE_STATUS:DELETE").orElseThrow();
 
         assignToRole("ROLE_ADMIN", new HashSet<>(Set.of(
                 userCreate, userRead, userUpdate, userDelete,
@@ -182,14 +198,18 @@ public class DataInitializer implements CommandLineRunner {
                 employeeCreate, employeeRead, employeeUpdate, employeeDelete,
                 hrRequestRead, hrRequestApprove, hrRequestReject,
                 leaveCreate, leaveRead, leaveUpdate, leaveDelete,
-                projectAssignmentRead)));
+                projectAssignmentRead,
+                attendanceCreate, attendanceRead, attendanceUpdate, attendanceDelete,
+                attendanceStatusCreate, attendanceStatusRead, attendanceStatusUpdate, attendanceStatusDelete)));
 
         assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(
                 userRead, userUpdate,
                 employeeCreate, employeeRead, employeeUpdate,
                 hrRequestRead, hrRequestApprove, hrRequestReject,
                 leaveCreate, leaveRead, leaveUpdate,
-                projectAssignmentRead)));
+                projectAssignmentRead,
+                attendanceCreate, attendanceRead, attendanceUpdate,
+                attendanceStatusRead)));
 
         assignToRole("ROLE_USER", new HashSet<>(Set.of(userRead, employeeRead, hrRequestRead, leaveRead)));
 
