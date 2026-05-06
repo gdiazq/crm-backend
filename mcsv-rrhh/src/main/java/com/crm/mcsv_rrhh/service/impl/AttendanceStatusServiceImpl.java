@@ -1,10 +1,8 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceStatusRequest;
 import com.crm.mcsv_rrhh.entity.AttendanceStatus;
 import com.crm.mcsv_rrhh.repository.AttendanceStatusRepository;
 import com.crm.mcsv_rrhh.repository.AttendanceStatusSpecification;
@@ -23,19 +21,6 @@ import java.util.List;
 public class AttendanceStatusServiceImpl implements AttendanceStatusService {
 
     private final AttendanceStatusRepository repository;
-
-    @Override
-    public AttendanceStatusResponse update(UpdateAttendanceStatusRequest request) {
-        AttendanceStatus entity = findOrThrow(request.getId());
-        String nextName = request.getName() != null ? request.getName() : entity.getName();
-        String nextCode = request.getCode() != null ? normalizeCode(request.getCode()) : entity.getCode();
-        validateUnique(nextName, nextCode, entity.getId());
-
-        if (request.getName() != null) entity.setName(request.getName());
-        if (request.getCode() != null) entity.setCode(nextCode);
-        if (request.getDescription() != null) entity.setDescription(request.getDescription());
-        return toResponse(repository.save(entity));
-    }
 
     @Override
     public void updateStatus(Long id, Boolean active) {
@@ -71,15 +56,6 @@ public class AttendanceStatusServiceImpl implements AttendanceStatusService {
     private AttendanceStatus findOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado de asistencia no encontrado: " + id));
-    }
-
-    private void validateUnique(String name, String code, Long id) {
-        if (repository.existsByNameAndIdNot(name, id)) throw new DuplicateResourceException("Ya existe un estado con el nombre: " + name);
-        if (repository.existsByCodeAndIdNot(normalizeCode(code), id)) throw new DuplicateResourceException("Ya existe un estado con el código: " + code);
-    }
-
-    private String normalizeCode(String code) {
-        return code == null ? null : code.trim().toUpperCase();
     }
 
     private AttendanceStatusResponse toResponse(AttendanceStatus status) {

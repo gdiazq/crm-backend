@@ -2,11 +2,9 @@ package com.crm.mcsv_rrhh.controller;
 
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceStatusRequest;
 import com.crm.mcsv_rrhh.service.AttendanceStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,12 +47,6 @@ public class AttendanceStatusController {
     @Operation(summary = "Obtener estado de asistencia por ID")
     public ResponseEntity<AttendanceStatusResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
-    }
-
-    @PutMapping("/update")
-    @Operation(summary = "Actualizar estado de asistencia")
-    public ResponseEntity<AttendanceStatusResponse> update(@Valid @RequestBody UpdateAttendanceStatusRequest request) {
-        return ResponseEntity.ok(service.update(request));
     }
 
     @PutMapping("/{id}/status")
