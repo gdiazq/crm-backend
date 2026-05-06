@@ -271,6 +271,28 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public List<EmployeeService.AttendanceEmployeeSelectItem> getEmployeesForAttendance() {
+        Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
+                .map(EmployeeStatus::getId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
+
+        List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
+                .map(Contract::getEmployeeId)
+                .distinct()
+                .toList();
+
+        if (employeeIdsWithContract.isEmpty()) return List.of();
+
+        return employeeRepository.findByActiveTrueAndStatusIdAndIdIn(approvedStatusId, employeeIdsWithContract)
+                .stream()
+                .map(e -> new EmployeeService.AttendanceEmployeeSelectItem(
+                        e.getId(),
+                        fullName(e),
+                        e.getCostCenter()))
+                .toList();
+    }
+
+    @Override
     public List<EmployeeService.EmployeeSelectItem> getSupervisors() {
         try {
             List<Long> userIds = userClient.getSupervisors().stream().map(UserDTO::getId).toList();
@@ -563,6 +585,17 @@ public class EmployeeServiceImpl implements EmployeeService {
             log.warn("No se pudo resolver nombre de proyecto para costCenter={}: {}", costCenter, e.getMessage());
             return null;
         }
+    }
+
+    private String fullName(Employee employee) {
+        return String.join(" ",
+                safe(employee.getFirstName()),
+                safe(employee.getPaternalLastName()),
+                safe(employee.getMaternalLastName())).trim();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 
     private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {

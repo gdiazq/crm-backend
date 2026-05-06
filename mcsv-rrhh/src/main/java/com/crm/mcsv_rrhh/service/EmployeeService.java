@@ -37,6 +37,8 @@ public interface EmployeeService {
 
     List<EmployeeSelectItem> getEmployeesWithContract();
 
+    List<AttendanceEmployeeSelectItem> getEmployeesForAttendance();
+
     List<EmployeeSelectItem> getSupervisors();
 
     List<EmployeeSelectItem> getVisitors();
@@ -44,4 +46,6 @@ public interface EmployeeService {
     List<EmployeeSelectItem> getCompanyRepresentatives();
 
     record EmployeeSelectItem(Long id, String name) {}
+
+    record AttendanceEmployeeSelectItem(Long id, String name, Integer costCenter) {}
 }

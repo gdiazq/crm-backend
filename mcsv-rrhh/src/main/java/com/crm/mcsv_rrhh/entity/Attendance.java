@@ -78,7 +78,7 @@ public class Attendance {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Formula("(EXISTS (SELECT 1 FROM employee_leaves el WHERE el.employee_id = employee_id AND date BETWEEN el.start_date AND el.end_date AND (SELECT es.name FROM hr_requests hr JOIN employee_statuses es ON es.id = hr.status_id WHERE hr.leave_id = el.id ORDER BY hr.created_at DESC LIMIT 1) = 'Aprobado'))")
+    @Formula("(EXISTS (SELECT 1 FROM employee_leaves el WHERE el.employee_id = employee_id AND \"date\" BETWEEN el.start_date AND el.end_date AND (SELECT es.name FROM hr_requests hr JOIN employee_statuses es ON es.id = hr.status_id WHERE hr.leave_id = el.id ORDER BY hr.created_at DESC LIMIT 1) = 'Aprobado'))")
     private Boolean hasActiveLeave;
 
     @Column(nullable = false, updatable = false)
