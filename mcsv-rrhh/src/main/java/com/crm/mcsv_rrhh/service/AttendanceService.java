@@ -1,9 +1,7 @@
 package com.crm.mcsv_rrhh.service;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceRequest;
 import com.crm.mcsv_rrhh.dto.AttendanceResponse;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
@@ -26,12 +24,6 @@ public interface AttendanceService {
                                            String sortDir);
 
     AttendanceResponse getById(Long id);
-
-    AttendanceResponse create(AttendanceRequest request);
-
-    AttendanceResponse update(UpdateAttendanceRequest request);
-
-    void delete(Long id);
 
     List<AttendanceResponse> findByEmployee(Long employeeId);
 

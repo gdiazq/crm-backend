@@ -1,20 +1,16 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceRequest;
 import com.crm.mcsv_rrhh.dto.AttendanceResponse;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceRequest;
 import com.crm.mcsv_rrhh.service.AttendanceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,25 +60,6 @@ public class AttendanceController {
     @Operation(summary = "Obtener asistencia por ID")
     public ResponseEntity<AttendanceResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
-    }
-
-    @PostMapping("/create")
-    @Operation(summary = "Crear asistencia diaria")
-    public ResponseEntity<AttendanceResponse> create(@Valid @RequestBody AttendanceRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
-    }
-
-    @PutMapping("/update")
-    @Operation(summary = "Actualizar asistencia diaria")
-    public ResponseEntity<AttendanceResponse> update(@Valid @RequestBody UpdateAttendanceRequest request) {
-        return ResponseEntity.ok(service.update(request));
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar asistencia diaria")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/select/by-employee/{employeeId}")

@@ -135,10 +135,10 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("GET:/v1/api/rrhh/attendance-statuses",                "ATTENDANCE_STATUS:READ"),
             Map.entry("PUT:/v1/api/rrhh/attendance-statuses/update",         "ATTENDANCE_STATUS:UPDATE"),
             Map.entry("PUT:/v1/api/rrhh/attendance-statuses",                "ATTENDANCE_STATUS:UPDATE"),
-            Map.entry("POST:/v1/api/rrhh/attendance/create",                 "ATTENDANCE:CREATE"),
-            Map.entry("GET:/v1/api/rrhh/attendance",                         "ATTENDANCE:READ"),
-            Map.entry("PUT:/v1/api/rrhh/attendance/update",                  "ATTENDANCE:UPDATE"),
-            Map.entry("DELETE:/v1/api/rrhh/attendance",                      "ATTENDANCE:DELETE")
+            Map.entry("POST:/v1/api/rrhh/attendance-marks/create",           "ATTENDANCE:CREATE"),
+            Map.entry("GET:/v1/api/rrhh/attendance-marks",                   "ATTENDANCE:READ"),
+            Map.entry("PUT:/v1/api/rrhh/attendance-marks/update",            "ATTENDANCE:UPDATE"),
+            Map.entry("GET:/v1/api/rrhh/attendance",                         "ATTENDANCE:READ")
     );
 
     private final WebClient.Builder webClient;
