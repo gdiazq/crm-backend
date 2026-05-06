@@ -1,7 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceStatusRequest;
 import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
 import com.crm.mcsv_rrhh.dto.UpdateAttendanceStatusRequest;
 import com.crm.mcsv_rrhh.service.AttendanceStatusService;
@@ -13,7 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,12 +49,6 @@ public class AttendanceStatusController {
     @Operation(summary = "Obtener estado de asistencia por ID")
     public ResponseEntity<AttendanceStatusResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
-    }
-
-    @PostMapping("/create")
-    @Operation(summary = "Crear estado de asistencia")
-    public ResponseEntity<AttendanceStatusResponse> create(@Valid @RequestBody AttendanceStatusRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
 
     @PutMapping("/update")

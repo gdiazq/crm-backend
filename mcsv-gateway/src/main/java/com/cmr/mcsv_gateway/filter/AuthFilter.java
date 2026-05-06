@@ -131,7 +131,6 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             Map.entry("PUT:/v1/api/rrhh/leaves/update",                     "LEAVE:UPDATE"),
             Map.entry("DELETE:/v1/api/rrhh/leaves",                         "LEAVE:DELETE"),
             Map.entry("GET:/v1/api/rrhh/project-assignments",                "PROJECT_ASSIGNMENT:READ"),
-            Map.entry("POST:/v1/api/rrhh/attendance-statuses/create",        "ATTENDANCE_STATUS:CREATE"),
             Map.entry("GET:/v1/api/rrhh/attendance-statuses",                "ATTENDANCE_STATUS:READ"),
             Map.entry("PUT:/v1/api/rrhh/attendance-statuses/update",         "ATTENDANCE_STATUS:UPDATE"),
             Map.entry("PUT:/v1/api/rrhh/attendance-statuses",                "ATTENDANCE_STATUS:UPDATE"),

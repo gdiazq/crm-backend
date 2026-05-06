@@ -77,7 +77,6 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("ATTENDANCE:READ",   "Ver asistencia diaria");
         createPermissionIfNotExists("ATTENDANCE:UPDATE", "Modificar asistencia diaria");
         createPermissionIfNotExists("ATTENDANCE:DELETE", "Eliminar asistencia diaria");
-        createPermissionIfNotExists("ATTENDANCE_STATUS:CREATE", "Crear estados de asistencia");
         createPermissionIfNotExists("ATTENDANCE_STATUS:READ",   "Ver estados de asistencia");
         createPermissionIfNotExists("ATTENDANCE_STATUS:UPDATE", "Modificar estados de asistencia");
         createPermissionIfNotExists("ATTENDANCE_STATUS:DELETE", "Eliminar estados de asistencia");
@@ -187,7 +186,6 @@ public class DataInitializer implements CommandLineRunner {
         Permission attendanceRead   = permissionRepository.findByName("ATTENDANCE:READ").orElseThrow();
         Permission attendanceUpdate = permissionRepository.findByName("ATTENDANCE:UPDATE").orElseThrow();
         Permission attendanceDelete = permissionRepository.findByName("ATTENDANCE:DELETE").orElseThrow();
-        Permission attendanceStatusCreate = permissionRepository.findByName("ATTENDANCE_STATUS:CREATE").orElseThrow();
         Permission attendanceStatusRead   = permissionRepository.findByName("ATTENDANCE_STATUS:READ").orElseThrow();
         Permission attendanceStatusUpdate = permissionRepository.findByName("ATTENDANCE_STATUS:UPDATE").orElseThrow();
         Permission attendanceStatusDelete = permissionRepository.findByName("ATTENDANCE_STATUS:DELETE").orElseThrow();
@@ -200,7 +198,7 @@ public class DataInitializer implements CommandLineRunner {
                 leaveCreate, leaveRead, leaveUpdate, leaveDelete,
                 projectAssignmentRead,
                 attendanceCreate, attendanceRead, attendanceUpdate, attendanceDelete,
-                attendanceStatusCreate, attendanceStatusRead, attendanceStatusUpdate, attendanceStatusDelete)));
+                attendanceStatusRead, attendanceStatusUpdate, attendanceStatusDelete)));
 
         assignToRole("ROLE_MANAGER", new HashSet<>(Set.of(
                 userRead, userUpdate,

@@ -3,7 +3,6 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.dto.AttendanceStatusRequest;
 import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
 import com.crm.mcsv_rrhh.dto.UpdateAttendanceStatusRequest;
 import com.crm.mcsv_rrhh.entity.AttendanceStatus;
@@ -24,18 +23,6 @@ import java.util.List;
 public class AttendanceStatusServiceImpl implements AttendanceStatusService {
 
     private final AttendanceStatusRepository repository;
-
-    @Override
-    public AttendanceStatusResponse create(AttendanceStatusRequest request) {
-        validateUnique(request.getName(), request.getCode(), null);
-        AttendanceStatus entity = AttendanceStatus.builder()
-                .name(request.getName())
-                .code(normalizeCode(request.getCode()))
-                .description(request.getDescription())
-                .active(true)
-                .build();
-        return toResponse(repository.save(entity));
-    }
 
     @Override
     public AttendanceStatusResponse update(UpdateAttendanceStatusRequest request) {
@@ -87,11 +74,6 @@ public class AttendanceStatusServiceImpl implements AttendanceStatusService {
     }
 
     private void validateUnique(String name, String code, Long id) {
-        if (id == null) {
-            if (repository.existsByName(name)) throw new DuplicateResourceException("Ya existe un estado con el nombre: " + name);
-            if (repository.existsByCode(normalizeCode(code))) throw new DuplicateResourceException("Ya existe un estado con el código: " + code);
-            return;
-        }
         if (repository.existsByNameAndIdNot(name, id)) throw new DuplicateResourceException("Ya existe un estado con el nombre: " + name);
         if (repository.existsByCodeAndIdNot(normalizeCode(code), id)) throw new DuplicateResourceException("Ya existe un estado con el código: " + code);
     }
