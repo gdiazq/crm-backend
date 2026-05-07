@@ -61,7 +61,7 @@ public class ProjectAssignmentController {
     }
 
     @GetMapping("/select/by-employee/{employeeId}")
-    @Operation(summary = "Listar asignaciones activas por empleado")
+    @Operation(summary = "Listar historial de asignaciones por empleado")
     public ResponseEntity<List<ProjectAssignmentResponse>> selectByEmployee(@PathVariable Long employeeId) {
         return ResponseEntity.ok(service.findByEmployee(employeeId));
     }

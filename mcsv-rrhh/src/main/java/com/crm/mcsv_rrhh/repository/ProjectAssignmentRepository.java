@@ -14,6 +14,8 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
 
     List<ProjectAssignment> findByEmployeeIdAndActiveTrueOrderByStartDateDesc(Long employeeId);
 
+    List<ProjectAssignment> findByEmployeeIdOrderByStartDateDesc(Long employeeId);
+
     List<ProjectAssignment> findByCostCenterAndActiveTrueOrderByStartDateDesc(Integer costCenter);
 
     long countByActiveTrue();

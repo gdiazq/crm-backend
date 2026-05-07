@@ -68,7 +68,7 @@ public class ProjectAssignmentServiceImpl implements ProjectAssignmentService {
     @Transactional(readOnly = true)
     public List<ProjectAssignmentResponse> findByEmployee(Long employeeId) {
         validateEmployee(employeeId);
-        return repository.findByEmployeeIdAndActiveTrueOrderByStartDateDesc(employeeId)
+        return repository.findByEmployeeIdOrderByStartDateDesc(employeeId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
