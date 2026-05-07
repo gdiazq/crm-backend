@@ -8,7 +8,5 @@ public interface AttendanceStatusService {
 
     void updateStatus(Long id, Boolean active);
 
-    AttendanceStatusResponse getById(Long id);
-
     List<AttendanceStatusResponse> selectActive();
 }

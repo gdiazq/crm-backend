@@ -24,11 +24,6 @@ public class AttendanceStatusServiceImpl implements AttendanceStatusService {
     }
 
     @Override
-    public AttendanceStatusResponse getById(Long id) {
-        return toResponse(findOrThrow(id));
-    }
-
-    @Override
     public List<AttendanceStatusResponse> selectActive() {
         return repository.findAll().stream()
                 .filter(status -> Boolean.TRUE.equals(status.getActive()))

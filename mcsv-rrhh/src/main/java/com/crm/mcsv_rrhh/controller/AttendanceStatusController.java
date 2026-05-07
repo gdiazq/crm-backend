@@ -19,12 +19,6 @@ public class AttendanceStatusController {
 
     private final AttendanceStatusService service;
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Obtener estado de asistencia por ID")
-    public ResponseEntity<AttendanceStatusResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
-    }
-
     @PutMapping("/{id}/status")
     @Operation(summary = "Habilitar/deshabilitar estado de asistencia")
     public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
