@@ -38,6 +38,7 @@ import com.crm.mcsv_rrhh.repository.LegalTerminationCauseRepository;
 import com.crm.mcsv_rrhh.repository.NoReHiredCauseRepository;
 import com.crm.mcsv_rrhh.repository.QualityOfWorkRepository;
 import com.crm.mcsv_rrhh.repository.SafetyComplianceRepository;
+import com.crm.mcsv_rrhh.service.AttendanceLeaveSyncService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
 import com.crm.mcsv_rrhh.util.LeaveCalculator;
@@ -81,6 +82,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final LeaveValidator leaveValidator;
     private final ObjectMapper objectMapper;
     private final ProjectAssignmentSyncService projectAssignmentSyncService;
+    private final AttendanceLeaveSyncService attendanceLeaveSyncService;
 
     @Override
     @Transactional
@@ -494,6 +496,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                     leaveValidator.validate(leave, null, leave.getId(), null);
                 }
                 employeeLeaveRepository.save(leave);
+                attendanceLeaveSyncService.revertGeneratedForLeave(leave.getId());
+                attendanceLeaveSyncService.generateForApprovedLeave(leave);
 
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
@@ -600,6 +604,9 @@ public class HRRequestServiceImpl implements HRRequestService {
         }
         if ("UPDATE".equals(hr.getAction()) && "Permiso".equals(requestTypeName)) {
             deletePendingLeaveFiles(hr.getId(), hr.getLeaveId());
+        }
+        if ("Permiso".equals(requestTypeName) && hr.getLeaveId() != null) {
+            attendanceLeaveSyncService.revertGeneratedForLeave(hr.getLeaveId());
         }
 
         if ("CREATE".equals(hr.getAction())) {
