@@ -1,19 +1,13 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
 import com.crm.mcsv_rrhh.entity.AttendanceStatus;
 import com.crm.mcsv_rrhh.repository.AttendanceStatusRepository;
-import com.crm.mcsv_rrhh.repository.AttendanceStatusSpecification;
 import com.crm.mcsv_rrhh.service.AttendanceStatusService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -32,17 +26,6 @@ public class AttendanceStatusServiceImpl implements AttendanceStatusService {
     @Override
     public AttendanceStatusResponse getById(Long id) {
         return toResponse(findOrThrow(id));
-    }
-
-    @Override
-    public PagedResponse<AttendanceStatusResponse> list(String search, Boolean active,
-                                                         LocalDate createdFrom, LocalDate createdTo,
-                                                         LocalDate updatedFrom, LocalDate updatedTo,
-                                                         Pageable pageable) {
-        Specification<AttendanceStatus> spec = AttendanceStatusSpecification.withFilters(
-                search, active, createdFrom, createdTo, updatedFrom, updatedTo);
-        Page<AttendanceStatus> page = repository.findAll(spec, pageable);
-        return PagedResponse.of(page.map(this::toResponse), page.getTotalElements(), repository.countByActiveTrue());
     }
 
     @Override
