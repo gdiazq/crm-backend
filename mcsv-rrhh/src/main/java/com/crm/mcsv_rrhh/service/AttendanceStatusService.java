@@ -6,7 +6,5 @@ import java.util.List;
 
 public interface AttendanceStatusService {
 
-    void updateStatus(Long id, Boolean active);
-
     List<AttendanceStatusResponse> selectActive();
 }
