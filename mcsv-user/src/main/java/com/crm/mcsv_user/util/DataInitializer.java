@@ -72,6 +72,7 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("LEAVE:READ",   "Ver y consultar permisos de empleado");
         createPermissionIfNotExists("LEAVE:UPDATE", "Modificar permisos de empleado");
         createPermissionIfNotExists("LEAVE:DELETE", "Eliminar documentos asociados a permisos");
+        createPermissionIfNotExists("CALENDAR:READ", "Ver calendario global RRHH");
         createPermissionIfNotExists("PROJECT_ASSIGNMENT:READ",   "Ver historial de asignaciones de empleados a centros de costo");
         createPermissionIfNotExists("ATTENDANCE:CREATE", "Crear asistencia diaria");
         createPermissionIfNotExists("ATTENDANCE:READ",   "Ver asistencia diaria");
@@ -181,6 +182,7 @@ public class DataInitializer implements CommandLineRunner {
         Permission leaveRead   = permissionRepository.findByName("LEAVE:READ").orElseThrow();
         Permission leaveUpdate = permissionRepository.findByName("LEAVE:UPDATE").orElseThrow();
         Permission leaveDelete = permissionRepository.findByName("LEAVE:DELETE").orElseThrow();
+        Permission calendarRead = permissionRepository.findByName("CALENDAR:READ").orElseThrow();
         Permission projectAssignmentRead   = permissionRepository.findByName("PROJECT_ASSIGNMENT:READ").orElseThrow();
         Permission attendanceCreate = permissionRepository.findByName("ATTENDANCE:CREATE").orElseThrow();
         Permission attendanceRead   = permissionRepository.findByName("ATTENDANCE:READ").orElseThrow();
@@ -196,6 +198,7 @@ public class DataInitializer implements CommandLineRunner {
                 employeeCreate, employeeRead, employeeUpdate, employeeDelete,
                 hrRequestRead, hrRequestApprove, hrRequestReject,
                 leaveCreate, leaveRead, leaveUpdate, leaveDelete,
+                calendarRead,
                 projectAssignmentRead,
                 attendanceCreate, attendanceRead, attendanceUpdate, attendanceDelete,
                 attendanceStatusRead, attendanceStatusUpdate, attendanceStatusDelete)));
@@ -205,6 +208,7 @@ public class DataInitializer implements CommandLineRunner {
                 employeeCreate, employeeRead, employeeUpdate,
                 hrRequestRead, hrRequestApprove, hrRequestReject,
                 leaveCreate, leaveRead, leaveUpdate,
+                calendarRead,
                 projectAssignmentRead,
                 attendanceCreate, attendanceRead, attendanceUpdate,
                 attendanceStatusRead)));
