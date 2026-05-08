@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface EmployeeLeaveRepository extends JpaRepository<EmployeeLeave, Long>, JpaSpecificationExecutor<EmployeeLeave> {
     List<EmployeeLeave> findByEmployeeId(Long employeeId);
     List<EmployeeLeave> findByContractId(Long contractId);
+    List<EmployeeLeave> findByStartDateLessThanEqualAndEndDateGreaterThanEqual(LocalDate to, LocalDate from);
 
     @Query(value = """
             SELECT el.id

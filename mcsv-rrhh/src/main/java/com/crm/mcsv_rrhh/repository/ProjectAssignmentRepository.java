@@ -34,6 +34,16 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
     @Query("""
             SELECT pa
             FROM ProjectAssignment pa
+            WHERE (pa.startDate BETWEEN :from AND :to)
+               OR (pa.endDate BETWEEN :from AND :to)
+            ORDER BY pa.startDate DESC, pa.id DESC
+            """)
+    List<ProjectAssignment> findCalendarEvents(@Param("from") LocalDate from,
+                                               @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT pa
+            FROM ProjectAssignment pa
             WHERE pa.employeeId = :employeeId
               AND pa.active = true
               AND pa.endDate IS NULL

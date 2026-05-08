@@ -4,9 +4,11 @@ import com.crm.mcsv_rrhh.entity.ContractAnnex;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface ContractAnnexRepository extends JpaRepository<ContractAnnex, Long>, JpaSpecificationExecutor<ContractAnnex> {
     List<ContractAnnex> findByEmployeeId(Long employeeId);
     List<ContractAnnex> findByContractId(Long contractId);
+    List<ContractAnnex> findByDateBetween(LocalDate from, LocalDate to);
 }
