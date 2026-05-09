@@ -18,10 +18,9 @@ import java.util.*;
 public class CalendarEventServiceImpl implements CalendarEventService {
 
     private static final Set<String> SUPPORTED_MODULES = Set.of(
-            "ATTENDANCE", "LEAVE", "CONTRACT", "ANNEX", "TRANSFER", "SETTLEMENT", "PROJECT"
+            "LEAVE", "CONTRACT", "ANNEX", "TRANSFER", "SETTLEMENT", "PROJECT"
     );
 
-    private final AttendanceRepository attendanceRepository;
     private final EmployeeLeaveRepository employeeLeaveRepository;
     private final ContractRepository contractRepository;
     private final ContractAnnexRepository contractAnnexRepository;
@@ -46,9 +45,6 @@ public class CalendarEventServiceImpl implements CalendarEventService {
         List<CalendarEventResponse> events = new ArrayList<>();
         Map<Integer, String> projectNameCache = new HashMap<>();
 
-        if (includes(requestedModule, "ATTENDANCE")) {
-            addAttendanceEvents(events, projectNameCache, from, to, employeeId, costCenter, status);
-        }
         if (includes(requestedModule, "LEAVE")) {
             addLeaveEvents(events, projectNameCache, from, to, employeeId, costCenter, status);
         }
@@ -78,39 +74,6 @@ public class CalendarEventServiceImpl implements CalendarEventService {
                 .to(to)
                 .content(events)
                 .build();
-    }
-
-    private void addAttendanceEvents(List<CalendarEventResponse> events,
-                                     Map<Integer, String> projectNameCache,
-                                     LocalDate from,
-                                     LocalDate to,
-                                     Long employeeId,
-                                     Integer costCenter,
-                                     String status) {
-        attendanceRepository.findByDateBetween(from, to).forEach(attendance -> {
-            Employee employee = attendance.getEmployee();
-            Integer eventCostCenter = attendance.getCostCenter();
-            String eventStatus = Boolean.TRUE.equals(attendance.getHasActiveLeave())
-                    ? "Licencia"
-                    : attendance.getStatus() != null ? attendance.getStatus().getName() : null;
-            if (!passesFilters(employee, eventCostCenter, eventStatus, employeeId, costCenter, status)) return;
-
-            add(events, CalendarEventResponse.builder()
-                    .id("ATTENDANCE-" + attendance.getId())
-                    .date(attendance.getDate().toString())
-                    .title("Asistencia - " + fullName(employee))
-                    .description(eventStatus)
-                    .module("ATTENDANCE")
-                    .entityId(attendance.getId())
-                    .entityType("ATTENDANCE")
-                    .status(eventStatus)
-                    .employeeId(attendance.getEmployeeId())
-                    .employeeFullName(fullName(employee))
-                    .costCenter(eventCostCenter)
-                    .projectName(resolveProjectName(eventCostCenter, projectNameCache))
-                    .tone(resolveTone(eventStatus))
-                    .build());
-        });
     }
 
     private void addLeaveEvents(List<CalendarEventResponse> events,

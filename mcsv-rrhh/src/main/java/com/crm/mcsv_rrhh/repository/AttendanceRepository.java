@@ -11,7 +11,6 @@ import java.util.Optional;
 public interface AttendanceRepository extends JpaRepository<Attendance, Long>, JpaSpecificationExecutor<Attendance> {
     boolean existsByEmployeeIdAndDate(Long employeeId, LocalDate date);
     Optional<Attendance> findByEmployeeIdAndDate(Long employeeId, LocalDate date);
-    List<Attendance> findByDateBetween(LocalDate from, LocalDate to);
     List<Attendance> findByEmployeeIdOrderByDateDesc(Long employeeId);
     List<Attendance> findByCostCenterOrderByDateDesc(Integer costCenter);
     void deleteByGeneratedByLeaveIdAndManuallyOverriddenFalse(Long generatedByLeaveId);
