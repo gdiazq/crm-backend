@@ -50,11 +50,12 @@ public class OvertimeServiceImpl implements OvertimeService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<OvertimeResponse> list(Long employeeId, Integer costCenter, Long statusId,
+    public PagedResponse<OvertimeResponse> list(String search,
+                                                Long employeeId, Integer costCenter, Long statusId,
                                                 LocalDate dateFrom, LocalDate dateTo,
                                                 Long overtimeTypeId, Pageable pageable) {
         Page<Overtime> page = overtimeRepository.findAll(
-                OvertimeSpecification.withFilters(employeeId, costCenter, statusId, dateFrom, dateTo, overtimeTypeId),
+                OvertimeSpecification.withFilters(search, employeeId, costCenter, statusId, dateFrom, dateTo, overtimeTypeId),
                 pageable);
 
         long total = page.getTotalElements();

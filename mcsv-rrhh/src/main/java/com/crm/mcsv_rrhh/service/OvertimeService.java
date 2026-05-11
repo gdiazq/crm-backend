@@ -12,7 +12,8 @@ import java.util.List;
 
 public interface OvertimeService {
 
-    PagedResponse<OvertimeResponse> list(Long employeeId, Integer costCenter, Long statusId,
+    PagedResponse<OvertimeResponse> list(String search,
+                                         Long employeeId, Integer costCenter, Long statusId,
                                          LocalDate dateFrom, LocalDate dateTo,
                                          Long overtimeTypeId, Pageable pageable);
 

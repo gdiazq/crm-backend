@@ -37,9 +37,10 @@ public class OvertimeController {
 
     private final OvertimeService service;
 
-    @GetMapping
+    @GetMapping("/paged")
     @Operation(summary = "Listar horas extras (paginado)")
-    public ResponseEntity<PagedResponse<OvertimeResponse>> list(
+    public ResponseEntity<PagedResponse<OvertimeResponse>> paged(
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long employeeId,
             @RequestParam(required = false) Integer costCenter,
             @RequestParam(required = false) Long statusId,
@@ -56,7 +57,7 @@ public class OvertimeController {
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        return ResponseEntity.ok(service.list(employeeId, costCenter, statusId,
+        return ResponseEntity.ok(service.list(search, employeeId, costCenter, statusId,
                 dateFrom, dateTo, overtimeTypeId, pageable));
     }
 

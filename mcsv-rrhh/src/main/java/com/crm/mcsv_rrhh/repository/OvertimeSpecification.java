@@ -1,7 +1,10 @@
 package com.crm.mcsv_rrhh.repository;
 
+import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.Overtime;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -16,11 +19,23 @@ public class OvertimeSpecification {
 
     private OvertimeSpecification() {}
 
-    public static Specification<Overtime> withFilters(Long employeeId, Integer costCenter, Long statusId,
+    public static Specification<Overtime> withFilters(String search,
+                                                      Long employeeId, Integer costCenter, Long statusId,
                                                       LocalDate dateFrom, LocalDate dateTo,
                                                       Long overtimeTypeId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (search != null && !search.isBlank()) {
+                Join<Overtime, Employee> empJoin = root.join("employee", JoinType.LEFT);
+                String pattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(empJoin.get("firstName")), pattern),
+                        cb.like(cb.lower(empJoin.get("paternalLastName")), pattern),
+                        cb.like(cb.lower(empJoin.get("maternalLastName")), pattern),
+                        cb.like(cb.lower(empJoin.get("identification")), pattern)
+                ));
+            }
 
             if (employeeId != null) {
                 predicates.add(cb.equal(root.get("employeeId"), employeeId));
