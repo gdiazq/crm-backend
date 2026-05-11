@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @Builder
@@ -23,9 +24,10 @@ public class AttendanceResponse {
     private Long projectAssignmentId;
     private Integer costCenter;
     private String projectName;
-    private LocalDate date;
-    private LocalDateTime checkInTime;
-    private LocalDateTime checkOutTime;
+    private LocalDate checkInDate;
+    private LocalTime checkInTime;
+    private LocalDate checkOutDate;
+    private LocalTime checkOutTime;
     private BigDecimal totalHours;
     private Long statusId;
     private String statusName;

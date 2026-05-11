@@ -770,9 +770,7 @@ public class DataInitializer implements CommandLineRunner {
                 new OvertimeDef("Nocturna 35%", "Hora extra en jornada nocturna",
                         new java.math.BigDecimal("35.00"), true, false),
                 new OvertimeDef("Festiva 100%", "Hora extra en día festivo o domingo",
-                        new java.math.BigDecimal("100.00"), false, true),
-                new OvertimeDef("Especial 100%", "Hora extra con recargo del 100%",
-                        new java.math.BigDecimal("100.00"), false, false)
+                        new java.math.BigDecimal("100.00"), false, true)
         );
 
         for (OvertimeDef t : types) {

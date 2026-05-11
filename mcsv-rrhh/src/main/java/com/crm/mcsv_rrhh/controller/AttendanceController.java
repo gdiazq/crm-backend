@@ -27,6 +27,11 @@ public class AttendanceController {
 
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
+    private static final java.util.Map<String, String> SORT_FIELD_ALIASES = java.util.Map.of(
+            "checkInDate", "checkInTime",
+            "checkOutDate", "checkOutTime"
+    );
+
     private final AttendanceService service;
 
     @GetMapping("/paged")
@@ -47,13 +52,15 @@ public class AttendanceController {
             @RequestParam(defaultValue = "date") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Sort sort = EMPLOYEE_SORT_FIELDS.contains(sortBy)
+        String effectiveSortBy = SORT_FIELD_ALIASES.getOrDefault(sortBy, sortBy);
+
+        Sort sort = EMPLOYEE_SORT_FIELDS.contains(effectiveSortBy)
                 ? Sort.unsorted()
-                : (sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending());
+                : (sortDir.equalsIgnoreCase("asc") ? Sort.by(effectiveSortBy).ascending() : Sort.by(effectiveSortBy).descending());
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return ResponseEntity.ok(service.list(search, employeeId, costCenter, statusId,
-                dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
+                dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, pageable, effectiveSortBy, sortDir));
     }
 
     @GetMapping("/{id}")
