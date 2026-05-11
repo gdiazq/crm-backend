@@ -48,6 +48,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TransportTypeRepository transportTypeRepository;
     private final ContractAnnexTypeRepository contractAnnexTypeRepository;
     private final LeaveTypeRepository leaveTypeRepository;
+    private final OvertimeTypeRepository overtimeTypeRepository;
     private final AttendanceStatusRepository attendanceStatusRepository;
 
     @Override
@@ -86,6 +87,7 @@ public class DataInitializer implements CommandLineRunner {
         initializeTransportTypes();
         initializeContractAnnexTypes();
         initializeLeaveTypes();
+        initializeOvertimeTypes();
         initializeAttendanceStatuses();
     }
 
@@ -557,12 +559,13 @@ public class DataInitializer implements CommandLineRunner {
     private void initializeHRRequestTypes() {
         record TypeDef(String name, Boolean req) {}
         List<TypeDef> types = List.of(
-                new TypeDef("Trabajador", true),
-                new TypeDef("Contrato", true),
-                new TypeDef("Finiquito", true),
-                new TypeDef("Anexo", true),
-                new TypeDef("Traspaso", true),
-                new TypeDef("Permiso", true)
+                new TypeDef(HRRequestTypes.EMPLOYEE, true),
+                new TypeDef(HRRequestTypes.CONTRACT, true),
+                new TypeDef(HRRequestTypes.SETTLEMENT, true),
+                new TypeDef(HRRequestTypes.ANNEX, true),
+                new TypeDef(HRRequestTypes.TRANSFER, true),
+                new TypeDef(HRRequestTypes.LEAVE, true),
+                new TypeDef(HRRequestTypes.OVERTIME, true)
         );
         for (TypeDef t : types) {
             HRRequestType existing = hrRequestTypeRepository.findByName(t.name()).orElse(null);
@@ -755,6 +758,65 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
         log.info("Leave types initialized.");
+    }
+
+    private void initializeOvertimeTypes() {
+        record OvertimeDef(String name, String description, java.math.BigDecimal surcharge,
+                           boolean nightShift, boolean holiday) {}
+
+        List<OvertimeDef> types = List.of(
+                new OvertimeDef("Diurna 50%", "Hora extra diurna con recargo del 50%",
+                        new java.math.BigDecimal("50.00"), false, false),
+                new OvertimeDef("Nocturna 35%", "Hora extra en jornada nocturna",
+                        new java.math.BigDecimal("35.00"), true, false),
+                new OvertimeDef("Festiva 100%", "Hora extra en día festivo o domingo",
+                        new java.math.BigDecimal("100.00"), false, true),
+                new OvertimeDef("Especial 100%", "Hora extra con recargo del 100%",
+                        new java.math.BigDecimal("100.00"), false, false)
+        );
+
+        for (OvertimeDef t : types) {
+            OvertimeType existing = overtimeTypeRepository.findByName(t.name()).orElse(null);
+            if (existing == null) {
+                overtimeTypeRepository.save(OvertimeType.builder()
+                        .name(t.name())
+                        .description(t.description())
+                        .surchargePercent(t.surcharge())
+                        .nightShift(t.nightShift())
+                        .holiday(t.holiday())
+                        .active(true)
+                        .build());
+                continue;
+            }
+
+            boolean changed = false;
+            if (!java.util.Objects.equals(existing.getDescription(), t.description())) {
+                existing.setDescription(t.description());
+                changed = true;
+            }
+            if (existing.getSurchargePercent() == null
+                    || existing.getSurchargePercent().compareTo(t.surcharge()) != 0) {
+                existing.setSurchargePercent(t.surcharge());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getNightShift(), t.nightShift())) {
+                existing.setNightShift(t.nightShift());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getHoliday(), t.holiday())) {
+                existing.setHoliday(t.holiday());
+                changed = true;
+            }
+            if (!java.util.Objects.equals(existing.getActive(), true)) {
+                existing.setActive(true);
+                changed = true;
+            }
+
+            if (changed) {
+                overtimeTypeRepository.save(existing);
+            }
+        }
+        log.info("Overtime types initialized.");
     }
 
     private void initializeEmployeeStatuses() {

@@ -61,6 +61,9 @@ public class Attendance {
     @Column(name = "total_hours", precision = 5, scale = 2)
     private BigDecimal totalHours;
 
+    @Column(name = "overtime_hours", precision = 5, scale = 2)
+    private BigDecimal overtimeHours;
+
     @Column(name = "status_id", nullable = false)
     private Long statusId;
 
