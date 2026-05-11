@@ -11,11 +11,14 @@ import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UpdateEmployeeLeaveRequest;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
 import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
+import com.crm.mcsv_rrhh.dto.OvertimeUpdateRequest;
 import com.crm.mcsv_rrhh.entity.ContractAnnex;
 import com.crm.mcsv_rrhh.entity.EmployeeLeave;
+import com.crm.mcsv_rrhh.entity.Overtime;
 import com.crm.mcsv_rrhh.entity.Transfer;
 import com.crm.mcsv_rrhh.repository.ContractAnnexRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
+import com.crm.mcsv_rrhh.repository.OvertimeRepository;
 import com.crm.mcsv_rrhh.repository.TransferRepository;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
@@ -39,10 +42,13 @@ import com.crm.mcsv_rrhh.repository.NoReHiredCauseRepository;
 import com.crm.mcsv_rrhh.repository.QualityOfWorkRepository;
 import com.crm.mcsv_rrhh.repository.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.service.AttendanceLeaveSyncService;
+import com.crm.mcsv_rrhh.service.AttendanceOvertimeSyncService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
+import com.crm.mcsv_rrhh.util.HRRequestTypes;
 import com.crm.mcsv_rrhh.util.LeaveCalculator;
 import com.crm.mcsv_rrhh.util.LeaveValidator;
+import com.crm.mcsv_rrhh.util.OvertimeValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -77,12 +83,15 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final TransferRepository transferRepository;
     private final ContractAnnexRepository contractAnnexRepository;
     private final EmployeeLeaveRepository employeeLeaveRepository;
+    private final OvertimeRepository overtimeRepository;
     private final UserClient userClient;
     private final StorageService storageService;
     private final LeaveValidator leaveValidator;
+    private final OvertimeValidator overtimeValidator;
     private final ObjectMapper objectMapper;
     private final ProjectAssignmentSyncService projectAssignmentSyncService;
     private final AttendanceLeaveSyncService attendanceLeaveSyncService;
+    private final AttendanceOvertimeSyncService attendanceOvertimeSyncService;
 
     @Override
     @Transactional
@@ -234,6 +243,33 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .requireApproval(type.getRequireApproval())
                 .idModule(employeeId)
                 .leaveId(leaveId)
+                .action(action)
+                .proposedData(proposedData)
+                .build();
+
+        return hrRequestRepository.save(request);
+    }
+
+    @Override
+    public HRRequest createForOvertime(Long overtimeId, Long employeeId, String action, String proposedData) {
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypes.OVERTIME)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Tipo de solicitud no encontrado: " + HRRequestTypes.OVERTIME));
+
+        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
+                ? "Pendiente de revisión"
+                : "Pendiente de aprobación";
+
+        Long statusId = employeeStatusRepository.findByName(initialStatusName)
+                .map(s -> s.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
+
+        HRRequest request = HRRequest.builder()
+                .requestTypeId(type.getId())
+                .statusId(statusId)
+                .requireApproval(type.getRequireApproval())
+                .idModule(employeeId)
+                .overtimeId(overtimeId)
                 .action(action)
                 .proposedData(proposedData)
                 .build();
@@ -495,9 +531,42 @@ public class HRRequestServiceImpl implements HRRequestService {
                 } else {
                     leaveValidator.validate(leave, null, leave.getId(), null);
                 }
+
+                if (!overtimeRepository.findApprovedByEmployeeIdAndDateBetween(
+                        leave.getEmployeeId(), leave.getStartDate(), leave.getEndDate()).isEmpty()) {
+                    throw new IllegalStateException(
+                            "No se puede aprobar el permiso: el empleado tiene horas extras aprobadas en el rango");
+                }
+
                 employeeLeaveRepository.save(leave);
                 attendanceLeaveSyncService.revertGeneratedForLeave(leave.getId());
                 attendanceLeaveSyncService.generateForApprovedLeave(leave);
+
+            } else if (HRRequestTypes.OVERTIME.equals(requestTypeName)) {
+                Overtime overtime = overtimeRepository.findById(hr.getOvertimeId())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Hora extra no encontrada: " + hr.getOvertimeId()));
+
+                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                    OvertimeUpdateRequest proposed;
+                    try {
+                        proposed = objectMapper.readValue(hr.getProposedData(), OvertimeUpdateRequest.class);
+                    } catch (Exception e) {
+                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+                        throw new RuntimeException("Error deserializando la actualización de la hora extra", e);
+                    }
+                    Overtime candidate = mergeOvertimeCandidate(overtime, proposed);
+                    java.math.BigDecimal hours = overtimeValidator.validate(candidate, overtime.getId());
+                    overtime.setOvertimeTypeId(candidate.getOvertimeTypeId());
+                    overtime.setStartTime(candidate.getStartTime());
+                    overtime.setEndTime(candidate.getEndTime());
+                    overtime.setHours(hours);
+                    overtime.setReason(candidate.getReason());
+                } else {
+                    overtimeValidator.validate(overtime, overtime.getId());
+                }
+                overtimeRepository.save(overtime);
+                attendanceOvertimeSyncService.recalculateAttendanceOvertime(overtime.getAttendanceId());
 
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
@@ -584,6 +653,14 @@ public class HRRequestServiceImpl implements HRRequestService {
     @Transactional
     public HRRequestResponse reject(Long id, RejectHRRequestRequest req) {
         HRRequest hr = findOrThrow(id);
+        String currentStatus = resolveStatusName(hr.getStatusId());
+        if ("Aprobado".equals(currentStatus)) {
+            throw new IllegalStateException("La solicitud ya está aprobada y no puede ser rechazada");
+        }
+        if ("Rechazado".equals(currentStatus)) {
+            throw new IllegalStateException("La solicitud ya está rechazada");
+        }
+
         Long rejectedStatusId = resolveStatusId("Rechazado");
 
         hr.setRejectionDetail(req.getRejectionDetail());
@@ -901,6 +978,27 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .endDate(endDate)
                 .halfDay(Boolean.TRUE.equals(halfDay))
                 .totalDays(LeaveCalculator.computeTotalDays(startDate, endDate, halfDay))
+                .reason(proposed.getReason() != null ? proposed.getReason() : current.getReason())
+                .createdAt(current.getCreatedAt())
+                .updatedAt(current.getUpdatedAt())
+                .build();
+    }
+
+    private Overtime mergeOvertimeCandidate(Overtime current, OvertimeUpdateRequest proposed) {
+        return Overtime.builder()
+                .id(current.getId())
+                .employeeId(current.getEmployeeId())
+                .contractId(current.getContractId())
+                .costCenter(current.getCostCenter())
+                .overtimeTypeId(proposed.getOvertimeTypeId() != null
+                        ? proposed.getOvertimeTypeId() : current.getOvertimeTypeId())
+                .attendanceId(current.getAttendanceId())
+                .date(current.getDate())
+                .startTime(proposed.getStartTime() != null
+                        ? proposed.getStartTime() : current.getStartTime())
+                .endTime(proposed.getEndTime() != null
+                        ? proposed.getEndTime() : current.getEndTime())
+                .hours(current.getHours())
                 .reason(proposed.getReason() != null ? proposed.getReason() : current.getReason())
                 .createdAt(current.getCreatedAt())
                 .updatedAt(current.getUpdatedAt())

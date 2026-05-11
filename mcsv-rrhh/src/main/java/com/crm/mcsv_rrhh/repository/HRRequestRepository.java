@@ -24,6 +24,7 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
     Optional<HRRequest> findTopByTransferIdOrderByCreatedAtDesc(Long transferId);
     Optional<HRRequest> findTopByAnnexIdOrderByCreatedAtDesc(Long annexId);
     Optional<HRRequest> findTopByLeaveIdOrderByCreatedAtDesc(Long leaveId);
+    Optional<HRRequest> findTopByOvertimeIdOrderByCreatedAtDesc(Long overtimeId);
 
     @Query("SELECT COUNT(DISTINCT h.settlementId) FROM HRRequest h " +
            "WHERE h.settlementId IS NOT NULL AND h.statusId = :statusId " +
@@ -34,6 +35,16 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
            "WHERE h.leaveId IS NOT NULL AND h.statusId = :statusId " +
            "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.leaveId = h.leaveId)")
     long countLeavesWithLatestStatusId(@Param("statusId") Long statusId);
+
+    @Query("SELECT COUNT(DISTINCT h.overtimeId) FROM HRRequest h " +
+           "WHERE h.overtimeId IS NOT NULL AND h.statusId = :statusId " +
+           "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.overtimeId = h.overtimeId)")
+    long countOvertimesWithLatestStatusId(@Param("statusId") Long statusId);
+
+    @Query("SELECT COUNT(DISTINCT h.overtimeId) FROM HRRequest h " +
+           "WHERE h.overtimeId IS NOT NULL AND h.statusId IN :statusIds " +
+           "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.overtimeId = h.overtimeId)")
+    long countOvertimesWithLatestStatusIdIn(@Param("statusIds") Collection<Long> statusIds);
 
     long countByIdModule(Long idModule);
     long countByStatusId(Long statusId);
