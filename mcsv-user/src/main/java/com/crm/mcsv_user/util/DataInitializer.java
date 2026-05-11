@@ -72,6 +72,9 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("LEAVE:READ",   "Ver y consultar permisos de empleado");
         createPermissionIfNotExists("LEAVE:UPDATE", "Modificar permisos de empleado");
         createPermissionIfNotExists("LEAVE:DELETE", "Eliminar documentos asociados a permisos");
+        createPermissionIfNotExists("OVERTIME:CREATE", "Crear horas extras");
+        createPermissionIfNotExists("OVERTIME:READ",   "Ver y consultar horas extras");
+        createPermissionIfNotExists("OVERTIME:UPDATE", "Modificar horas extras");
         createPermissionIfNotExists("CALENDAR:READ", "Ver calendario global RRHH");
         createPermissionIfNotExists("PROJECT_ASSIGNMENT:READ",   "Ver historial de asignaciones de empleados a centros de costo");
         createPermissionIfNotExists("ATTENDANCE:CREATE", "Crear asistencia diaria");

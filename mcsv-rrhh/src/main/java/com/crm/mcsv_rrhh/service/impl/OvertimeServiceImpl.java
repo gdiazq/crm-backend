@@ -5,6 +5,7 @@ import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.dto.OvertimeRequest;
 import com.crm.mcsv_rrhh.dto.OvertimeResponse;
+import com.crm.mcsv_rrhh.dto.OvertimeTypeResponse;
 import com.crm.mcsv_rrhh.dto.OvertimeUpdateRequest;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
@@ -127,6 +128,22 @@ public class OvertimeServiceImpl implements OvertimeService {
         hrRequestService.createForOvertime(current.getId(), current.getEmployeeId(), "UPDATE", proposedData);
 
         return toResponse(current);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OvertimeTypeResponse> listTypes() {
+        return overtimeTypeRepository.findByActiveTrue().stream()
+                .map(t -> OvertimeTypeResponse.builder()
+                        .id(t.getId())
+                        .name(t.getName())
+                        .description(t.getDescription())
+                        .surchargePercent(t.getSurchargePercent())
+                        .nightShift(t.getNightShift())
+                        .holiday(t.getHoliday())
+                        .active(t.getActive())
+                        .build())
+                .toList();
     }
 
     private long resolveCountByStatusName(String statusName) {
