@@ -32,8 +32,6 @@ public interface ContractService {
 
     ContractDetailResponse updateContract(Long id, UpdateContractRequest req, List<MultipartFile> files);
 
-    void deleteDocument(Long contractId, Long fileId, Long userId);
-
     byte[] exportCsv();
 
     BulkImportResult importFromCsv(MultipartFile file);

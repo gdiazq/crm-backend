@@ -62,16 +62,6 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
-    @DeleteMapping("/{id}/documents/{fileId}")
-    @Operation(summary = "Eliminar documento adjunto del contrato")
-    public ResponseEntity<Void> deleteDocument(
-            @PathVariable Long id,
-            @PathVariable Long fileId,
-            @RequestParam("userId") Long userId) {
-        contractService.deleteDocument(id, fileId, userId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/paged")
     @Operation(summary = "Listar contratos (paginado)")
     public ResponseEntity<PagedResponse<ContractResponse>> paged(

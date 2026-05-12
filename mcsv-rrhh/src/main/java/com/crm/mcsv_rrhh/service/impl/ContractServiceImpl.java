@@ -190,14 +190,6 @@ public class ContractServiceImpl implements ContractService {
 
     // ─── Documentos ───────────────────────────────────────────────────────────
 
-    @Override
-    public void deleteDocument(Long contractId, Long fileId, Long userId) {
-        if (!contractRepository.existsById(contractId)) {
-            throw new ResourceNotFoundException("Contrato no encontrado: " + contractId);
-        }
-        storageService.delete(fileId, userId);
-    }
-
     private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) return;
         for (MultipartFile file : files) {
