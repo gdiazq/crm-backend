@@ -2,8 +2,10 @@ package com.crm.mcsv_rrhh.util;
 
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.entity.Attendance;
+import com.crm.mcsv_rrhh.entity.AttendanceMark;
 import com.crm.mcsv_rrhh.entity.Overtime;
 import com.crm.mcsv_rrhh.entity.OvertimeType;
+import com.crm.mcsv_rrhh.repository.AttendanceMarkRepository;
 import com.crm.mcsv_rrhh.repository.AttendanceRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
 import com.crm.mcsv_rrhh.repository.OvertimeRepository;
@@ -22,6 +24,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OvertimeValidator {
 
+    private static final String CHECK_IN = "CHECK_IN";
+    private static final String CHECK_OUT = "CHECK_OUT";
+
     private static final Set<String> ACTIVE_STATUSES = Set.of(
             "Pendiente de revisión",
             "Pendiente de aprobación",
@@ -31,6 +36,7 @@ public class OvertimeValidator {
     private static final BigDecimal MAX_HOURS_PER_BLOCK = new BigDecimal("12.00");
 
     private final AttendanceRepository attendanceRepository;
+    private final AttendanceMarkRepository attendanceMarkRepository;
     private final OvertimeRepository overtimeRepository;
     private final OvertimeTypeRepository overtimeTypeRepository;
     private final EmployeeLeaveRepository employeeLeaveRepository;
@@ -41,16 +47,10 @@ public class OvertimeValidator {
                 .findByEmployeeIdAndDate(candidate.getEmployeeId(), candidate.getDate())
                 .orElseThrow(() -> new IllegalArgumentException("Debe existir asistencia del día"));
 
-        if (attendance.getCheckInTime() == null || attendance.getCheckOutTime() == null) {
-            throw new IllegalArgumentException(
-                    "La asistencia del día debe tener hora de entrada y salida registradas");
-        }
-
         candidate.setAttendanceId(attendance.getId());
 
         validateTimeRange(candidate.getStartTime(), candidate.getEndTime(), candidate.getDate());
-        validateOutsideShift(candidate.getStartTime(), candidate.getEndTime(),
-                attendance.getCheckInTime(), attendance.getCheckOutTime());
+        validateOutsideAttendanceMarks(candidate.getStartTime(), candidate.getEndTime(), attendance.getId());
 
         BigDecimal hours = computeHours(candidate.getStartTime(), candidate.getEndTime());
         if (hours.compareTo(MAX_HOURS_PER_BLOCK) > 0) {
@@ -102,14 +102,27 @@ public class OvertimeValidator {
         }
     }
 
-    private void validateOutsideShift(LocalDateTime start, LocalDateTime end,
-                                      LocalDateTime checkIn, LocalDateTime checkOut) {
-        boolean beforeShift = !end.isAfter(checkIn);
-        boolean afterShift  = !start.isBefore(checkOut);
-        if (!beforeShift && !afterShift) {
+    private void validateOutsideAttendanceMarks(LocalDateTime start, LocalDateTime end, Long attendanceId) {
+        LocalDateTime checkIn = attendanceMarkRepository
+                .findFirstByAttendanceIdAndMarkTypeOrderByMarkTimeAsc(attendanceId, CHECK_IN)
+                .map(AttendanceMark::getMarkTime)
+                .orElse(null);
+        LocalDateTime checkOut = attendanceMarkRepository
+                .findFirstByAttendanceIdAndMarkTypeOrderByMarkTimeDesc(attendanceId, CHECK_OUT)
+                .map(AttendanceMark::getMarkTime)
+                .orElse(null);
+
+        boolean beforeEntry = checkIn != null && !end.isAfter(checkIn);
+        boolean afterExit = checkOut != null && !start.isBefore(checkOut);
+
+        if (beforeEntry || afterExit) return;
+
+        if (checkIn == null && checkOut == null) {
             throw new IllegalArgumentException(
-                    "El bloque debe estar antes de la entrada o después de la salida del turno");
+                    "Debe existir un marcaje de entrada o salida para registrar horas extras");
         }
+        throw new IllegalArgumentException(
+                "El bloque debe estar completamente antes del marcaje de entrada o después del marcaje de salida");
     }
 
     private BigDecimal computeHours(LocalDateTime start, LocalDateTime end) {
