@@ -164,15 +164,6 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     }
 
     @Override
-    @Transactional
-    public void deleteDocument(Long leaveId, Long fileId, Long userId) {
-        if (!repository.existsById(leaveId)) {
-            throw new ResourceNotFoundException("Permiso no encontrado: " + leaveId);
-        }
-        storageService.delete(fileId, userId);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public byte[] exportCsv() {
         StringBuilder csv = new StringBuilder();

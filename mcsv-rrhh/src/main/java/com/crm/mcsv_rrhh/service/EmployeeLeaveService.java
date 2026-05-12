@@ -21,7 +21,6 @@ public interface EmployeeLeaveService {
     EmployeeLeaveResponse getById(Long id);
     EmployeeLeaveResponse create(EmployeeLeaveRequest request, List<MultipartFile> files);
     EmployeeLeaveResponse update(UpdateEmployeeLeaveRequest request, List<MultipartFile> files);
-    void deleteDocument(Long leaveId, Long fileId, Long userId);
     byte[] exportCsv();
     List<EmployeeLeaveResponse> findByEmployee(Long employeeId);
 }

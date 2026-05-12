@@ -17,7 +17,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,16 +92,6 @@ public class EmployeeLeaveController {
             @RequestPart("data") @Valid UpdateEmployeeLeaveRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         return ResponseEntity.ok(service.update(request, files));
-    }
-
-    @DeleteMapping("/{id}/documents/{fileId}")
-    @Operation(summary = "Eliminar documento adjunto del permiso")
-    public ResponseEntity<Void> deleteDocument(
-            @PathVariable Long id,
-            @PathVariable Long fileId,
-            @RequestParam("userId") Long userId) {
-        service.deleteDocument(id, fileId, userId);
-        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/export/csv")
