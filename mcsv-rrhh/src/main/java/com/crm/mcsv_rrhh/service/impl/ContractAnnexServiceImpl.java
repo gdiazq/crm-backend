@@ -147,14 +147,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     }
 
     @Override
-    public void deleteDocument(Long annexId, Long fileId, Long userId) {
-        if (!repository.existsById(annexId)) {
-            throw new ResourceNotFoundException("Anexo no encontrado: " + annexId);
-        }
-        storageService.delete(fileId, userId);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public byte[] exportCsv() {
         StringBuilder csv = new StringBuilder();

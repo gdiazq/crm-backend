@@ -20,7 +20,6 @@ public interface ContractAnnexService {
     ContractAnnexResponse getById(Long id);
     ContractAnnexResponse create(ContractAnnexRequest request, List<MultipartFile> files);
     ContractAnnexResponse update(UpdateContractAnnexRequest request, List<MultipartFile> files);
-    void deleteDocument(Long annexId, Long fileId, Long userId);
     byte[] exportCsv();
     List<ContractAnnexResponse> findByContract(Long contractId);
 }

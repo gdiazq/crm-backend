@@ -84,16 +84,6 @@ public class ContractAnnexController {
         return ResponseEntity.ok(service.update(request, files));
     }
 
-    @DeleteMapping("/{id}/documents/{fileId}")
-    @Operation(summary = "Eliminar documento adjunto del anexo")
-    public ResponseEntity<Void> deleteDocument(
-            @PathVariable Long id,
-            @PathVariable Long fileId,
-            @RequestParam("userId") Long userId) {
-        service.deleteDocument(id, fileId, userId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/export/csv")
     @Operation(summary = "Exportar anexos a CSV")
     public ResponseEntity<byte[]> exportCsv() {
