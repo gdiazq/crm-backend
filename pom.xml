@@ -18,6 +18,7 @@
         <module>mcsv-auth</module>
         <module>mcsv-gateway</module>
         <module>mcsv-project</module>
+        <module>mcsv-recruitment</module>
         <module>aws-serverless</module>
     </modules>
 </project>

@@ -21,7 +21,8 @@ public class FallbackController {
             "mcsv-notification", "Notification service is currently unavailable. Please try again later.",
             "mcsv-storage", "Storage service is currently unavailable. Please try again later.",
             "mcsv-rrhh", "RRHH service is currently unavailable. Please try again later.",
-            "mcsv-project", "Project service is currently unavailable. Please try again later."
+            "mcsv-project", "Project service is currently unavailable. Please try again later.",
+            "mcsv-recruitment", "Recruitment service is currently unavailable. Please try again later."
     );
 
     @RequestMapping(value = "/{service}", method = {RequestMethod.GET, RequestMethod.POST,

@@ -1,0 +1,70 @@
+server:
+    port: 9098
+
+spring:
+    application:
+        name: mcsv-recruitment
+
+    config:
+        import: "configserver:"
+
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 10MB
+            max-request-size: 55MB
+
+    cloud:
+        config:
+            uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+
+info:
+  app:
+    name: recruitment Microservicio Server
+    description: Microservicio para reclutamiento
+    version: 1.0.0
+
+# Configuración para Documentation swagger
+openapi:
+    service:
+        title: recruitment-service doc
+        version: 1.0.0
+        url: ${URLAPI:http://localhost:9090}/v1/api/recruitment
+
+feign:
+  circuitbreaker:
+    enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      mcsv-user:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+    instances:
+      mcsv-user:
+        baseConfig: default
+
+aws:
+    s3:
+        enabled: true
+        bucket: ${AWS_S3_BUCKET:crm-uploads}
+        region: ${AWS_REGION:us-east-1}
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
+
+springdoc:
+  api-docs:
+    path: /api/api-docs/recruitment
+  swagger-ui:
+    path: /api-docs/swagger-ui.html
