@@ -148,14 +148,6 @@ public class TransferServiceImpl implements TransferService {
     }
 
     @Override
-    public void deleteDocument(Long transferId, Long fileId, Long userId) {
-        if (!repository.existsById(transferId)) {
-            throw new ResourceNotFoundException("Traspaso no encontrado: " + transferId);
-        }
-        storageService.delete(fileId, userId);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public byte[] exportCsv() {
         StringBuilder csv = new StringBuilder();

@@ -82,16 +82,6 @@ public class TransferController {
         return ResponseEntity.ok(service.update(request, files));
     }
 
-    @DeleteMapping("/{id}/documents/{fileId}")
-    @Operation(summary = "Eliminar documento adjunto del traspaso")
-    public ResponseEntity<Void> deleteDocument(
-            @PathVariable Long id,
-            @PathVariable Long fileId,
-            @RequestParam("userId") Long userId) {
-        service.deleteDocument(id, fileId, userId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/select/to-cost-centers")
     @Operation(summary = "Centros de costo destino usados en traspasos (para select)")
     public ResponseEntity<List<ProjectNameDTO>> toCostCenterOptions() {
