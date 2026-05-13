@@ -15,6 +15,7 @@ import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
@@ -76,7 +77,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
-        Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElse(null);
 
@@ -190,7 +191,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId, Integer costCenter,
                                                    java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                                    Pageable pageable) {
-        Long rejectedStatusId = employeeStatusRepository.findByName("Rechazado")
+        Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
         Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, costCenter, createdFrom, createdTo);
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
@@ -203,7 +204,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Map<String, Long> getEmployeeStats(Integer costCenter) {
-        Long rejectedStatusId = employeeStatusRepository.findByName("Rechazado")
+        Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
         Specification<Employee> baseSpec = EmployeeSpecification.withFilters(
                 null, null, rejectedStatusId, null, costCenter, null, null);
@@ -229,7 +230,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<EmployeeService.EmployeeSelectItem> getEmployeesWithoutContract() {
-        Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
+        Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
 
@@ -251,7 +252,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<EmployeeService.EmployeeSelectItem> getEmployeesWithContract() {
-        Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
+        Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
 
@@ -272,7 +273,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<EmployeeService.AttendanceEmployeeSelectItem> getEmployeesForAttendance() {
-        Long approvedStatusId = employeeStatusRepository.findByName("Aprobado")
+        Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
 
