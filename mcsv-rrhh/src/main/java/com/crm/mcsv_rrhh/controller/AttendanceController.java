@@ -69,12 +69,6 @@ public class AttendanceController {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    @GetMapping("/select/by-employee/{employeeId}")
-    @Operation(summary = "Listar asistencia por empleado")
-    public ResponseEntity<List<AttendanceResponse>> selectByEmployee(@PathVariable Long employeeId) {
-        return ResponseEntity.ok(service.findByEmployee(employeeId));
-    }
-
     @GetMapping("/select/by-cost-center/{costCenter}")
     @Operation(summary = "Listar asistencia por centro de costo")
     public ResponseEntity<List<AttendanceResponse>> selectByCostCenter(@PathVariable Integer costCenter) {

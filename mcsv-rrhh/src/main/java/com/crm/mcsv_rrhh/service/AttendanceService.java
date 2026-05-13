@@ -25,8 +25,6 @@ public interface AttendanceService {
 
     AttendanceResponse getById(Long id);
 
-    List<AttendanceResponse> findByEmployee(Long employeeId);
-
     List<AttendanceResponse> findByCostCenter(Integer costCenter);
 
     byte[] exportCsv(String search,

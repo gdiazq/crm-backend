@@ -29,7 +29,6 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     private final AttendanceRepository repository;
     private final AttendanceStatusRepository statusRepository;
-    private final EmployeeRepository employeeRepository;
     private final ProjectClient projectClient;
 
     @Override
@@ -66,13 +65,6 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Transactional(readOnly = true)
     public AttendanceResponse getById(Long id) {
         return toResponse(findOrThrow(id));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AttendanceResponse> findByEmployee(Long employeeId) {
-        validateEmployee(employeeId);
-        return repository.findByEmployeeIdOrderByDateDesc(employeeId).stream().map(this::toResponse).toList();
     }
 
     @Override
@@ -118,11 +110,6 @@ public class AttendanceServiceImpl implements AttendanceService {
     private Attendance findOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Asistencia no encontrada: " + id));
-    }
-
-    private Employee validateEmployee(Long employeeId) {
-        return employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + employeeId));
     }
 
     private void validateCostCenter(Integer costCenter) {
