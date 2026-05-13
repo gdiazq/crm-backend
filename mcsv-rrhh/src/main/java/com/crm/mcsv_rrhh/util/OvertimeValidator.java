@@ -13,6 +13,7 @@ import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
 import com.crm.mcsv_rrhh.repository.OvertimeRepository;
 import com.crm.mcsv_rrhh.repository.OvertimeTypeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -26,7 +27,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OvertimeValidator {
 
-    private static final BigDecimal MAX_HOURS_PER_BLOCK = new BigDecimal("12.00");
+    @Value("${overtime.max-hours-per-block:12.00}")
+    private BigDecimal maxHoursPerBlock;
 
     private final AttendanceRepository attendanceRepository;
     private final AttendanceMarkRepository attendanceMarkRepository;
@@ -46,9 +48,9 @@ public class OvertimeValidator {
         validateOutsideAttendanceMarks(candidate.getStartTime(), candidate.getEndTime(), attendance.getId());
 
         BigDecimal hours = computeHours(candidate.getStartTime(), candidate.getEndTime());
-        if (hours.compareTo(MAX_HOURS_PER_BLOCK) > 0) {
+        if (hours.compareTo(maxHoursPerBlock) > 0) {
             throw new IllegalArgumentException(
-                    "Un bloque de horas extras no puede superar las " + MAX_HOURS_PER_BLOCK + " horas");
+                    "Un bloque de horas extras no puede superar las " + maxHoursPerBlock + " horas");
         }
 
         validateNoOverlapWithActiveBlocks(candidate, excludeOvertimeId);

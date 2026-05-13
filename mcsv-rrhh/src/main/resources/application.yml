@@ -63,6 +63,9 @@ aws:
         access-key: ${AWS_ACCESS_KEY:}
         secret-key: ${AWS_SECRET_KEY:}
 
+overtime:
+    max-hours-per-block: ${OVERTIME_MAX_HOURS_PER_BLOCK:12.00}
+
 springdoc:
   api-docs:
     path: /api/api-docs/rrhh

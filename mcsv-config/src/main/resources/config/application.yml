@@ -1,4 +1,7 @@
 spring:
+    devtools:
+        restart:
+            enabled: ${DEVTOOLS_RESTART_ENABLED:false}
     jpa:
         generate-ddl: ${GENERATE-DDL:false}
         show-sql: ${SHOW-SQL:false}
