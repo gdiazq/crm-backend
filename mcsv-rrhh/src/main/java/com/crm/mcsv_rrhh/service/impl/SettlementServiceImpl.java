@@ -213,7 +213,7 @@ public class SettlementServiceImpl implements SettlementService {
     }
 
     private long resolveApprovedCount() {
-        return employeeStatusRepository.findByName("Aprobado")
+        return employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(s -> hrRequestRepository.countSettlementsWithLatestStatusId(s.getId()))
                 .orElse(0L);
     }

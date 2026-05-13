@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,8 +21,11 @@ public class EmployeeStatusController {
 
     private final EmployeeStatusRepository employeeStatusRepository;
 
-    private static final Set<String> APPROVAL_STATUSES = Set.of(
-            "Pendiente de revisión", "Pendiente de aprobación", "Aprobado", "Rechazado"
+    private static final Set<String> APPROVAL_STATUSES = RequestStatus.displayNamesOf(
+            RequestStatus.PENDING_REVIEW,
+            RequestStatus.PENDING_APPROVAL,
+            RequestStatus.APPROVED,
+            RequestStatus.REJECTED
     );
 
     @GetMapping

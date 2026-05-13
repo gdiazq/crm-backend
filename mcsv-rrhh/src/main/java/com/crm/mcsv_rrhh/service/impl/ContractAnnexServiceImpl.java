@@ -13,6 +13,7 @@ import com.crm.mcsv_rrhh.entity.ContractAnnexType;
 import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.ContractAnnexService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
@@ -270,7 +271,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     }
 
     private long resolveApprovedCount() {
-        return employeeStatusRepository.findByName("Aprobado")
+        return employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(s -> hrRequestRepository.findAll().stream()
                         .filter(r -> r.getAnnexId() != null && s.getId().equals(r.getStatusId()))
                         .map(HRRequest::getAnnexId)

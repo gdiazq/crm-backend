@@ -11,6 +11,7 @@ import com.crm.mcsv_rrhh.dto.TransferResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.entity.Transfer;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.HRRequestService;
@@ -274,7 +275,7 @@ public class TransferServiceImpl implements TransferService {
     }
 
     private long resolveApprovedCount() {
-        return employeeStatusRepository.findByName("Aprobado")
+        return employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(s -> hrRequestRepository.findAll().stream()
                         .filter(r -> r.getTransferId() != null && s.getId().equals(r.getStatusId()))
                         .map(HRRequest::getTransferId)
