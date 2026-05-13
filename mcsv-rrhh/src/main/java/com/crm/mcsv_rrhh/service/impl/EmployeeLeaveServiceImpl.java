@@ -13,6 +13,7 @@ import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.EmployeeLeave;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.LeaveType;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.repository.ContractRepository;
 import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
@@ -323,7 +324,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     }
 
     private long resolveApprovedCount() {
-        return employeeStatusRepository.findByName("Aprobado")
+        return employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(s -> hrRequestRepository.countLeavesWithLatestStatusId(s.getId()))
                 .orElse(0L);
     }

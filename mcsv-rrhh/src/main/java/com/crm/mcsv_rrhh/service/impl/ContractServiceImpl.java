@@ -66,7 +66,7 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     public ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files) {
-        Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
 
@@ -354,7 +354,7 @@ public class ContractServiceImpl implements ContractService {
         int total = 0;
         int success = 0;
 
-        Long pendingStatusId = employeeStatusRepository.findByName("Pendiente de revisión")
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
         Long suspendedContractStatusId = contractStatusRepository.findByName("Suspendido")
                 .map(ContractStatus::getId).orElse(null);

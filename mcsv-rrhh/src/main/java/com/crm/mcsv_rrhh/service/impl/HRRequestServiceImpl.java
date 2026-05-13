@@ -27,6 +27,7 @@ import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.entity.Settlement;
 import com.crm.mcsv_rrhh.repository.SettlementRepository;
 import com.crm.common.exception.ResourceNotFoundException;
@@ -100,8 +101,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: " + requestTypeName));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -126,8 +127,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Contrato"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -152,8 +153,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Finiquito"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -178,8 +179,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Traspaso"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -204,8 +205,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Anexo"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -230,8 +231,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Permiso"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -257,8 +258,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                         "Tipo de solicitud no encontrado: " + HRRequestTypes.OVERTIME));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? "Pendiente de revisión"
-                : "Pendiente de aprobación";
+                ? RequestStatus.PENDING_REVIEW.getDisplayName()
+                : RequestStatus.PENDING_APPROVAL.getDisplayName();
 
         Long statusId = employeeStatusRepository.findByName(initialStatusName)
                 .map(s -> s.getId())
@@ -367,10 +368,10 @@ public class HRRequestServiceImpl implements HRRequestService {
         HRRequest hr = findOrThrow(id);
         String currentStatus = resolveStatusName(hr.getStatusId());
 
-        if ("Pendiente de revisión".equals(currentStatus)) {
+        if (RequestStatus.PENDING_REVIEW.getDisplayName().equals(currentStatus)) {
             hr.setApproverId(approverId);
             hr.setApprovalDate(LocalDateTime.now());
-            hr.setStatusId(resolveStatusId("Pendiente de aprobación"));
+            hr.setStatusId(resolveStatusId(RequestStatus.PENDING_APPROVAL.getDisplayName()));
             hrRequestRepository.save(hr);
 
             String reqTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
@@ -378,8 +379,8 @@ public class HRRequestServiceImpl implements HRRequestService {
 
             return toResponse(hr);
 
-        } else if ("Pendiente de aprobación".equals(currentStatus)) {
-            Long approvedStatusId = resolveStatusId("Aprobado");
+        } else if (RequestStatus.PENDING_APPROVAL.getDisplayName().equals(currentStatus)) {
+            Long approvedStatusId = resolveStatusId(RequestStatus.APPROVED.getDisplayName());
 
             String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
                     .map(HRRequestType::getName).orElse(null);
@@ -654,14 +655,14 @@ public class HRRequestServiceImpl implements HRRequestService {
     public HRRequestResponse reject(Long id, RejectHRRequestRequest req) {
         HRRequest hr = findOrThrow(id);
         String currentStatus = resolveStatusName(hr.getStatusId());
-        if ("Aprobado".equals(currentStatus)) {
+        if (RequestStatus.APPROVED.getDisplayName().equals(currentStatus)) {
             throw new IllegalStateException("La solicitud ya está aprobada y no puede ser rechazada");
         }
-        if ("Rechazado".equals(currentStatus)) {
+        if (RequestStatus.REJECTED.getDisplayName().equals(currentStatus)) {
             throw new IllegalStateException("La solicitud ya está rechazada");
         }
 
-        Long rejectedStatusId = resolveStatusId("Rechazado");
+        Long rejectedStatusId = resolveStatusId(RequestStatus.REJECTED.getDisplayName());
 
         hr.setRejectionDetail(req.getRejectionDetail());
         hr.setStatusId(rejectedStatusId);
@@ -721,14 +722,14 @@ public class HRRequestServiceImpl implements HRRequestService {
     @Override
     public Map<String, Long> getStats(Long idModule) {
         Map<String, Long> statusIdsByName = employeeStatusRepository
-                .findAllByNameIn(List.of("Pendiente de revisión", "Pendiente de aprobación", "Aprobado"))
+                .findAllByNameIn(RequestStatus.ACTIVE_DISPLAY_NAMES)
                 .stream().collect(Collectors.toMap(s -> s.getName(), s -> s.getId()));
 
         List<Long> pendingIds = List.of(
-                statusIdsByName.get("Pendiente de revisión"),
-                statusIdsByName.get("Pendiente de aprobación")
+                statusIdsByName.get(RequestStatus.PENDING_REVIEW.getDisplayName()),
+                statusIdsByName.get(RequestStatus.PENDING_APPROVAL.getDisplayName())
         );
-        Long approvedId = statusIdsByName.get("Aprobado");
+        Long approvedId = statusIdsByName.get(RequestStatus.APPROVED.getDisplayName());
 
         long total   = idModule != null ? hrRequestRepository.countByIdModule(idModule)                              : hrRequestRepository.count();
         long pending = idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)     : hrRequestRepository.countByStatusIdIn(pendingIds);
