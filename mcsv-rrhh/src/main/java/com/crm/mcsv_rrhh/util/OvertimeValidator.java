@@ -21,17 +21,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 public class OvertimeValidator {
-
-    private static final Set<String> ACTIVE_STATUSES = RequestStatus.displayNamesOf(
-            RequestStatus.PENDING_REVIEW,
-            RequestStatus.PENDING_APPROVAL,
-            RequestStatus.APPROVED
-    );
 
     private static final BigDecimal MAX_HOURS_PER_BLOCK = new BigDecimal("12.00");
 
@@ -114,7 +107,7 @@ public class OvertimeValidator {
         for (Overtime other : sameDay) {
             if (excludeOvertimeId != null && excludeOvertimeId.equals(other.getId())) continue;
             String status = other.getCurrentStatusName();
-            if (status == null || !ACTIVE_STATUSES.contains(status)) continue;
+            if (status == null || !RequestStatus.ACTIVE_DISPLAY_NAMES.contains(status)) continue;
             if (overlaps(candidate.getStartTime(), candidate.getEndTime(),
                          other.getStartTime(), other.getEndTime())) {
                 throw new IllegalArgumentException(

@@ -3,6 +3,7 @@ package com.crm.mcsv_rrhh.util;
 import com.crm.common.service.StorageService;
 import com.crm.mcsv_rrhh.entity.EmployeeLeave;
 import com.crm.mcsv_rrhh.entity.LeaveType;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveSpecification;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
@@ -60,7 +61,7 @@ public class LeaveValidator {
 
     private void validateOverlap(Long employeeId, LocalDate startDate, LocalDate endDate, Long excludeLeaveId) {
         List<Long> activeStatusIds = employeeStatusRepository
-                .findAllByNameIn(List.of("Pendiente de revisión", "Pendiente de aprobación", "Aprobado"))
+                .findAllByNameIn(RequestStatus.ACTIVE_DISPLAY_NAMES)
                 .stream()
                 .map(s -> s.getId())
                 .toList();
