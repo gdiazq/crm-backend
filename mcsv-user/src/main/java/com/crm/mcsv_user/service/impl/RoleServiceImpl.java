@@ -85,6 +85,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public RoleDTO createRole(CreateRoleRequest request) {
+        return createRoleInternal(request);
+    }
+
+    private RoleDTO createRoleInternal(CreateRoleRequest request) {
         log.info("Creating new role with name: {}", request.getName());
 
         if (roleRepository.existsByName(request.getName())) {
@@ -303,7 +307,7 @@ public class RoleServiceImpl implements RoleService {
                     .name(name)
                     .description(description)
                     .build();
-            createRole(request);
+            createRoleInternal(request);
         });
     }
 
@@ -313,20 +317,13 @@ public class RoleServiceImpl implements RoleService {
         csv.append("ID,Nombre,Descripción,Habilitado,Permisos\n");
         roleRepository.findAll().forEach(r -> {
             String permissions = r.getPermissions().stream()
-                    .map(p -> p.getName()).reduce("", (a, b) -> a.isEmpty() ? b : a + "|" + b);
+                    .map(Permission::getName).reduce("", (a, b) -> a.isEmpty() ? b : a + "|" + b);
             csv.append(r.getId()).append(",")
-               .append(escape(r.getName())).append(",")
-               .append(escape(r.getDescription())).append(",")
+               .append(CsvUtil.escape(r.getName())).append(",")
+               .append(CsvUtil.escape(r.getDescription())).append(",")
                .append(r.getEnabled()).append(",")
-               .append(escape(permissions)).append("\n");
+               .append(CsvUtil.escape(permissions)).append("\n");
         });
         return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
-    }
-
-    private String escape(String value) {
-        if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        return value;
     }
 }
