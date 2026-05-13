@@ -89,8 +89,9 @@ public class OvertimeServiceImpl implements OvertimeService {
                 .reason(request.getReason())
                 .build();
 
-        BigDecimal hours = overtimeValidator.validate(candidate, null);
-        candidate.setHours(hours);
+        OvertimeValidator.Result result = overtimeValidator.validate(candidate, null);
+        candidate.setAttendanceId(result.attendanceId());
+        candidate.setHours(result.hours());
 
         Overtime saved = overtimeRepository.save(candidate);
         hrRequestService.createForOvertime(saved.getId(), saved.getEmployeeId(), "CREATE", null);

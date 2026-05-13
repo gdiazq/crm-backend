@@ -3,8 +3,10 @@ package com.crm.mcsv_rrhh.util;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.entity.Attendance;
 import com.crm.mcsv_rrhh.entity.AttendanceMark;
+import com.crm.mcsv_rrhh.entity.AttendanceMarkType;
 import com.crm.mcsv_rrhh.entity.Overtime;
 import com.crm.mcsv_rrhh.entity.OvertimeType;
+import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.repository.AttendanceMarkRepository;
 import com.crm.mcsv_rrhh.repository.AttendanceRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -24,13 +27,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OvertimeValidator {
 
-    private static final String CHECK_IN = "CHECK_IN";
-    private static final String CHECK_OUT = "CHECK_OUT";
-
-    private static final Set<String> ACTIVE_STATUSES = Set.of(
-            "Pendiente de revisión",
-            "Pendiente de aprobación",
-            "Aprobado"
+    private static final Set<String> ACTIVE_STATUSES = RequestStatus.displayNamesOf(
+            RequestStatus.PENDING_REVIEW,
+            RequestStatus.PENDING_APPROVAL,
+            RequestStatus.APPROVED
     );
 
     private static final BigDecimal MAX_HOURS_PER_BLOCK = new BigDecimal("12.00");
@@ -42,12 +42,12 @@ public class OvertimeValidator {
     private final EmployeeLeaveRepository employeeLeaveRepository;
     private final ProjectClient projectClient;
 
-    public BigDecimal validate(Overtime candidate, Long excludeOvertimeId) {
+    public record Result(Long attendanceId, BigDecimal hours) {}
+
+    public Result validate(Overtime candidate, Long excludeOvertimeId) {
         Attendance attendance = attendanceRepository
                 .findByEmployeeIdAndDate(candidate.getEmployeeId(), candidate.getDate())
                 .orElseThrow(() -> new IllegalArgumentException("Debe existir asistencia del día"));
-
-        candidate.setAttendanceId(attendance.getId());
 
         validateTimeRange(candidate.getStartTime(), candidate.getEndTime(), candidate.getDate());
         validateOutsideAttendanceMarks(candidate.getStartTime(), candidate.getEndTime(), attendance.getId());
@@ -59,40 +59,14 @@ public class OvertimeValidator {
         }
 
         validateNoOverlapWithActiveBlocks(candidate, excludeOvertimeId);
+        validateOvertimeType(candidate.getOvertimeTypeId());
+        validateProject(candidate.getCostCenter());
+        validateNoApprovedLeave(candidate.getEmployeeId(), candidate.getDate());
 
-        OvertimeType type = overtimeTypeRepository.findById(candidate.getOvertimeTypeId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Tipo de hora extra no encontrado: " + candidate.getOvertimeTypeId()));
-        if (!Boolean.TRUE.equals(type.getActive())) {
-            throw new IllegalArgumentException("El tipo de hora extra está inactivo");
-        }
-
-        if (candidate.getCostCenter() == null) {
-            throw new IllegalArgumentException(
-                    "El empleado no tiene centro de costo asignado");
-        }
-        try {
-            ProjectClient.ProjectNameDTO project = projectClient.getByCostCenter(candidate.getCostCenter());
-            if (project == null || project.getId() == null) {
-                throw new IllegalArgumentException(
-                        "El centro de costo del empleado no corresponde a un proyecto válido");
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "No fue posible validar el proyecto del empleado: " + e.getMessage());
-        }
-
-        employeeLeaveRepository
-                .findApprovedLeaveIdCoveringDate(candidate.getEmployeeId(), candidate.getDate())
-                .ifPresent(id -> {
-                    throw new IllegalArgumentException(
-                            "El empleado tiene un permiso aprobado ese día");
-                });
-
-        return hours;
+        return new Result(attendance.getId(), hours);
     }
 
-    private void validateTimeRange(LocalDateTime start, LocalDateTime end, java.time.LocalDate date) {
+    private void validateTimeRange(LocalDateTime start, LocalDateTime end, LocalDate date) {
         if (!start.isBefore(end)) {
             throw new IllegalArgumentException("La hora de inicio debe ser anterior a la hora de término");
         }
@@ -104,23 +78,23 @@ public class OvertimeValidator {
 
     private void validateOutsideAttendanceMarks(LocalDateTime start, LocalDateTime end, Long attendanceId) {
         LocalDateTime checkIn = attendanceMarkRepository
-                .findFirstByAttendanceIdAndMarkTypeOrderByMarkTimeAsc(attendanceId, CHECK_IN)
+                .findFirstByAttendanceIdAndMarkTypeOrderByMarkTimeAsc(attendanceId, AttendanceMarkType.CHECK_IN.name())
                 .map(AttendanceMark::getMarkTime)
                 .orElse(null);
         LocalDateTime checkOut = attendanceMarkRepository
-                .findFirstByAttendanceIdAndMarkTypeOrderByMarkTimeDesc(attendanceId, CHECK_OUT)
+                .findFirstByAttendanceIdAndMarkTypeOrderByMarkTimeDesc(attendanceId, AttendanceMarkType.CHECK_OUT.name())
                 .map(AttendanceMark::getMarkTime)
                 .orElse(null);
-
-        boolean beforeEntry = checkIn != null && !end.isAfter(checkIn);
-        boolean afterExit = checkOut != null && !start.isBefore(checkOut);
-
-        if (beforeEntry || afterExit) return;
 
         if (checkIn == null && checkOut == null) {
             throw new IllegalArgumentException(
                     "Debe existir un marcaje de entrada o salida para registrar horas extras");
         }
+
+        boolean beforeEntry = checkIn != null && !end.isAfter(checkIn);
+        boolean afterExit = checkOut != null && !start.isBefore(checkOut);
+        if (beforeEntry || afterExit) return;
+
         throw new IllegalArgumentException(
                 "El bloque debe estar completamente antes del marcaje de entrada o después del marcaje de salida");
     }
@@ -152,5 +126,33 @@ public class OvertimeValidator {
     private boolean overlaps(LocalDateTime aStart, LocalDateTime aEnd,
                              LocalDateTime bStart, LocalDateTime bEnd) {
         return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+    }
+
+    private void validateOvertimeType(Long overtimeTypeId) {
+        OvertimeType type = overtimeTypeRepository.findById(overtimeTypeId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Tipo de hora extra no encontrado: " + overtimeTypeId));
+        if (!Boolean.TRUE.equals(type.getActive())) {
+            throw new IllegalArgumentException("El tipo de hora extra está inactivo");
+        }
+    }
+
+    private void validateProject(Integer costCenter) {
+        if (costCenter == null) {
+            throw new IllegalArgumentException("El empleado no tiene centro de costo asignado");
+        }
+        ProjectClient.ProjectNameDTO project = projectClient.getByCostCenter(costCenter);
+        if (project == null || project.getId() == null) {
+            throw new IllegalArgumentException(
+                    "El centro de costo del empleado no corresponde a un proyecto válido");
+        }
+    }
+
+    private void validateNoApprovedLeave(Long employeeId, LocalDate date) {
+        employeeLeaveRepository
+                .findApprovedLeaveIdCoveringDate(employeeId, date)
+                .ifPresent(id -> {
+                    throw new IllegalArgumentException("El empleado tiene un permiso aprobado ese día");
+                });
     }
 }

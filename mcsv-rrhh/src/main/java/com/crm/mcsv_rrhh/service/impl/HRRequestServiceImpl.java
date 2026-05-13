@@ -556,11 +556,11 @@ public class HRRequestServiceImpl implements HRRequestService {
                         throw new RuntimeException("Error deserializando la actualización de la hora extra", e);
                     }
                     Overtime candidate = mergeOvertimeCandidate(overtime, proposed);
-                    java.math.BigDecimal hours = overtimeValidator.validate(candidate, overtime.getId());
+                    OvertimeValidator.Result result = overtimeValidator.validate(candidate, overtime.getId());
                     overtime.setOvertimeTypeId(candidate.getOvertimeTypeId());
                     overtime.setStartTime(candidate.getStartTime());
                     overtime.setEndTime(candidate.getEndTime());
-                    overtime.setHours(hours);
+                    overtime.setHours(result.hours());
                     overtime.setReason(candidate.getReason());
                 } else {
                     overtimeValidator.validate(overtime, overtime.getId());
