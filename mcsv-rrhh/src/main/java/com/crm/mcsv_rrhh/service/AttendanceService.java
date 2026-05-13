@@ -5,7 +5,6 @@ import com.crm.mcsv_rrhh.dto.AttendanceResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public interface AttendanceService {
 
@@ -24,8 +23,6 @@ public interface AttendanceService {
                                            String sortDir);
 
     AttendanceResponse getById(Long id);
-
-    List<AttendanceResponse> findByCostCenter(Integer costCenter);
 
     byte[] exportCsv(String search,
                      Long employeeId,

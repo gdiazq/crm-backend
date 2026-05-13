@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -67,12 +66,6 @@ public class AttendanceController {
     @Operation(summary = "Obtener asistencia por ID")
     public ResponseEntity<AttendanceResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
-    }
-
-    @GetMapping("/select/by-cost-center/{costCenter}")
-    @Operation(summary = "Listar asistencia por centro de costo")
-    public ResponseEntity<List<AttendanceResponse>> selectByCostCenter(@PathVariable Integer costCenter) {
-        return ResponseEntity.ok(service.findByCostCenter(costCenter));
     }
 
     @GetMapping("/export/csv")

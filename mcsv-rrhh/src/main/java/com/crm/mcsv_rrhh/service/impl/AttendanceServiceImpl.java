@@ -69,13 +69,6 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AttendanceResponse> findByCostCenter(Integer costCenter) {
-        validateCostCenter(costCenter);
-        return repository.findByCostCenterOrderByDateDesc(costCenter).stream().map(this::toResponse).toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public byte[] exportCsv(String search,
                             Long employeeId,
                             Integer costCenter,
@@ -110,22 +103,6 @@ public class AttendanceServiceImpl implements AttendanceService {
     private Attendance findOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Asistencia no encontrada: " + id));
-    }
-
-    private void validateCostCenter(Integer costCenter) {
-        if (costCenter == null || costCenter <= 0) {
-            throw new IllegalArgumentException("El centro de costo debe ser mayor a 0");
-        }
-        try {
-            ProjectClient.ProjectNameDTO project = projectClient.getByCostCenter(costCenter);
-            if (project == null || project.getId() == null) {
-                throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
-            }
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
-        }
     }
 
     private AttendanceResponse toResponse(Attendance entity) {
