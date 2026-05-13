@@ -8,7 +8,8 @@ public enum RequestStatus {
     PENDING_REVIEW("Pendiente de revisión"),
     PENDING_APPROVAL("Pendiente de aprobación"),
     APPROVED("Aprobado"),
-    REJECTED("Rechazado");
+    REJECTED("Rechazado"),
+    SYNC_ERROR("Error de sincronización");
 
     private final String displayName;
 
@@ -25,4 +26,8 @@ public enum RequestStatus {
                 .map(RequestStatus::getDisplayName)
                 .collect(Collectors.toUnmodifiableSet());
     }
+
+    public static final Set<String> ACTIVE_DISPLAY_NAMES = displayNamesOf(
+            PENDING_REVIEW, PENDING_APPROVAL, APPROVED
+    );
 }
