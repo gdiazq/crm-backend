@@ -1,7 +1,7 @@
 package com.crm.mcsv_auth.controller;
 
 import com.crm.mcsv_auth.dto.TicketValidationResponse;
-import com.crm.mcsv_auth.dto.ValidationError;
+import com.crm.mcsv_auth.dto.TokenValidationResponse;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.WsTicketService;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +17,25 @@ public class AuthorizerController {
     private final WsTicketService wsTicketService;
 
     @PostMapping("/v1/validateToken")
-    public ValidationError validateToken(@RequestParam String jwt) {
+    public TokenValidationResponse validateToken(@RequestParam String jwt) {
         boolean isValid = authService.validateToken(extractToken(jwt));
         if (isValid) {
-            return new ValidationError(true, null);
+            return new TokenValidationResponse(true, null);
         }
-        return new ValidationError(false, "Invalid token");
+        return new TokenValidationResponse(false, "Invalid token");
     }
 
     @PostMapping("/v1/validateTokenUrl")
-    public ValidationError validateTokenUrl(
+    public TokenValidationResponse validateTokenUrl(
             @RequestParam String jwt,
             @RequestParam String urlPath,
             @RequestParam String method
     ) {
         boolean isValid = authService.validateToken(extractToken(jwt));
         if (isValid) {
-            return new ValidationError(true, null);
+            return new TokenValidationResponse(true, null);
         }
-        return new ValidationError(false, "Invalid token");
+        return new TokenValidationResponse(false, "Invalid token");
     }
 
     @PostMapping("/v1/validateTicket")
