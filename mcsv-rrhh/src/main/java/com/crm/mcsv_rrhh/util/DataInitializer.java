@@ -1,6 +1,9 @@
 package com.crm.mcsv_rrhh.util;
 
 import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
+import com.crm.mcsv_rrhh.enums.HRRequestTypeName;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.*;
 
 import java.util.List;
@@ -559,13 +562,13 @@ public class DataInitializer implements CommandLineRunner {
     private void initializeHRRequestTypes() {
         record TypeDef(String name, Boolean req) {}
         List<TypeDef> types = List.of(
-                new TypeDef(HRRequestTypes.EMPLOYEE, true),
-                new TypeDef(HRRequestTypes.CONTRACT, true),
-                new TypeDef(HRRequestTypes.SETTLEMENT, true),
-                new TypeDef(HRRequestTypes.ANNEX, true),
-                new TypeDef(HRRequestTypes.TRANSFER, true),
-                new TypeDef(HRRequestTypes.LEAVE, true),
-                new TypeDef(HRRequestTypes.OVERTIME, true)
+                new TypeDef(HRRequestTypeName.EMPLOYEE.getDisplayName(), true),
+                new TypeDef(HRRequestTypeName.CONTRACT.getDisplayName(), true),
+                new TypeDef(HRRequestTypeName.SETTLEMENT.getDisplayName(), true),
+                new TypeDef(HRRequestTypeName.ANNEX.getDisplayName(), true),
+                new TypeDef(HRRequestTypeName.TRANSFER.getDisplayName(), true),
+                new TypeDef(HRRequestTypeName.LEAVE.getDisplayName(), true),
+                new TypeDef(HRRequestTypeName.OVERTIME.getDisplayName(), true)
         );
         for (TypeDef t : types) {
             HRRequestType existing = hrRequestTypeRepository.findByName(t.name()).orElse(null);
@@ -591,10 +594,12 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeContractStatuses() {
         if (contractStatusRepository.count() > 0) return;
-        String[] names = {"Activo", "Vencido", "Terminado", "Suspendido"};
-        for (String name : names)
-            if (contractStatusRepository.findByName(name).isEmpty())
+        for (ContractStatusName status : ContractStatusName.values()) {
+            String name = status.getDisplayName();
+            if (contractStatusRepository.findByName(name).isEmpty()) {
                 contractStatusRepository.save(ContractStatus.builder().name(name).build());
+            }
+        }
         log.info("Contract statuses initialized.");
     }
 

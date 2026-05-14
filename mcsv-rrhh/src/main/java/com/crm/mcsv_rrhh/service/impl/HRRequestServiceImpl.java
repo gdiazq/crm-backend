@@ -24,11 +24,13 @@ import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.HRRequestType;
-import com.crm.mcsv_rrhh.entity.RequestStatus;
 import com.crm.mcsv_rrhh.entity.Settlement;
+import com.crm.mcsv_rrhh.enums.HRRequestTypeName;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.SettlementRepository;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.ContractRepository;
@@ -46,7 +48,6 @@ import com.crm.mcsv_rrhh.service.AttendanceLeaveSyncService;
 import com.crm.mcsv_rrhh.service.AttendanceOvertimeSyncService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
 import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
-import com.crm.mcsv_rrhh.util.HRRequestTypes;
 import com.crm.mcsv_rrhh.util.LeaveCalculator;
 import com.crm.mcsv_rrhh.util.LeaveValidator;
 import com.crm.mcsv_rrhh.util.OvertimeValidator;
@@ -123,7 +124,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     @Override
     @Transactional
     public HRRequest createForContract(Long contractId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName("Contrato")
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.CONTRACT.getDisplayName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Contrato"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
@@ -149,7 +150,7 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public HRRequest createForSettlement(Long settlementId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName("Finiquito")
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.SETTLEMENT.getDisplayName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Finiquito"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
@@ -175,7 +176,7 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public HRRequest createForTransfer(Long transferId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName("Traspaso")
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.TRANSFER.getDisplayName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Traspaso"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
@@ -201,7 +202,7 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public HRRequest createForAnnex(Long annexId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName("Anexo")
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.ANNEX.getDisplayName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Anexo"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
@@ -227,7 +228,7 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public HRRequest createForLeave(Long leaveId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName("Permiso")
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.LEAVE.getDisplayName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Permiso"));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
@@ -253,9 +254,9 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public HRRequest createForOvertime(Long overtimeId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypes.OVERTIME)
+        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.OVERTIME.getDisplayName())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tipo de solicitud no encontrado: " + HRRequestTypes.OVERTIME));
+                        "Tipo de solicitud no encontrado: " + HRRequestTypeName.OVERTIME.getDisplayName()));
 
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
                 ? RequestStatus.PENDING_REVIEW.getDisplayName()
@@ -385,7 +386,7 @@ public class HRRequestServiceImpl implements HRRequestService {
             String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
                     .map(HRRequestType::getName).orElse(null);
 
-            if ("Contrato".equals(requestTypeName)) {
+            if (HRRequestTypeName.CONTRACT.getDisplayName().equals(requestTypeName)) {
                 Contract contract = contractRepository.findById(hr.getContractId())
                         .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
 
@@ -417,7 +418,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                     retagPendingFiles(hr.getId(), contract.getId());
                 } else {
                     contract.setStatusId(approvedStatusId);
-                    contractStatusRepository.findByName("Activo")
+                    contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
                             .ifPresent(s -> contract.setContractStatusId(s.getId()));
                     Employee employee = employeeRepository.findById(contract.getEmployeeId()).orElse(null);
                     if (employee != null) {
@@ -427,7 +428,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 contractRepository.save(contract);
 
-            } else if ("Finiquito".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.SETTLEMENT.getDisplayName().equals(requestTypeName)) {
                 Settlement settlement = settlementRepository.findById(hr.getSettlementId())
                         .orElseThrow(() -> new ResourceNotFoundException("Finiquito no encontrado: " + hr.getSettlementId()));
 
@@ -462,13 +463,13 @@ public class HRRequestServiceImpl implements HRRequestService {
                 } else {
                     Contract contract = contractRepository.findById(settlement.getContractId())
                             .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + settlement.getContractId()));
-                    contractStatusRepository.findByName("Terminado")
+                    contractStatusRepository.findByName(ContractStatusName.TERMINATED.getDisplayName())
                             .ifPresent(s -> contract.setContractStatusId(s.getId()));
                     contractRepository.save(contract);
                 }
                 settlementRepository.save(settlement);
 
-            } else if ("Traspaso".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.TRANSFER.getDisplayName().equals(requestTypeName)) {
                 Transfer transfer = transferRepository.findById(hr.getTransferId())
                         .orElseThrow(() -> new ResourceNotFoundException("Traspaso no encontrado: " + hr.getTransferId()));
 
@@ -496,7 +497,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 transferRepository.save(transfer);
 
-            } else if ("Anexo".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.ANNEX.getDisplayName().equals(requestTypeName)) {
                 ContractAnnex annex = contractAnnexRepository.findById(hr.getAnnexId())
                         .orElseThrow(() -> new ResourceNotFoundException("Anexo no encontrado: " + hr.getAnnexId()));
 
@@ -513,7 +514,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 contractAnnexRepository.save(annex);
 
-            } else if ("Permiso".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName)) {
                 EmployeeLeave leave = employeeLeaveRepository.findById(hr.getLeaveId())
                         .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado: " + hr.getLeaveId()));
 
@@ -543,7 +544,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 attendanceLeaveSyncService.revertGeneratedForLeave(leave.getId());
                 attendanceLeaveSyncService.generateForApprovedLeave(leave);
 
-            } else if (HRRequestTypes.OVERTIME.equals(requestTypeName)) {
+            } else if (HRRequestTypeName.OVERTIME.getDisplayName().equals(requestTypeName)) {
                 Overtime overtime = overtimeRepository.findById(hr.getOvertimeId())
                         .orElseThrow(() -> new ResourceNotFoundException(
                                 "Hora extra no encontrada: " + hr.getOvertimeId()));
@@ -671,38 +672,38 @@ public class HRRequestServiceImpl implements HRRequestService {
         String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
                 .map(HRRequestType::getName).orElse(null);
 
-        if ("UPDATE".equals(hr.getAction()) && "Contrato".equals(requestTypeName)) {
+        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.CONTRACT.getDisplayName().equals(requestTypeName)) {
             deletePendingFiles(hr.getId(), hr.getContractId());
         }
-        if ("UPDATE".equals(hr.getAction()) && "Traspaso".equals(requestTypeName)) {
+        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.TRANSFER.getDisplayName().equals(requestTypeName)) {
             deletePendingTransferFiles(hr.getId(), hr.getTransferId());
         }
-        if ("UPDATE".equals(hr.getAction()) && "Anexo".equals(requestTypeName)) {
+        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.ANNEX.getDisplayName().equals(requestTypeName)) {
             deletePendingAnnexFiles(hr.getId(), hr.getAnnexId());
         }
-        if ("UPDATE".equals(hr.getAction()) && "Permiso".equals(requestTypeName)) {
+        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName)) {
             deletePendingLeaveFiles(hr.getId(), hr.getLeaveId());
         }
-        if ("Permiso".equals(requestTypeName) && hr.getLeaveId() != null) {
+        if (HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName) && hr.getLeaveId() != null) {
             attendanceLeaveSyncService.revertGeneratedForLeave(hr.getLeaveId());
         }
 
         if ("CREATE".equals(hr.getAction())) {
-            if ("Contrato".equals(requestTypeName)) {
+            if (HRRequestTypeName.CONTRACT.getDisplayName().equals(requestTypeName)) {
                 Contract contract = contractRepository.findById(hr.getContractId())
                         .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
                 contract.setStatusId(rejectedStatusId);
                 contractRepository.save(contract);
-            } else if ("Finiquito".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.SETTLEMENT.getDisplayName().equals(requestTypeName)) {
                 if (hr.getSettlementId() != null)
                     settlementRepository.deleteById(hr.getSettlementId());
-            } else if ("Traspaso".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.TRANSFER.getDisplayName().equals(requestTypeName)) {
                 if (hr.getTransferId() != null)
                     transferRepository.deleteById(hr.getTransferId());
-            } else if ("Anexo".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.ANNEX.getDisplayName().equals(requestTypeName)) {
                 if (hr.getAnnexId() != null)
                     contractAnnexRepository.deleteById(hr.getAnnexId());
-            } else if ("Permiso".equals(requestTypeName)) {
+            } else if (HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName)) {
                 if (hr.getLeaveId() != null) {
                     deleteLeaveFiles(hr.getLeaveId());
                     employeeLeaveRepository.deleteById(hr.getLeaveId());

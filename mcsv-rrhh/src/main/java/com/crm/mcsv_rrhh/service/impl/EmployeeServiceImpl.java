@@ -15,7 +15,8 @@ import com.crm.mcsv_rrhh.dto.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
-import com.crm.mcsv_rrhh.entity.RequestStatus;
+import com.crm.mcsv_rrhh.enums.HRRequestTypeName;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
@@ -135,7 +136,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee saved = employeeRepository.save(employee);
         projectAssignmentSyncService.openInitialAssignment(saved, LocalDate.now());
-        HRRequest req = hrRequestService.createForEmployee(saved.getId(), "Trabajador", "CREATE", null);
+        HRRequest req = hrRequestService.createForEmployee(saved.getId(), HRRequestTypeName.EMPLOYEE.getDisplayName(), "CREATE", null);
         return toDetailResponse(saved, null, req.getId());
     }
 
@@ -160,7 +161,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = findOrThrow(id);
         try {
             String proposedData = objectMapper.writeValueAsString(request);
-            HRRequest req = hrRequestService.createForEmployee(employee.getId(), "Trabajador", "UPDATE", proposedData);
+            HRRequest req = hrRequestService.createForEmployee(employee.getId(), HRRequestTypeName.EMPLOYEE.getDisplayName(), "UPDATE", proposedData);
             UserDTO user = fetchUser(employee.getUserId());
             return toDetailResponse(employee, user, req.getId());
         } catch (Exception e) {
