@@ -25,7 +25,6 @@ import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -163,6 +162,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
+        return createUserInternal(request);
+    }
+
+    private UserResponse createUserInternal(CreateUserRequest request) {
         log.info("Creating new user with username: {}", request.getUsername());
 
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -404,6 +407,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void sendVerificationCode(Long userId, String email, String username) {
+        sendVerificationCodeInternal(userId, email, username);
+    }
+
+    private void sendVerificationCodeInternal(Long userId, String email, String username) {
         log.info("Sending verification code for admin-created user id: {}", userId);
 
         // Invalidate any previous unused codes
@@ -452,7 +459,7 @@ public class UserServiceImpl implements UserService {
         userRepository.findAll().forEach(u -> {
             String roleName = u.getRoles().stream()
                     .findFirst()
-                    .map(r -> r.getName())
+                    .map(Role::getName)
                     .orElse("");
             csv.append(u.getId()).append(",")
                .append(CsvUtil.escape(u.getUsername())).append(",")
@@ -510,7 +517,7 @@ public class UserServiceImpl implements UserService {
                     String roleName  = CsvUtil.col(cols, iRole);
 
                     Long roleId = (!roleName.isEmpty())
-                            ? roleRepository.findByName(roleName).map(r -> r.getId()).orElse(null)
+                            ? roleRepository.findByName(roleName).map(Role::getId).orElse(null)
                             : null;
 
                     CreateUserRequest request = CreateUserRequest.builder()
@@ -522,8 +529,8 @@ public class UserServiceImpl implements UserService {
                             .roleId(roleId)
                             .build();
 
-                    UserResponse created = createUser(request);
-                    sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
+                    UserResponse created = createUserInternal(request);
+                    sendVerificationCodeInternal(created.getId(), created.getEmail(), created.getUsername());
                     success++;
                     try {
                         eventBridgeNotificationClient.send(SendNotificationRequest.builder()

@@ -2,6 +2,7 @@ package com.crm.mcsv_user.controller;
 
 import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.mcsv_user.dto.CredentialsRequest;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.dto.SendNotificationRequest;
@@ -24,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -208,26 +208,5 @@ public class UserController {
     @Operation(summary = "Importar usuarios desde CSV")
     public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(userService.importUsersFromCsv(file));
-    }
-
-    public static class CredentialsRequest {
-        private String usernameOrEmail;
-        private String password;
-
-        public String getUsernameOrEmail() {
-            return usernameOrEmail;
-        }
-
-        public void setUsernameOrEmail(String usernameOrEmail) {
-            this.usernameOrEmail = usernameOrEmail;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
     }
 }
