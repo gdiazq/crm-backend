@@ -13,7 +13,8 @@ import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.EmployeeLeave;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.LeaveType;
-import com.crm.mcsv_rrhh.entity.RequestStatus;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.ContractRepository;
 import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
@@ -52,7 +53,6 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     private static final String ENTITY_TYPE = "LEAVE";
     private static final String PENDING_ENTITY_TYPE = "LEAVE_PENDING";
     private static final int MAX_DOCUMENTS = 5;
-    private static final String ACTIVE_CONTRACT_STATUS = "Activo";
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     private final EmployeeLeaveRepository repository;
@@ -250,9 +250,9 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     }
 
     private Long resolveActiveContractId(Long employeeId) {
-        Long activeContractStatusId = contractStatusRepository.findByName(ACTIVE_CONTRACT_STATUS)
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
                 .map(ContractStatus::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ACTIVE_CONTRACT_STATUS));
+                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ContractStatusName.ACTIVE.getDisplayName()));
 
         List<Contract> activeContracts = contractRepository.findByEmployeeId(employeeId).stream()
                 .filter(contract -> activeContractStatusId.equals(contract.getContractStatusId()))

@@ -13,7 +13,8 @@ import com.crm.mcsv_rrhh.entity.ContractAnnexType;
 import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
-import com.crm.mcsv_rrhh.entity.RequestStatus;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.ContractAnnexService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
@@ -44,7 +45,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     private static final String ENTITY_TYPE = "ANNEX";
     private static final int MAX_DOCUMENTS = 5;
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
-    private static final String ACTIVE_CONTRACT_STATUS = "Activo";
 
     private final ContractAnnexRepository repository;
     private final ContractAnnexTypeRepository annexTypeRepository;
@@ -225,9 +225,9 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     }
 
     private Long resolveActiveContractId(Long employeeId) {
-        Long activeContractStatusId = contractStatusRepository.findByName(ACTIVE_CONTRACT_STATUS)
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
                 .map(ContractStatus::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ACTIVE_CONTRACT_STATUS));
+                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ContractStatusName.ACTIVE.getDisplayName()));
 
         List<Contract> activeContracts = contractRepository.findByEmployeeId(employeeId).stream()
                 .filter(contract -> activeContractStatusId.equals(contract.getContractStatusId()))

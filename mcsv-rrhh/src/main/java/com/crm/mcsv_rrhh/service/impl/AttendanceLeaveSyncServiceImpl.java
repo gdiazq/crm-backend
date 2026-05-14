@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.AttendanceLeaveSyncService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import java.util.List;
 public class AttendanceLeaveSyncServiceImpl implements AttendanceLeaveSyncService {
 
     private static final String JUSTIFIED_STATUS_CODE = "JUSTIFIED";
-    private static final String ACTIVE_CONTRACT_STATUS = "Activo";
 
     private final AttendanceRepository attendanceRepository;
     private final AttendanceStatusRepository attendanceStatusRepository;
@@ -82,7 +82,7 @@ public class AttendanceLeaveSyncServiceImpl implements AttendanceLeaveSyncServic
 
     private Long resolveActiveContractIdOrFallback(EmployeeLeave leave) {
         try {
-            Long activeContractStatusId = contractStatusRepository.findByName(ACTIVE_CONTRACT_STATUS)
+            Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
                     .map(ContractStatus::getId)
                     .orElse(null);
             if (activeContractStatusId == null) {

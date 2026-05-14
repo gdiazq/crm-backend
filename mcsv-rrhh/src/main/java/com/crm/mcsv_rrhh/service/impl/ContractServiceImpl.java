@@ -9,6 +9,8 @@ import com.crm.mcsv_rrhh.dto.CreateContractRequest;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.UpdateContractRequest;
 import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
@@ -70,7 +72,7 @@ public class ContractServiceImpl implements ContractService {
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
 
-        Long suspendedContractStatusId = contractStatusRepository.findByName("Suspendido")
+        Long suspendedContractStatusId = contractStatusRepository.findByName(ContractStatusName.SUSPENDED.getDisplayName())
                 .map(ContractStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: Suspendido"));
 
@@ -172,9 +174,9 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     public Map<String, Long> getStats(Long employeeId) {
-        Long pendingStatusId = contractStatusRepository.findByName("Pendiente de revisión")
-                .map(ContractStatus::getId).orElse(-1L);
-        Long activeContractStatusId = contractStatusRepository.findByName("Activo")
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
+                .map(EmployeeStatus::getId).orElse(-1L);
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
                 .map(ContractStatus::getId).orElse(-1L);
 
         long total   = employeeId != null ? contractRepository.countByEmployeeId(employeeId) : contractRepository.count();
@@ -356,7 +358,7 @@ public class ContractServiceImpl implements ContractService {
 
         Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
-        Long suspendedContractStatusId = contractStatusRepository.findByName("Suspendido")
+        Long suspendedContractStatusId = contractStatusRepository.findByName(ContractStatusName.SUSPENDED.getDisplayName())
                 .map(ContractStatus::getId).orElse(null);
 
         try (BufferedReader reader = new BufferedReader(

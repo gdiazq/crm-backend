@@ -8,6 +8,7 @@ import com.crm.mcsv_rrhh.dto.AttendanceMarkResponse;
 import com.crm.mcsv_rrhh.dto.AttendanceMarkTypeSelectItem;
 import com.crm.mcsv_rrhh.dto.UpdateAttendanceMarkRequest;
 import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.AttendanceMarkService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,6 @@ public class AttendanceMarkServiceImpl implements AttendanceMarkService {
 
     private static final String CHECK_IN = "CHECK_IN";
     private static final String CHECK_OUT = "CHECK_OUT";
-    private static final String ACTIVE_CONTRACT_STATUS = "Activo";
     private static final Set<String> ALLOWED_MARK_TYPES = Set.of(CHECK_IN, CHECK_OUT);
 
     private final AttendanceMarkRepository repository;
@@ -290,9 +290,9 @@ public class AttendanceMarkServiceImpl implements AttendanceMarkService {
     }
 
     private Long resolveActiveContractId(Long employeeId) {
-        Long activeContractStatusId = contractStatusRepository.findByName(ACTIVE_CONTRACT_STATUS)
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
                 .map(ContractStatus::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ACTIVE_CONTRACT_STATUS));
+                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: " + ContractStatusName.ACTIVE.getDisplayName()));
 
         List<Contract> activeContracts = contractRepository.findByEmployeeId(employeeId).stream()
                 .filter(contract -> activeContractStatusId.equals(contract.getContractStatusId()))
