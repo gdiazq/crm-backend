@@ -7,6 +7,7 @@ import com.crm.mcsv_rrhh.dto.SettlementRequest;
 import com.crm.mcsv_rrhh.dto.SettlementResponse;
 import com.crm.mcsv_rrhh.dto.UpdateSettlementRequest;
 import com.crm.mcsv_rrhh.entity.*;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.TerminationQuizAnswerRepository;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;

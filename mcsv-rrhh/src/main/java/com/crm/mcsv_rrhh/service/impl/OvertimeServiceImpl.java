@@ -11,7 +11,7 @@ import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.Overtime;
 import com.crm.mcsv_rrhh.entity.OvertimeType;
-import com.crm.mcsv_rrhh.entity.RequestStatus;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestRepository;

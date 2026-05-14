@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.enums;
 
 public enum AttendanceMarkType {
     CHECK_IN,

@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.controller;
 
-import com.crm.mcsv_rrhh.entity.RequestStatus;
+import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
