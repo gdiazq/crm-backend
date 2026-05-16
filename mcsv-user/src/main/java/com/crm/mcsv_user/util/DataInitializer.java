@@ -81,6 +81,10 @@ public class DataInitializer implements CommandLineRunner {
         createPermissionIfNotExists("ATTENDANCE:READ",   "Ver asistencia diaria");
         createPermissionIfNotExists("ATTENDANCE:UPDATE", "Modificar asistencia diaria");
         createPermissionIfNotExists("ATTENDANCE:DELETE", "Eliminar asistencia diaria");
+        createPermissionIfNotExists("JOB_OPENING:CREATE", "Crear vacantes de reclutamiento");
+        createPermissionIfNotExists("JOB_OPENING:READ",   "Ver y consultar vacantes");
+        createPermissionIfNotExists("JOB_OPENING:UPDATE", "Modificar vacantes");
+        createPermissionIfNotExists("JOB_OPENING:DELETE", "Eliminar vacantes en borrador");
         createPermissionIfNotExists("ATTENDANCE_STATUS:READ",   "Ver estados de asistencia");
         createPermissionIfNotExists("ATTENDANCE_STATUS:UPDATE", "Modificar estados de asistencia");
         createPermissionIfNotExists("ATTENDANCE_STATUS:DELETE", "Eliminar estados de asistencia");
