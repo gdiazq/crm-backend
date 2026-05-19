@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "mcsv-rrhh", fallback = com.crm.mcsv_recruitment.client.fallback.RrhhClientFallback.class)
+@FeignClient(name = "mcsv-rrhh")
 public interface RrhhClient {
 
     @GetMapping("/select/job-titles/{id}")
