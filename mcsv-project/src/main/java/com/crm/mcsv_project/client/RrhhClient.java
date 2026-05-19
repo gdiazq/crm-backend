@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "mcsv-rrhh", fallback = com.crm.mcsv_project.client.fallback.RrhhClientFallback.class)
+@FeignClient(name = "mcsv-rrhh")
 public interface RrhhClient {
 
     @GetMapping("/employee/select/supervisors")

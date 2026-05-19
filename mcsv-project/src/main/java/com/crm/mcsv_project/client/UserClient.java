@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "mcsv-user", fallback = com.crm.mcsv_project.client.fallback.UserClientFallback.class)
+@FeignClient(name = "mcsv-user")
 public interface UserClient {
 
     @GetMapping("/detail/{id}")
