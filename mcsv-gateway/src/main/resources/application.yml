@@ -47,10 +47,6 @@ spring:
             - Path=/v1/api/auth/**
           filters:
             - StripPrefix=3
-            - name: CircuitBreaker
-              args:
-                name: mcsv-auth
-                fallbackUri: forward:/fallback/mcsv-auth
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 5
@@ -63,10 +59,6 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-user
-                fallbackUri: forward:/fallback/mcsv-user
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -79,10 +71,6 @@ spring:
           filters:
             - StripPrefix=2
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-role
-                fallbackUri: forward:/fallback/mcsv-role
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -95,10 +83,6 @@ spring:
           filters:
             - StripPrefix=2
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-select
-                fallbackUri: forward:/fallback/mcsv-user
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -111,10 +95,6 @@ spring:
           filters:
             - StripPrefix=2
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-user
-                fallbackUri: forward:/fallback/mcsv-user
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -127,10 +107,6 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-rrhh
-                fallbackUri: forward:/fallback/mcsv-rrhh
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -143,10 +119,6 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-project
-                fallbackUri: forward:/fallback/mcsv-project
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -159,10 +131,6 @@ spring:
           filters:
             - StripPrefix=3
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: mcsv-recruitment
-                fallbackUri: forward:/fallback/mcsv-recruitment
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -234,80 +202,3 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   packagesToScan: com.cmr.mcsv_gateway
-
-resilience4j:
-  timelimiter:
-    configs:
-      default:
-        timeout-duration: 15s
-  circuitbreaker:
-    instances:
-      mcsv-auth:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
-      mcsv-user:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
-      mcsv-role:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-      mcsv-select:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-      mcsv-rrhh:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
-      mcsv-project:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
-      mcsv-recruitment:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 3s
-        slow-call-rate-threshold: 50
-  retry:
-    instances:
-      mcsv-auth:
-        max-attempts: 3
-        wait-duration: 500ms
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-      mcsv-user:
-        max-attempts: 3
-        wait-duration: 500ms
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-      mcsv-rrhh:
-        max-attempts: 2
-        wait-duration: 500ms
-        enable-exponential-backoff: true
-      mcsv-project:
-        max-attempts: 2
-        wait-duration: 500ms
-        enable-exponential-backoff: true
-      mcsv-recruitment:
-        max-attempts: 2
-        wait-duration: 500ms
-        enable-exponential-backoff: true
