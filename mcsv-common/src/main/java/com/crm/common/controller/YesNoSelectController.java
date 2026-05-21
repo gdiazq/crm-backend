@@ -14,10 +14,10 @@ public class YesNoSelectController {
     @GetMapping
     public ResponseEntity<List<Item>> getAll() {
         return ResponseEntity.ok(List.of(
-                new Item(1L, "Sí"),
-                new Item(2L, "No")
+                new Item(1L, true),
+                new Item(2L, false)
         ));
     }
 
-    public record Item(Long id, String name) {}
+    public record Item(Long id, Boolean name) {}
 }
