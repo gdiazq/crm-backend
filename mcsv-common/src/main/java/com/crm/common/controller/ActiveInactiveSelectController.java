@@ -14,10 +14,10 @@ public class ActiveInactiveSelectController {
     @GetMapping
     public ResponseEntity<List<Item>> getAll() {
         return ResponseEntity.ok(List.of(
-                new Item(1L, true),
-                new Item(2L, false)
+                new Item(1L, true,  "Activo"),
+                new Item(2L, false, "Inactivo")
         ));
     }
 
-    public record Item(Long id, Boolean name) {}
+    public record Item(Long id, Boolean value, String name) {}
 }
