@@ -8,5 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserMfaRepository extends JpaRepository<UserMfa, Long> {
+
     Optional<UserMfa> findByUserId(Long userId);
 }
