@@ -2,10 +2,7 @@ package com.crm.mcsv_auth.exception;
 
 import com.crm.common.exception.BaseGlobalExceptionHandler;
 import com.crm.common.exception.ErrorResponse;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.crm.mcsv_auth.dto.MfaErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -66,18 +63,5 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MfaErrorResponse {
-        private LocalDateTime timestamp;
-        private int status;
-        private String error;
-        private String message;
-        private boolean mfaRequired;
-        private String path;
     }
 }
