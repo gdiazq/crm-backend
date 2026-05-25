@@ -32,8 +32,6 @@ public interface AuthService {
 
     UserDTO getUserByUsername(String username);
 
-    void logoutDevice(Long userId, String deviceId);
-
     void logoutSession(Long userId, Long sessionId);
 
     List<UserSessionDto> listActiveSessions(Long userId);

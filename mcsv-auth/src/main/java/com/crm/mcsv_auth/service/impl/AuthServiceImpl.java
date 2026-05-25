@@ -324,18 +324,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void logoutDevice(Long userId, String deviceId) {
-        userSessionRepository.findByUserIdAndDeviceIdAndRevokedFalse(userId, deviceId)
-                .ifPresent(session -> {
-                    tokenService.revokeSessionTokens(session.getId());
-                    session.setRevoked(true);
-                    session.setRevokedAt(LocalDateTime.now());
-                    userSessionRepository.save(session);
-                });
-    }
-
-    @Override
-    @Transactional
     public void logoutSession(Long userId, Long sessionId) {
         tokenService.revokeSessionTokens(sessionId);
         userSessionManager.revokeSessionExact(userId, sessionId);
