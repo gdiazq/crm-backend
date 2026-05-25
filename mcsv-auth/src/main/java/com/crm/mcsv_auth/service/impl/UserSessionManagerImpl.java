@@ -4,9 +4,10 @@ import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
+import com.crm.mcsv_auth.service.UserSessionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
@@ -20,16 +21,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserSessionManager {
+public class UserSessionManagerImpl implements UserSessionManager {
 
     // Mantener alineado con la vigencia del refresh token.
     private static final long SESSION_EXPIRY_DAYS = 7;
 
     private final UserSessionRepository userSessionRepository;
 
+    @Override
     @Transactional
     public UserSession registerSession(Long userId, String ipAddress, String userAgent, String deviceId) {
         List<UserSession> activeSessions = findActiveSessions(userId);
@@ -56,6 +58,7 @@ public class UserSessionManager {
         return saved;
     }
 
+    @Override
     @Transactional
     public UserSession attachSession(Long userId, Long sessionId, String ipAddress, String userAgent, String deviceId) {
         if (sessionId != null) {
@@ -90,6 +93,7 @@ public class UserSessionManager {
         matchingSessions.forEach(this::revoke);
     }
 
+    @Override
     @Transactional
     public void revokeCurrentSession(Long userId, String ipAddress, String userAgent, String deviceId) {
         List<UserSession> activeSessions = findActiveSessions(userId);
@@ -107,6 +111,7 @@ public class UserSessionManager {
         matchingSessions.forEach(this::revoke);
     }
 
+    @Override
     @Transactional
     public void revokeSessionExact(Long userId, Long sessionId) {
         if (sessionId == null) {
@@ -117,6 +122,7 @@ public class UserSessionManager {
         revoke(session);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<UserSessionDto> listVisibleSessions(Long userId) {
         List<UserSession> visibleSessions = findActiveSessions(userId).stream()
