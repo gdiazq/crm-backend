@@ -5,19 +5,15 @@ import com.crm.mcsv_auth.client.GitHubApiClient;
 import com.crm.mcsv_auth.client.GitHubTokenClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.config.GitHubOAuth2Config;
-import com.crm.mcsv_auth.config.JwtConfig;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.GitHubTokenResponse;
 import com.crm.mcsv_auth.dto.GitHubUserInfo;
 import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
-import com.crm.mcsv_auth.entity.RefreshToken;
-import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
+import com.crm.mcsv_auth.service.AuthTokenResponseService;
 import com.crm.mcsv_auth.service.GitHubOAuth2Service;
-import com.crm.mcsv_auth.service.TokenService;
-import com.crm.mcsv_auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +23,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +33,8 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
     private final GitHubApiClient gitHubApiClient;
     private final UserClient userClient;
     private final GitHubOAuth2Config gitHubOAuth2Config;
-    private final JwtUtil jwtUtil;
-    private final TokenService tokenService;
-    private final JwtConfig jwtConfig;
     private final EventBridgeNotificationClient eventBridgeNotificationClient;
-    private final UserSessionManager userSessionManager;
+    private final AuthTokenResponseService authTokenResponseService;
 
     @Override
     public String buildAuthorizationUrl() {
@@ -92,45 +84,16 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
             userClient.updateAvatarUrl(user.getId(), java.util.Map.of("avatarUrl", githubUser.getAvatarUrl()));
         }
 
-        // 5. Generar tokens
-        Set<String> roles = user.getRoles().stream()
-                .map(UserDTO.RoleDTO::getName)
-                .collect(Collectors.toSet());
+        String avatarUrl = githubUser.getAvatarUrl() != null ? githubUser.getAvatarUrl() : user.getAvatarUrl();
+        AuthResponse authResponse = authTokenResponseService.createSessionResponse(user, ipAddress, userAgent, deviceId, avatarUrl);
 
-        Set<String> permissions = user.getRoles().stream()
-                .filter(r -> r.getPermissions() != null)
-                .flatMap(r -> r.getPermissions().stream())
-                .map(UserDTO.PermissionDTO::getName)
-                .collect(Collectors.toSet());
-
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
-        UserSession session = userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
-        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
-
-        // 7. Enviar notificación
         if (isNewUser[0]) {
             sendWelcomeNotification(user.getId(), user.getUsername());
         } else {
             sendLoginNotification(user.getId(), user.getUsername());
         }
 
-        String avatarUrl = githubUser.getAvatarUrl() != null ? githubUser.getAvatarUrl() : user.getAvatarUrl();
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken.getPlainToken())
-                .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpireAt() * 60)
-                .user(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .avatarUrl(avatarUrl)
-                        .roles(roles)
-                        .build())
-                .build();
+        return authResponse;
     }
 
     private UserDTO findOrCreateUser(GitHubUserInfo githubUser, boolean[] isNewUser) {

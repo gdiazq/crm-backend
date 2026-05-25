@@ -3,7 +3,6 @@ package com.crm.mcsv_auth.service.impl;
 import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.client.SqsEmailClient;
 import com.crm.mcsv_auth.client.UserClient;
-import com.crm.mcsv_auth.config.JwtConfig;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.common.dto.EmailRequest;
@@ -15,26 +14,27 @@ import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
+import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
-import com.crm.mcsv_auth.exception.MfaRequiredException;
 import com.crm.mcsv_auth.exception.TokenException;
 import com.crm.mcsv_auth.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthService;
+import com.crm.mcsv_auth.service.AuthTokenResponseService;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.TokenService;
+import com.crm.mcsv_auth.service.UserSessionManager;
 import com.crm.mcsv_auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,10 +43,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,13 +58,12 @@ public class AuthServiceImpl implements AuthService {
     private final EventBridgeNotificationClient eventBridgeNotificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
-    private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final UserSessionRepository userSessionRepository;
     private final MfaService mfaService;
-    private final JwtConfig jwtConfig;
     private final UserSessionManager userSessionManager;
+    private final AuthTokenResponseService authTokenResponseService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -77,7 +76,6 @@ public class AuthServiceImpl implements AuthService {
     public Map<String, String> register(RegisterRequest request) {
         log.info("Registration attempt for: {}", request.getUsername());
 
-        // Crear request para mcsv-user (sin password del usuario, se usa placeholder)
         CreateUserInternalRequest createUserRequest = CreateUserInternalRequest.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -88,7 +86,6 @@ public class AuthServiceImpl implements AuthService {
                 .roleIds(new HashSet<>(Set.of(1L))) // Asignar ROLE_USER por defecto
                 .build();
 
-        // Crear usuario en mcsv-user vía endpoint interno
         ResponseEntity<UserDTO> response = userClient.signUpUser(createUserRequest);
 
         if (response.getBody() == null) {
@@ -97,17 +94,16 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = response.getBody();
 
-        // Generar código de verificación y enviar email
         String code = generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("User registered successfully, verification email sent to: {}", user.getEmail());
 
-        // Enviar notificación de bienvenida
         sendWelcomeNotification(user.getId(), user.getUsername());
 
-        return Map.of("message", "Registration successful. Please check your email for the verification code.");
+        return Map.of("message",
+                "Registration successful. Please check your email for the verification code.");
     }
 
     @Override
@@ -115,16 +111,13 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId) {
         log.info("Login attempt for: {}", request.getEmail());
 
-        // Validar credenciales
         boolean isValidCredentials = validateCredentials(request.getEmail(), request.getPassword());
         if (!isValidCredentials) {
             throw new AuthenticationException("Invalid username or password");
         }
 
-        // Obtener usuario
         UserDTO user = getUserByUsernameOrEmail(request.getEmail());
 
-        // Validar código MFA si está habilitado
         if (mfaService.isMfaEnabled(user.getId())) {
             if (request.getTotpCode() == null || request.getTotpCode().isBlank()) {
                 throw new AuthenticationException("MFA code is required");
@@ -135,12 +128,10 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        // Validar email verificado
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {
             throw new AuthenticationException("Email not verified. Please verify your email before logging in.");
         }
 
-        // Validar usuario activo
         if (!Boolean.TRUE.equals(user.getStatus())) {
             throw new AuthenticationException("User account is disabled");
         }
@@ -149,43 +140,12 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("User account is locked");
         }
 
-        // Extraer roles y permisos
-        Set<String> roles = user.getRoles().stream()
-                .map(UserDTO.RoleDTO::getName)
-                .collect(Collectors.toSet());
-
-        Set<String> permissions = user.getRoles().stream()
-                .filter(r -> r.getPermissions() != null)
-                .flatMap(r -> r.getPermissions().stream())
-                .map(UserDTO.PermissionDTO::getName)
-                .collect(Collectors.toSet());
-
-        // Generar tokens
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
-        UserSession session = userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
-        RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
+        AuthResponse authResponse = authTokenResponseService.createSessionResponse(user, ipAddress, userAgent, deviceId);
 
         log.info("User logged in successfully: {}", user.getUsername());
-
-        // Enviar notificación de bienvenida al login
         sendLoginNotification(user.getId(), user.getUsername());
 
-        // Construir respuesta
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken.getPlainToken())
-                .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpireAt() * 60)
-                .user(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .avatarUrl(extractAvatarUrl(user))
-                        .roles(roles)
-                        .build())
-                .build();
+        return authResponse;
     }
 
     @Override
@@ -193,27 +153,12 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse refreshToken(RefreshTokenRequest request, String ipAddress, String userAgent, String deviceId) {
         log.info("Refresh token request");
 
-        // Validar refresh token
         RefreshToken refreshToken = tokenService.validateRefreshToken(request.getRefreshToken());
 
-        // Obtener usuario
         UserDTO user = getUserById(refreshToken.getUserId());
 
-        // Extraer roles y permisos
-        Set<String> roles = user.getRoles().stream()
-                .map(UserDTO.RoleDTO::getName)
-                .collect(Collectors.toSet());
+        String newAccessToken = authTokenResponseService.createAccessToken(user);
 
-        Set<String> permissions = user.getRoles().stream()
-                .filter(r -> r.getPermissions() != null)
-                .flatMap(r -> r.getPermissions().stream())
-                .map(UserDTO.PermissionDTO::getName)
-                .collect(Collectors.toSet());
-
-        // Generar nuevo access token
-        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
-
-        // Rotar refresh token
         tokenService.revokeRefreshToken(request.getRefreshToken());
         UserSession session = userSessionManager.attachSession(
                 user.getId(),
@@ -225,21 +170,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
 
-        return AuthResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken.getPlainToken())
-                .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpireAt() * 60)
-                .user(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .avatarUrl(extractAvatarUrl(user))
-                        .roles(roles)
-                        .build())
-                .build();
+        return authTokenResponseService.buildAuthResponse(newAccessToken, newRefreshToken.getPlainToken(), user);
     }
 
     @Override
@@ -274,7 +205,6 @@ public class AuthServiceImpl implements AuthService {
     public void forgotPassword(ForgotPasswordRequest request) {
         log.info("Forgot password request");
 
-        // Buscar usuario por email
         UserDTO user;
         try {
             user = getUserByEmail(request.getEmail());
@@ -283,10 +213,8 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("No account found with that email address");
         }
 
-        // Invalidar códigos anteriores
         emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
-        // Generar código de verificación y enviar por email
         String code = generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
@@ -331,13 +259,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<com.crm.mcsv_auth.dto.UserSessionDto> listActiveSessions(Long userId) {
+    public List<UserSessionDto> listActiveSessions(Long userId) {
         return userSessionManager.listVisibleSessions(userId);
     }
 
     private UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {
         try {
-            // Intentar obtener por username primero
             ResponseEntity<UserDTO> response = userClient.getUserByUsername(usernameOrEmail);
             if (response.getBody() != null) {
                 return response.getBody();
@@ -347,7 +274,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         try {
-            // Si no se encuentra, intentar por email
             ResponseEntity<UserDTO> response = userClient.getUserByEmail(usernameOrEmail);
             if (response.getBody() != null) {
                 return response.getBody();
@@ -382,7 +308,6 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = getUserByEmail(request.getEmail());
 
-        // Try local (mcsv-auth) verification codes first (register/forgot-password flow)
         java.util.Optional<EmailVerificationCode> localCode = emailVerificationCodeRepository
                 .findByUserIdAndCodeAndUsedFalse(user.getId(), request.getCode());
 
@@ -397,7 +322,6 @@ public class AuthServiceImpl implements AuthService {
             return completeEmailVerification(user.getId());
         }
 
-        // Fallback: check codes stored in mcsv-user (admin-created user flow)
         try {
             ResponseEntity<Boolean> response = userClient.validateAndConsumeCode(
                     user.getId(), java.util.Map.of("code", request.getCode()));
@@ -435,7 +359,8 @@ public class AuthServiceImpl implements AuthService {
             log.warn("Failed to send email verified notification to userId: {}", userId, e);
         }
 
-        return Map.of("message", "Email verified successfully", "token", token);
+        return Map.of("message",
+                "Email verified successfully", "token", token);
     }
 
     @Override
@@ -455,16 +380,13 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
 
-        // Validar que el teléfono coincida con el registrado
         if (user.getPhoneNumber() == null || !user.getPhoneNumber().equals(phoneNumber)) {
             log.warn("Resend verification: phone number mismatch");
             return;
         }
 
-        // Invalidar códigos anteriores
         emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
-        // Generar nuevo código y enviar por email
         String code = generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
@@ -591,27 +513,7 @@ public class AuthServiceImpl implements AuthService {
         Long userId = jwtUtil.extractUserId(token);
         UserDTO user = getUserById(userId);
 
-        Set<String> roles = user.getRoles().stream()
-                .map(UserDTO.RoleDTO::getName)
-                .collect(Collectors.toSet());
-
-        Set<String> permissions = user.getRoles().stream()
-                .filter(r -> r.getPermissions() != null)
-                .flatMap(r -> r.getPermissions().stream())
-                .map(UserDTO.PermissionDTO::getName)
-                .collect(Collectors.toSet());
-
-        return AuthResponse.UserInfo.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phoneNumber(user.getPhoneNumber())
-                .avatarUrl(extractAvatarUrl(user))
-                .roles(roles)
-                .permissions(permissions)
-                .build();
+        return authTokenResponseService.buildCurrentUserInfo(user);
     }
 
     @Override
@@ -624,10 +526,6 @@ public class AuthServiceImpl implements AuthService {
     public MfaStatusResponse getMfaStatusByEmail(String email) {
         UserDTO user = getUserByUsernameOrEmail(email);
         return mfaService.getMfaStatus(user.getId());
-    }
-
-    private String extractAvatarUrl(UserDTO user) {
-        return user.getAvatarUrl();
     }
 
     private boolean validateCredentials(String usernameOrEmail, String password) {
