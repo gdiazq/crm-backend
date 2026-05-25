@@ -27,9 +27,12 @@ import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.AuthTokenResponseService;
+import com.crm.mcsv_auth.service.AuthUserLookupService;
+import com.crm.mcsv_auth.service.EmailVerificationCompletionService;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.TokenService;
 import com.crm.mcsv_auth.service.UserSessionManager;
+import com.crm.mcsv_auth.util.AuthCredentialUtil;
 import com.crm.mcsv_auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,13 +43,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -64,12 +65,13 @@ public class AuthServiceImpl implements AuthService {
     private final MfaService mfaService;
     private final UserSessionManager userSessionManager;
     private final AuthTokenResponseService authTokenResponseService;
+    private final AuthUserLookupService authUserLookupService;
+    private final EmailVerificationCompletionService emailVerificationCompletionService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Override
     @Transactional
@@ -79,7 +81,7 @@ public class AuthServiceImpl implements AuthService {
         CreateUserInternalRequest createUserRequest = CreateUserInternalRequest.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .password(generatePlaceholderPassword())
+                .password(AuthCredentialUtil.generatePlaceholderPassword())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
@@ -94,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = response.getBody();
 
-        String code = generateVerificationCode();
+        String code = AuthCredentialUtil.generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
@@ -116,7 +118,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("Invalid username or password");
         }
 
-        UserDTO user = getUserByUsernameOrEmail(request.getEmail());
+        UserDTO user = authUserLookupService.getByUsernameOrEmail(request.getEmail());
 
         if (mfaService.isMfaEnabled(user.getId())) {
             if (request.getTotpCode() == null || request.getTotpCode().isBlank()) {
@@ -155,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
 
         RefreshToken refreshToken = tokenService.validateRefreshToken(request.getRefreshToken());
 
-        UserDTO user = getUserById(refreshToken.getUserId());
+        UserDTO user = authUserLookupService.getById(refreshToken.getUserId());
 
         String newAccessToken = authTokenResponseService.createAccessToken(user);
 
@@ -207,7 +209,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user;
         try {
-            user = getUserByEmail(request.getEmail());
+            user = authUserLookupService.getByEmail(request.getEmail());
         } catch (Exception e) {
             log.warn("Forgot password requested for non-existent email: {}", request.getEmail());
             throw new AuthenticationException("No account found with that email address");
@@ -215,7 +217,7 @@ public class AuthServiceImpl implements AuthService {
 
         emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
-        String code = generateVerificationCode();
+        String code = AuthCredentialUtil.generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
@@ -243,11 +245,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserDTO getUserByUsername(String username) {
-        ResponseEntity<UserDTO> response = userClient.getUserByUsername(username);
-        if (response.getBody() == null) {
-            throw new AuthenticationException("User not found");
-        }
-        return response.getBody();
+        return authUserLookupService.getByUsername(username);
     }
 
     @Override
@@ -263,50 +261,12 @@ public class AuthServiceImpl implements AuthService {
         return userSessionManager.listVisibleSessions(userId);
     }
 
-    private UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {
-        try {
-            ResponseEntity<UserDTO> response = userClient.getUserByUsername(usernameOrEmail);
-            if (response.getBody() != null) {
-                return response.getBody();
-            }
-        } catch (Exception e) {
-            log.debug("User not found by username, trying email");
-        }
-
-        try {
-            ResponseEntity<UserDTO> response = userClient.getUserByEmail(usernameOrEmail);
-            if (response.getBody() != null) {
-                return response.getBody();
-            }
-        } catch (Exception e) {
-            log.error("User not found by email", e);
-        }
-
-        throw new AuthenticationException("Invalid username or password");
-    }
-
-    private UserDTO getUserByEmail(String email) {
-        ResponseEntity<UserDTO> response = userClient.getUserByEmail(email);
-        if (response.getBody() == null) {
-            throw new AuthenticationException("User not found");
-        }
-        return response.getBody();
-    }
-
-    private UserDTO getUserById(Long id) {
-        ResponseEntity<UserDTO> response = userClient.getUserById(id);
-        if (response.getBody() == null) {
-            throw new AuthenticationException("User not found");
-        }
-        return response.getBody();
-    }
-
     @Override
     @Transactional
     public Map<String, String> verifyEmail(VerifyEmailRequest request) {
         log.info("Email verification attempt for: {}", request.getEmail());
 
-        UserDTO user = getUserByEmail(request.getEmail());
+        UserDTO user = authUserLookupService.getByEmail(request.getEmail());
 
         java.util.Optional<EmailVerificationCode> localCode = emailVerificationCodeRepository
                 .findByUserIdAndCodeAndUsedFalse(user.getId(), request.getCode());
@@ -319,7 +279,7 @@ public class AuthServiceImpl implements AuthService {
             verificationCode.setUsed(true);
             emailVerificationCodeRepository.save(verificationCode);
             log.info("Email verified via local code for: {}", request.getEmail());
-            return completeEmailVerification(user.getId());
+            return emailVerificationCompletionService.complete(user.getId());
         }
 
         try {
@@ -327,40 +287,13 @@ public class AuthServiceImpl implements AuthService {
                     user.getId(), java.util.Map.of("code", request.getCode()));
             if (Boolean.TRUE.equals(response.getBody())) {
                 log.info("Email verified via admin code for: {}", request.getEmail());
-                return completeEmailVerification(user.getId());
+                return emailVerificationCompletionService.complete(user.getId());
             }
         } catch (Exception e) {
             log.error("Error calling validateAndConsumeCode on mcsv-user: {}", e.getMessage());
         }
 
         throw new AuthenticationException("Invalid verification code");
-    }
-
-    private Map<String, String> completeEmailVerification(Long userId) {
-        userClient.verifyEmail(userId);
-
-        String token = UUID.randomUUID().toString();
-        PasswordResetToken passwordToken = PasswordResetToken.builder()
-                .token(token)
-                .userId(userId)
-                .expiresAt(LocalDateTime.now().plusHours(24))
-                .used(false)
-                .build();
-        passwordResetTokenRepository.save(passwordToken);
-
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(userId)
-                    .title("Email verificado")
-                    .message("Tu dirección de correo ha sido verificada exitosamente. Ya puedes acceder a todas las funciones.")
-                    .type("SUCCESS")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send email verified notification to userId: {}", userId, e);
-        }
-
-        return Map.of("message",
-                "Email verified successfully", "token", token);
     }
 
     @Override
@@ -370,7 +303,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user;
         try {
-            user = getUserByEmail(email);
+            user = authUserLookupService.getByEmail(email);
         } catch (Exception e) {
             log.warn("Resend verification requested for non-existent email");
             return;
@@ -387,24 +320,9 @@ public class AuthServiceImpl implements AuthService {
 
         emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
 
-        String code = generateVerificationCode();
+        String code = AuthCredentialUtil.generateVerificationCode();
         saveVerificationCode(user.getId(), code);
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
-    }
-
-    @Override
-    public boolean checkEmailAvailability(String email) {
-        try {
-            ResponseEntity<UserDTO> response = userClient.getUserByEmail(email);
-            return response.getBody() == null;
-        } catch (Exception e) {
-            return true;
-        }
-    }
-
-    private String generateVerificationCode() {
-        int code = SECURE_RANDOM.nextInt(900000) + 100000;
-        return String.valueOf(code);
     }
 
     private void saveVerificationCode(Long userId, String code) {
@@ -474,10 +392,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private String generatePlaceholderPassword() {
-        return "Tmp!" + UUID.randomUUID().toString();
-    }
-
     private void sendWelcomeNotification(Long userId, String username) {
         try {
             eventBridgeNotificationClient.send(SendNotificationRequest.builder()
@@ -511,20 +425,20 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Long userId = jwtUtil.extractUserId(token);
-        UserDTO user = getUserById(userId);
+        UserDTO user = authUserLookupService.getById(userId);
 
         return authTokenResponseService.buildCurrentUserInfo(user);
     }
 
     @Override
     public boolean checkMfaStatus(String email) {
-        UserDTO user = getUserByUsernameOrEmail(email);
+        UserDTO user = authUserLookupService.getByUsernameOrEmail(email);
         return mfaService.isMfaEnabled(user.getId());
     }
 
     @Override
     public MfaStatusResponse getMfaStatusByEmail(String email) {
-        UserDTO user = getUserByUsernameOrEmail(email);
+        UserDTO user = authUserLookupService.getByUsernameOrEmail(email);
         return mfaService.getMfaStatus(user.getId());
     }
 
