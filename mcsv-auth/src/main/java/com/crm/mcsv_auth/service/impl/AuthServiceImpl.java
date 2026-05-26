@@ -99,8 +99,19 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent, String deviceId) {
         log.info("Login attempt for: {}", request.getEmail());
 
-        boolean isValidCredentials = validateCredentials(request.getEmail(), request.getPassword());
-        if (!isValidCredentials) {
+        final Boolean body;
+        try {
+            body = userClient.validateCredentials(
+                    new UserClient.CredentialsRequest(request.getEmail(), request.getPassword())
+            ).getBody();
+        } catch (Exception e) {
+            log.error("Exception while validating credentials: {}", e.getMessage());
+            throw new AuthenticationException("Invalid username or password");
+        }
+        if (!Boolean.TRUE.equals(body)) {
+            if (body == null) {
+                log.error("Error validating credentials - null response body");
+            }
             throw new AuthenticationException("Invalid username or password");
         }
 
@@ -313,21 +324,4 @@ public class AuthServiceImpl implements AuthService {
         return mfaService.getMfaStatus(user.getId());
     }
 
-    private boolean validateCredentials(String usernameOrEmail, String password) {
-        try {
-            ResponseEntity<Boolean> response = userClient.validateCredentials(
-                    new UserClient.CredentialsRequest(usernameOrEmail, password)
-            );
-
-            if (response.getBody() != null) {
-                return response.getBody();
-            }
-
-            log.error("Error validating credentials - null response body");
-            return false;
-        } catch (Exception e) {
-            log.error("Exception while validating credentials: {}", e.getMessage());
-            return false;
-        }
-    }
 }

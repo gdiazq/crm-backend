@@ -81,15 +81,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/check-email")
-    @Operation(summary = "Check email availability", description = "Check if an email is available for registration")
-    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam String email) {
-        boolean available = authService.checkEmailAvailability(email);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("available", available);
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/pre-login")
     @Operation(summary = "Pre-login check", description = "Check if user requires MFA before login")
     public ResponseEntity<Map<String, Boolean>> preLogin(@RequestBody Map<String, String> body) {
