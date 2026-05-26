@@ -133,13 +133,6 @@ public class TokenServiceImpl implements TokenService {
         refreshTokenRepository.saveAll(sessionTokens);
     }
 
-    @Override
-    @Transactional
-    public void deleteExpiredTokens() {
-        log.info("Deleting expired refresh tokens");
-        refreshTokenRepository.deleteByExpiresAtBeforeAndRevokedFalse(LocalDateTime.now());
-    }
-
     private String hashToken(String token) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

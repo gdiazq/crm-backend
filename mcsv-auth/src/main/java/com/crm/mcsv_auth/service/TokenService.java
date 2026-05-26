@@ -13,6 +13,4 @@ public interface TokenService {
     void revokeAllUserTokens(Long userId);
 
     void revokeSessionTokens(Long sessionId);
-
-    void deleteExpiredTokens();
 }
