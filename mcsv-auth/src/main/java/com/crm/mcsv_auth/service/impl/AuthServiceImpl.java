@@ -1,11 +1,9 @@
 package com.crm.mcsv_auth.service.impl;
 
 import com.crm.common.client.EventBridgeNotificationClient;
-import com.crm.common.client.SqsEmailClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
-import com.crm.common.dto.EmailRequest;
 import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
@@ -30,18 +28,16 @@ import com.crm.mcsv_auth.service.EmailVerificationCodeService;
 import com.crm.mcsv_auth.service.EmailVerificationCompletionService;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.TokenService;
+import com.crm.mcsv_auth.service.VerificationEmailService;
 import com.crm.mcsv_auth.service.UserSessionManager;
 import com.crm.mcsv_auth.util.AuthCredentialUtil;
 import com.crm.mcsv_auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +50,6 @@ import java.util.Set;
 public class AuthServiceImpl implements AuthService {
 
     private final UserClient userClient;
-    private final SqsEmailClient sqsEmailClient;
     private final EventBridgeNotificationClient eventBridgeNotificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
@@ -66,9 +61,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthUserLookupService authUserLookupService;
     private final EmailVerificationCodeService emailVerificationCodeService;
     private final EmailVerificationCompletionService emailVerificationCompletionService;
-
-    @Value("${app.frontend.url:http://localhost:5173}")
-    private String frontendUrl;
+    private final VerificationEmailService verificationEmailService;
 
     @Override
     @Transactional
@@ -94,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
         UserDTO user = response.getBody();
 
         String code = emailVerificationCodeService.createCode(user.getId());
-        sendVerificationEmail(user.getEmail(), user.getUsername(), code);
+        verificationEmailService.sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("User registered successfully, verification email sent to: {}", user.getEmail());
 
@@ -214,7 +207,7 @@ public class AuthServiceImpl implements AuthService {
         emailVerificationCodeService.deleteUnusedCodes(user.getId());
 
         String code = emailVerificationCodeService.createCode(user.getId());
-        sendVerificationEmail(user.getEmail(), user.getUsername(), code);
+        verificationEmailService.sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("Verification code sent for password reset to user: {}", user.getUsername());
     }
@@ -296,29 +289,7 @@ public class AuthServiceImpl implements AuthService {
         emailVerificationCodeService.deleteUnusedCodes(user.getId());
 
         String code = emailVerificationCodeService.createCode(user.getId());
-        sendVerificationEmail(user.getEmail(), user.getUsername(), code);
-    }
-
-    private void sendVerificationEmail(String email, String username, String code) {
-        try {
-            String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
-            String link = frontendUrl + "/verify-email?email=" + encodedEmail + "&code=" + code;
-
-            EmailRequest emailRequest = EmailRequest.builder()
-                    .to(email)
-                    .subject("Verify your email address")
-                    .templateName("verification-code")
-                    .variables(Map.of(
-                            "code", code,
-                            "username", username,
-                            "link", link
-                    ))
-                    .build();
-
-            sqsEmailClient.sendEmail(emailRequest);
-        } catch (Exception e) {
-            log.error("Failed to send verification email to: {}", email, e);
-        }
+        verificationEmailService.sendVerificationEmail(user.getEmail(), user.getUsername(), code);
     }
 
     private void consumePasswordToken(ResetPasswordRequest request) {
