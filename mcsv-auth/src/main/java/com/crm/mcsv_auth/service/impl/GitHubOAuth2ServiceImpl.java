@@ -1,6 +1,5 @@
 package com.crm.mcsv_auth.service.impl;
 
-import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.mcsv_auth.client.GitHubApiClient;
 import com.crm.mcsv_auth.client.GitHubTokenClient;
 import com.crm.mcsv_auth.client.UserClient;
@@ -9,9 +8,9 @@ import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.GitHubTokenResponse;
 import com.crm.mcsv_auth.dto.GitHubUserInfo;
-import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.exception.AuthenticationException;
+import com.crm.mcsv_auth.service.AuthNotificationService;
 import com.crm.mcsv_auth.service.AuthTokenResponseService;
 import com.crm.mcsv_auth.service.GitHubOAuth2Service;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +32,8 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
     private final GitHubApiClient gitHubApiClient;
     private final UserClient userClient;
     private final GitHubOAuth2Config gitHubOAuth2Config;
-    private final EventBridgeNotificationClient eventBridgeNotificationClient;
     private final AuthTokenResponseService authTokenResponseService;
+    private final AuthNotificationService authNotificationService;
 
     @Override
     public String buildAuthorizationUrl() {
@@ -88,9 +87,9 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         AuthResponse authResponse = authTokenResponseService.createSessionResponse(user, ipAddress, userAgent, deviceId, avatarUrl);
 
         if (isNewUser[0]) {
-            sendWelcomeNotification(user.getId(), user.getUsername());
+            authNotificationService.sendWelcomeNotification(user.getId(), user.getUsername());
         } else {
-            sendLoginNotification(user.getId(), user.getUsername());
+            authNotificationService.sendLoginNotification(user.getId(), user.getUsername());
         }
 
         return authResponse;
@@ -155,29 +154,4 @@ public class GitHubOAuth2ServiceImpl implements GitHubOAuth2Service {
         return new String[]{fullName.substring(0, space), fullName.substring(space + 1)};
     }
 
-    private void sendWelcomeNotification(Long userId, String username) {
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(userId)
-                    .title("Bienvenido a CRM")
-                    .message("Hola " + username + ", tu cuenta ha sido creada exitosamente con GitHub.")
-                    .type("SUCCESS")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send welcome notification to userId: {}", userId, e);
-        }
-    }
-
-    private void sendLoginNotification(Long userId, String username) {
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(userId)
-                    .title("Inicio de sesión")
-                    .message("Bienvenido de vuelta, " + username + ". Has iniciado sesión con GitHub.")
-                    .type("INFO")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send login notification to userId: {}", userId, e);
-        }
-    }
 }

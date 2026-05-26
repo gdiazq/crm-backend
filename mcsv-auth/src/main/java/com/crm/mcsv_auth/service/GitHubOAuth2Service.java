@@ -1,7 +1,6 @@
 package com.crm.mcsv_auth.service;
 
 import com.crm.mcsv_auth.dto.AuthResponse;
-import com.crm.mcsv_auth.dto.GitHubUserInfo;
 
 public interface GitHubOAuth2Service {
 

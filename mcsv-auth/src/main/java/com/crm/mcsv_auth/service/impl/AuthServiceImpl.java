@@ -1,10 +1,8 @@
 package com.crm.mcsv_auth.service.impl;
 
-import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
-import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
 import com.crm.mcsv_auth.dto.MfaStatusResponse;
@@ -18,6 +16,7 @@ import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
+import com.crm.mcsv_auth.service.AuthNotificationService;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.AuthTokenResponseService;
 import com.crm.mcsv_auth.service.AuthUserLookupService;
@@ -48,7 +47,6 @@ import java.util.Set;
 public class AuthServiceImpl implements AuthService {
 
     private final UserClient userClient;
-    private final EventBridgeNotificationClient eventBridgeNotificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final UserSessionRepository userSessionRepository;
@@ -60,6 +58,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailVerificationCompletionService emailVerificationCompletionService;
     private final VerificationEmailService verificationEmailService;
     private final PasswordTokenConsumptionService passwordTokenConsumptionService;
+    private final AuthNotificationService authNotificationService;
 
     @Override
     @Transactional
@@ -89,7 +88,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User registered successfully, verification email sent to: {}", user.getEmail());
 
-        sendWelcomeNotification(user.getId(), user.getUsername());
+        authNotificationService.sendWelcomeNotification(user.getId(), user.getUsername());
 
         return Map.of("message",
                 "Registration successful. Please check your email for the verification code.");
@@ -132,7 +131,7 @@ public class AuthServiceImpl implements AuthService {
         AuthResponse authResponse = authTokenResponseService.createSessionResponse(user, ipAddress, userAgent, deviceId);
 
         log.info("User logged in successfully: {}", user.getUsername());
-        sendLoginNotification(user.getId(), user.getUsername());
+        authNotificationService.sendLoginNotification(user.getId(), user.getUsername());
 
         return authResponse;
     }
@@ -288,32 +287,6 @@ public class AuthServiceImpl implements AuthService {
 
         String code = emailVerificationCodeService.createCode(user.getId());
         verificationEmailService.sendVerificationEmail(user.getEmail(), user.getUsername(), code);
-    }
-
-    private void sendWelcomeNotification(Long userId, String username) {
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(userId)
-                    .title("Bienvenido a CRM")
-                    .message("Hola " + username + ", tu cuenta ha sido creada exitosamente. Verifica tu correo para comenzar.")
-                    .type("SUCCESS")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send welcome notification to userId: {}", userId, e);
-        }
-    }
-
-    private void sendLoginNotification(Long userId, String username) {
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(userId)
-                    .title("Inicio de sesión")
-                    .message("Bienvenido de vuelta, " + username + ". Has iniciado sesión exitosamente.")
-                    .type("INFO")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send login notification to userId: {}", userId, e);
-        }
     }
 
     @Override

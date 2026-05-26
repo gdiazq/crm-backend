@@ -42,8 +42,6 @@ public interface AuthService {
 
     void resendVerificationCode(String email, String phoneNumber);
 
-    boolean checkEmailAvailability(String email);
-
     AuthResponse.UserInfo getCurrentUser(String token);
 
     boolean checkMfaStatus(String email);
