@@ -16,18 +16,17 @@ import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
-import com.crm.mcsv_auth.entity.EmailVerificationCode;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.exception.TokenException;
-import com.crm.mcsv_auth.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.AuthTokenResponseService;
 import com.crm.mcsv_auth.service.AuthUserLookupService;
+import com.crm.mcsv_auth.service.EmailVerificationCodeService;
 import com.crm.mcsv_auth.service.EmailVerificationCompletionService;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.TokenService;
@@ -60,18 +59,16 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final UserSessionRepository userSessionRepository;
     private final MfaService mfaService;
     private final UserSessionManager userSessionManager;
     private final AuthTokenResponseService authTokenResponseService;
     private final AuthUserLookupService authUserLookupService;
+    private final EmailVerificationCodeService emailVerificationCodeService;
     private final EmailVerificationCompletionService emailVerificationCompletionService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
-
-    private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
 
     @Override
     @Transactional
@@ -96,8 +93,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = response.getBody();
 
-        String code = AuthCredentialUtil.generateVerificationCode();
-        saveVerificationCode(user.getId(), code);
+        String code = emailVerificationCodeService.createCode(user.getId());
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("User registered successfully, verification email sent to: {}", user.getEmail());
@@ -215,10 +211,9 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthenticationException("No account found with that email address");
         }
 
-        emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
+        emailVerificationCodeService.deleteUnusedCodes(user.getId());
 
-        String code = AuthCredentialUtil.generateVerificationCode();
-        saveVerificationCode(user.getId(), code);
+        String code = emailVerificationCodeService.createCode(user.getId());
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
 
         log.info("Verification code sent for password reset to user: {}", user.getUsername());
@@ -268,29 +263,9 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = authUserLookupService.getByEmail(request.getEmail());
 
-        java.util.Optional<EmailVerificationCode> localCode = emailVerificationCodeRepository
-                .findByUserIdAndCodeAndUsedFalse(user.getId(), request.getCode());
-
-        if (localCode.isPresent()) {
-            EmailVerificationCode verificationCode = localCode.get();
-            if (verificationCode.isExpired()) {
-                throw new AuthenticationException("Verification code has expired. Please request a new one.");
-            }
-            verificationCode.setUsed(true);
-            emailVerificationCodeRepository.save(verificationCode);
-            log.info("Email verified via local code for: {}", request.getEmail());
+        if (emailVerificationCodeService.validateAndConsume(user.getId(), request.getCode())) {
+            log.info("Email verified for: {}", request.getEmail());
             return emailVerificationCompletionService.complete(user.getId());
-        }
-
-        try {
-            ResponseEntity<Boolean> response = userClient.validateAndConsumeCode(
-                    user.getId(), java.util.Map.of("code", request.getCode()));
-            if (Boolean.TRUE.equals(response.getBody())) {
-                log.info("Email verified via admin code for: {}", request.getEmail());
-                return emailVerificationCompletionService.complete(user.getId());
-            }
-        } catch (Exception e) {
-            log.error("Error calling validateAndConsumeCode on mcsv-user: {}", e.getMessage());
         }
 
         throw new AuthenticationException("Invalid verification code");
@@ -318,22 +293,10 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
 
-        emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(user.getId());
+        emailVerificationCodeService.deleteUnusedCodes(user.getId());
 
-        String code = AuthCredentialUtil.generateVerificationCode();
-        saveVerificationCode(user.getId(), code);
+        String code = emailVerificationCodeService.createCode(user.getId());
         sendVerificationEmail(user.getEmail(), user.getUsername(), code);
-    }
-
-    private void saveVerificationCode(Long userId, String code) {
-        EmailVerificationCode verificationCode = EmailVerificationCode.builder()
-                .code(code)
-                .userId(userId)
-                .expiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
-                .used(false)
-                .build();
-
-        emailVerificationCodeRepository.save(verificationCode);
     }
 
     private void sendVerificationEmail(String email, String username, String code) {
