@@ -14,12 +14,9 @@ import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
-import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
-import com.crm.mcsv_auth.exception.TokenException;
-import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthService;
 import com.crm.mcsv_auth.service.AuthTokenResponseService;
@@ -27,6 +24,7 @@ import com.crm.mcsv_auth.service.AuthUserLookupService;
 import com.crm.mcsv_auth.service.EmailVerificationCodeService;
 import com.crm.mcsv_auth.service.EmailVerificationCompletionService;
 import com.crm.mcsv_auth.service.MfaService;
+import com.crm.mcsv_auth.service.PasswordTokenConsumptionService;
 import com.crm.mcsv_auth.service.TokenService;
 import com.crm.mcsv_auth.service.VerificationEmailService;
 import com.crm.mcsv_auth.service.UserSessionManager;
@@ -53,7 +51,6 @@ public class AuthServiceImpl implements AuthService {
     private final EventBridgeNotificationClient eventBridgeNotificationClient;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserSessionRepository userSessionRepository;
     private final MfaService mfaService;
     private final UserSessionManager userSessionManager;
@@ -62,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailVerificationCodeService emailVerificationCodeService;
     private final EmailVerificationCompletionService emailVerificationCompletionService;
     private final VerificationEmailService verificationEmailService;
+    private final PasswordTokenConsumptionService passwordTokenConsumptionService;
 
     @Override
     @Transactional
@@ -216,14 +214,14 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         log.info("Reset password request");
-        consumePasswordToken(request);
+        passwordTokenConsumptionService.consume(request);
     }
 
     @Override
     @Transactional
     public void createPassword(ResetPasswordRequest request) {
         log.info("Create password request");
-        consumePasswordToken(request);
+        passwordTokenConsumptionService.consume(request);
     }
 
     @Override
@@ -290,40 +288,6 @@ public class AuthServiceImpl implements AuthService {
 
         String code = emailVerificationCodeService.createCode(user.getId());
         verificationEmailService.sendVerificationEmail(user.getEmail(), user.getUsername(), code);
-    }
-
-    private void consumePasswordToken(ResetPasswordRequest request) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
-                .orElseThrow(() -> new TokenException("Invalid password reset token"));
-
-        if (resetToken.getUsed()) {
-            throw new TokenException("Password reset token has already been used");
-        }
-
-        if (resetToken.isExpired()) {
-            throw new TokenException("Password reset token has expired");
-        }
-
-        userClient.updatePassword(
-                new UserClient.UpdatePasswordRequest(resetToken.getUserId(), request.getNewPassword())
-        );
-
-        resetToken.setUsed(true);
-        resetToken.setUsedAt(LocalDateTime.now());
-        passwordResetTokenRepository.save(resetToken);
-
-        log.info("Password updated successfully for user ID: {}", resetToken.getUserId());
-
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(resetToken.getUserId())
-                    .title("Contraseña actualizada")
-                    .message("Tu contraseña ha sido actualizada exitosamente. Si no realizaste este cambio, contacta al administrador.")
-                    .type("WARNING")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send password updated notification to userId: {}", resetToken.getUserId(), e);
-        }
     }
 
     private void sendWelcomeNotification(Long userId, String username) {
