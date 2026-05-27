@@ -24,6 +24,7 @@ import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
@@ -487,9 +488,14 @@ public class HRRequestServiceImpl implements HRRequestService {
                 } else {
                     Employee employee = employeeRepository.findById(transfer.getEmployeeId())
                             .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + transfer.getEmployeeId()));
-                    Integer previousCostCenter = employee.getCostCenter();
-                    employee.setCostCenter(transfer.getToCostCenter());
-                    employeeRepository.save(employee);
+                    Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                            .map(ContractStatus::getId)
+                            .orElseThrow(() -> new IllegalStateException("Estado de contrato 'Activo' no encontrado"));
+                    Contract activeContract = contractRepository.findFirstByEmployeeIdAndContractStatusId(employee.getId(), activeContractStatusId)
+                            .orElseThrow(() -> new IllegalStateException("El empleado no tiene un contrato activo para aplicar el traspaso"));
+                    Integer previousCostCenter = activeContract.getCostCenter();
+                    activeContract.setCostCenter(transfer.getToCostCenter());
+                    contractRepository.save(activeContract);
                     projectAssignmentSyncService.syncCostCenterChange(
                             employee,
                             previousCostCenter,

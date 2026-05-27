@@ -9,9 +9,12 @@ import com.crm.mcsv_rrhh.client.ProjectClient.ProjectNameDTO;
 import com.crm.mcsv_rrhh.dto.TransferRequest;
 import com.crm.mcsv_rrhh.dto.TransferResponse;
 import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
+import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.Transfer;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.RequestStatus;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.HRRequestService;
@@ -48,6 +51,8 @@ public class TransferServiceImpl implements TransferService {
     private final TransferRepository repository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
+    private final ContractRepository contractRepository;
+    private final ContractStatusRepository contractStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ProjectClient projectClient;
@@ -100,16 +105,16 @@ public class TransferServiceImpl implements TransferService {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado: " + request.getEmployeeId()));
 
-        if (employee.getCostCenter() == null) {
-            throw new IllegalStateException("El empleado no tiene centro de costo asignado");
-        }
-        if (employee.getCostCenter().equals(request.getToCostCenter())) {
+        Contract activeContract = findActiveContractOrThrow(employee.getId());
+        Integer fromCostCenter = activeContract.getCostCenter();
+
+        if (fromCostCenter.equals(request.getToCostCenter())) {
             throw new IllegalStateException("El centro de costo destino es igual al actual");
         }
 
         Transfer entity = Transfer.builder()
                 .employeeId(request.getEmployeeId())
-                .fromCostCenter(employee.getCostCenter())
+                .fromCostCenter(fromCostCenter)
                 .toCostCenter(request.getToCostCenter())
                 .effectiveDate(request.getEffectiveDate())
                 .reason(request.getReason())
@@ -267,6 +272,14 @@ public class TransferServiceImpl implements TransferService {
             }
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
+    }
+
+    private Contract findActiveContractOrThrow(Long employeeId) {
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId)
+                .orElseThrow(() -> new IllegalStateException("Estado de contrato 'Activo' no encontrado"));
+        return contractRepository.findFirstByEmployeeIdAndContractStatusId(employeeId, activeContractStatusId)
+                .orElseThrow(() -> new IllegalStateException("El empleado no tiene un contrato activo"));
     }
 
     private String resolveStatusName(Long statusId) {

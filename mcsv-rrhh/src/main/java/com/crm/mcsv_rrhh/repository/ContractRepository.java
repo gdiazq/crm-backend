@@ -8,9 +8,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSpecificationExecutor<Contract> {
     List<Contract> findByEmployeeId(Long employeeId);
+
+    Optional<Contract> findFirstByEmployeeIdAndContractStatusId(Long employeeId, Long contractStatusId);
 
     @Query("""
             SELECT c
