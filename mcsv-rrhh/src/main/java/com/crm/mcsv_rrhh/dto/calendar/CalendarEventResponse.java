@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.calendar;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,11 +1,11 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.calendar;
 
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.dto.CalendarEventResponse;
-import com.crm.mcsv_rrhh.dto.CalendarEventsResponse;
+import com.crm.mcsv_rrhh.dto.calendar.CalendarEventResponse;
+import com.crm.mcsv_rrhh.dto.calendar.CalendarEventsResponse;
 import com.crm.mcsv_rrhh.entity.*;
 import com.crm.mcsv_rrhh.repository.*;
-import com.crm.mcsv_rrhh.service.CalendarEventService;
+import com.crm.mcsv_rrhh.service.calendar.CalendarEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

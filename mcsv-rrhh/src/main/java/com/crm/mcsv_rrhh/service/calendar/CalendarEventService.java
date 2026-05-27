@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.calendar;
 
-import com.crm.mcsv_rrhh.dto.CalendarEventsResponse;
+import com.crm.mcsv_rrhh.dto.calendar.CalendarEventsResponse;
 
 import java.time.LocalDate;
 
