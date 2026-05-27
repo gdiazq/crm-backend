@@ -4,7 +4,6 @@ import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.dto.CalendarEventResponse;
 import com.crm.mcsv_rrhh.dto.CalendarEventsResponse;
 import com.crm.mcsv_rrhh.entity.*;
-import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.CalendarEventService;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +85,7 @@ public class CalendarEventServiceImpl implements CalendarEventService {
                                 String status) {
         employeeLeaveRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(to, from).forEach(leave -> {
             Employee employee = leave.getEmployee();
-            Integer eventCostCenter = employee != null ? activeContractCostCenter(employee.getId()) : null;
+            Integer eventCostCenter = contractCostCenter(leave.getContractId());
             String eventStatus = leave.getCurrentStatusName();
             if (!passesFilters(employee, eventCostCenter, eventStatus, employeeId, costCenter, status)) return;
 
@@ -172,7 +171,7 @@ public class CalendarEventServiceImpl implements CalendarEventService {
                                 String status) {
         contractAnnexRepository.findByDateBetween(from, to).forEach(annex -> {
             Employee employee = annex.getEmployee();
-            Integer eventCostCenter = employee != null ? activeContractCostCenter(employee.getId()) : null;
+            Integer eventCostCenter = contractCostCenter(annex.getContractId());
             String eventStatus = annex.getCurrentStatusName();
             if (!passesFilters(employee, eventCostCenter, eventStatus, employeeId, costCenter, status)) return;
 
@@ -236,7 +235,7 @@ public class CalendarEventServiceImpl implements CalendarEventService {
                                      String status) {
         settlementRepository.findByEndDateBetween(from, to).forEach(settlement -> {
             Employee employee = settlement.getEmployee();
-            Integer eventCostCenter = employee != null ? activeContractCostCenter(employee.getId()) : null;
+            Integer eventCostCenter = contractCostCenter(settlement.getContractId());
             String eventStatus = hrRequestRepository.findTopBySettlementIdOrderByCreatedAtDesc(settlement.getId())
                     .map(hr -> resolveHrStatus(hr.getStatusId()))
                     .orElse(null);
@@ -362,10 +361,9 @@ public class CalendarEventServiceImpl implements CalendarEventService {
         }
     }
 
-    private Integer activeContractCostCenter(Long employeeId) {
-        if (employeeId == null) return null;
-        return contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
-                .flatMap(s -> contractRepository.findFirstByEmployeeIdAndContractStatusId(employeeId, s.getId()))
+    private Integer contractCostCenter(Long contractId) {
+        if (contractId == null) return null;
+        return contractRepository.findById(contractId)
                 .map(Contract::getCostCenter)
                 .orElse(null);
     }
