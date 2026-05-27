@@ -45,7 +45,6 @@ public class EmployeeController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) Long statusId,
-            @RequestParam(required = false) Integer costCenter,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate createdFrom,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate createdTo,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -55,8 +54,8 @@ public class EmployeeController {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<EmployeeResponse> result = employeeService.filterEmployees(search, active, statusId, costCenter, createdFrom, createdTo, pageable);
-        Map<String, Long> stats = employeeService.getEmployeeStats(costCenter);
+        Page<EmployeeResponse> result = employeeService.filterEmployees(search, active, statusId, createdFrom, createdTo, pageable);
+        Map<String, Long> stats = employeeService.getEmployeeStats();
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
     }

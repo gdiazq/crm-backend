@@ -20,6 +20,7 @@ public class ContractSpecification {
     public static Specification<Contract> withFilters(String search,
                                                        Long employeeId, Long statusId,
                                                        Long contractStatusId, Long contractTypeId,
+                                                       Integer costCenter,
                                                        LocalDate createdFrom, LocalDate createdTo,
                                                        LocalDate startDateFrom, LocalDate startDateTo,
                                                        LocalDate endDateFrom, LocalDate endDateTo,
@@ -55,6 +56,9 @@ public class ContractSpecification {
             }
             if (contractTypeId != null) {
                 predicates.add(cb.equal(root.get("contractTypeId"), contractTypeId));
+            }
+            if (costCenter != null) {
+                predicates.add(cb.equal(root.get("costCenter"), costCenter));
             }
             if (createdFrom != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdFrom.atStartOfDay()));

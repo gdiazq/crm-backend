@@ -20,6 +20,7 @@ public interface ContractService {
     Page<ContractResponse> list(String search,
                                 Long employeeId, Long statusId,
                                 Long contractStatusId, Long contractTypeId,
+                                Integer costCenter,
                                 LocalDate createdFrom, LocalDate createdTo,
                                 LocalDate startDateFrom, LocalDate startDateTo,
                                 LocalDate endDateFrom, LocalDate endDateTo,

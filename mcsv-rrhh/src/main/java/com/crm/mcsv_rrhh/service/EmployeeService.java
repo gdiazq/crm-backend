@@ -19,12 +19,14 @@ public interface EmployeeService {
 
     EmployeeDetailResponse getEmployeeByUserId(Long userId);
 
-    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId, Integer costCenter,
+    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
                                            java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                            Pageable pageable);
 
-    Map<String, Long> getEmployeeStats(Integer costCenter);
+    Map<String, Long> getEmployeeStats();
+
     byte[] exportCsv();
+
     BulkImportResult importFromCsv(MultipartFile file);
 
     void updateStatus(Long id, Boolean active);

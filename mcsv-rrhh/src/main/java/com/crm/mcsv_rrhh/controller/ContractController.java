@@ -70,6 +70,7 @@ public class ContractController {
             @RequestParam(required = false) Long statusId,
             @RequestParam(required = false) Long contractStatusId,
             @RequestParam(required = false) Long contractTypeId,
+            @RequestParam(required = false) Integer costCenter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateFrom,
@@ -86,7 +87,7 @@ public class ContractController {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ContractResponse> result = contractService.list(search, employeeId, statusId, contractStatusId, contractTypeId, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, pageable, safeSortBy, sortDir);
+        Page<ContractResponse> result = contractService.list(search, employeeId, statusId, contractStatusId, contractTypeId, costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, pageable, safeSortBy, sortDir);
         Map<String, Long> stats = contractService.getStats(employeeId);
 
         return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));

@@ -185,14 +185,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId, Integer costCenter,
+    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
                                                    java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                                    Pageable pageable) {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
-        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
-                .map(ContractStatus::getId).orElse(null);
-        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, costCenter, activeContractStatusId, createdFrom, createdTo);
+        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, createdFrom, createdTo);
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         EmployeeStatus::getId,
@@ -202,15 +200,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Map<String, Long> getEmployeeStats(Integer costCenter) {
+    public Map<String, Long> getEmployeeStats() {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
-        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
-                .map(ContractStatus::getId).orElse(null);
         Specification<Employee> baseSpec = EmployeeSpecification.withFilters(
-                null, null, rejectedStatusId, null, costCenter, activeContractStatusId, null, null);
+                null, null, rejectedStatusId, null, null, null);
         Specification<Employee> activeSpec = EmployeeSpecification.withFilters(
-                null, true, rejectedStatusId, null, costCenter, activeContractStatusId, null, null);
+                null, true, rejectedStatusId, null, null, null);
         long total  = employeeRepository.count(baseSpec);
         long active = employeeRepository.count(activeSpec);
         return Map.of("total", total, "active", active);
