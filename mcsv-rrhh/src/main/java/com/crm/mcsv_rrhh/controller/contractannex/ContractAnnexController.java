@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.contractannex;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.ContractAnnexRequest;
-import com.crm.mcsv_rrhh.dto.ContractAnnexResponse;
-import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
-import com.crm.mcsv_rrhh.service.ContractAnnexService;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexRequest;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexResponse;
+import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;
+import com.crm.mcsv_rrhh.service.contractannex.ContractAnnexService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.contractannex;
 
-import com.crm.mcsv_rrhh.entity.ContractAnnexType;
+import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnexType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.contractannex;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -11,12 +11,13 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateContractAnnexRequest {
+public class ContractAnnexRequest {
 
-    @NotNull(message = "El ID del anexo es obligatorio")
-    @Schema(description = "ID del anexo a actualizar")
-    private Long id;
+    @NotNull(message = "El empleado es obligatorio")
+    @Schema(description = "ID del empleado")
+    private Long employeeId;
 
+    @NotNull(message = "El tipo de anexo es obligatorio")
     @Schema(description = "ID del tipo de anexo")
     private Long annexTypeId;
 

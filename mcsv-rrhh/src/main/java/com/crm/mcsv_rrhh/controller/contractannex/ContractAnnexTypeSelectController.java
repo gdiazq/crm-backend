@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.contractannex;
 
-import com.crm.mcsv_rrhh.repository.ContractAnnexTypeRepository;
+import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexTypeRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

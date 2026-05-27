@@ -1,23 +1,22 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.contractannex;
 
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.common.service.StorageService;
-import com.crm.mcsv_rrhh.dto.ContractAnnexRequest;
-import com.crm.mcsv_rrhh.dto.ContractAnnexResponse;
-import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexRequest;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexResponse;
+import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;
 import com.crm.mcsv_rrhh.entity.Contract;
-import com.crm.mcsv_rrhh.entity.ContractAnnex;
-import com.crm.mcsv_rrhh.entity.ContractAnnexType;
+import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnex;
+import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnexType;
 import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.Employee;
-import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.RequestStatus;
-import com.crm.mcsv_rrhh.repository.*;
-import com.crm.mcsv_rrhh.service.ContractAnnexService;
-import com.crm.mcsv_rrhh.service.HRRequestService;
+import com.crm.mcsv_rrhh.service.contractannex.ContractAnnexService;
+import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import com.crm.mcsv_rrhh.util.FileUploadHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +35,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexRepository;
+import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexSpecification;
+import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexTypeRepository;
+import com.crm.mcsv_rrhh.repository.ContractRepository;
+import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
+import com.crm.mcsv_rrhh.repository.EmployeeRepository;
+import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
 
 @Service
 @RequiredArgsConstructor

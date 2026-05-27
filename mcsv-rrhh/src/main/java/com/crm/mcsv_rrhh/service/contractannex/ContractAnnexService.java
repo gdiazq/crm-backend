@@ -1,9 +1,9 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.contractannex;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.ContractAnnexRequest;
-import com.crm.mcsv_rrhh.dto.ContractAnnexResponse;
-import com.crm.mcsv_rrhh.dto.UpdateContractAnnexRequest;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexRequest;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexResponse;
+import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
