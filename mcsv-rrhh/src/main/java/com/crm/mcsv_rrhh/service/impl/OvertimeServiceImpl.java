@@ -7,11 +7,16 @@ import com.crm.mcsv_rrhh.dto.OvertimeRequest;
 import com.crm.mcsv_rrhh.dto.OvertimeResponse;
 import com.crm.mcsv_rrhh.dto.OvertimeTypeResponse;
 import com.crm.mcsv_rrhh.dto.OvertimeUpdateRequest;
+import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.Employee;
 import com.crm.mcsv_rrhh.entity.HRRequest;
 import com.crm.mcsv_rrhh.entity.Overtime;
 import com.crm.mcsv_rrhh.entity.OvertimeType;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.RequestStatus;
+import com.crm.mcsv_rrhh.repository.ContractRepository;
+import com.crm.mcsv_rrhh.repository.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.HRRequestRepository;
@@ -43,6 +48,8 @@ public class OvertimeServiceImpl implements OvertimeService {
     private final OvertimeTypeRepository overtimeTypeRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
+    private final ContractRepository contractRepository;
+    private final ContractStatusRepository contractStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final OvertimeValidator overtimeValidator;
@@ -81,10 +88,15 @@ public class OvertimeServiceImpl implements OvertimeService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Empleado no encontrado: " + request.getEmployeeId()));
 
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
+        Contract activeContract = activeContractStatusId == null ? null :
+                contractRepository.findFirstByEmployeeIdAndContractStatusId(employee.getId(), activeContractStatusId).orElse(null);
+
         Overtime candidate = Overtime.builder()
                 .employeeId(employee.getId())
-                .contractId(null)
-                .costCenter(employee.getCostCenter())
+                .contractId(activeContract != null ? activeContract.getId() : null)
+                .costCenter(activeContract != null ? activeContract.getCostCenter() : null)
                 .overtimeTypeId(request.getOvertimeTypeId())
                 .date(request.getDate())
                 .startTime(request.getStartTime())

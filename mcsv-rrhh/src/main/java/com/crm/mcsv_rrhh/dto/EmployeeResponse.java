@@ -31,10 +31,6 @@ public class EmployeeResponse {
     // Estado RRHH
     private String statusName;
 
-    // Proyecto asignado
-    private Integer costCenter;
-    private String projectName;
-
     // Estado
     private Boolean active;
     private Boolean rehireEligible;

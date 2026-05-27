@@ -70,7 +70,6 @@ public class UpdateEmployeeRequest {
 
     // ─── Datos Organizacionales ───────────────────────────────────────────────
     private Long statusId;
-    private Integer costCenter;
 
     // ─── Otros Datos ──────────────────────────────────────────────────────────
     private String clothingSize;

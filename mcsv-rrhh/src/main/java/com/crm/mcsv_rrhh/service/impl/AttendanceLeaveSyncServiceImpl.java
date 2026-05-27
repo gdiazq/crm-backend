@@ -108,10 +108,14 @@ public class AttendanceLeaveSyncServiceImpl implements AttendanceLeaveSyncServic
             return new AttendanceAssignmentSnapshot(assignment.getId(), assignment.getCostCenter());
         }
         if (assignments.size() > 1) {
-            log.warn("Empleado {} tiene múltiples asignaciones para {}. Se usa Employee.costCenter como fallback.",
+            log.warn("Empleado {} tiene múltiples asignaciones para {}. Se usa contrato activo como fallback.",
                     employee.getId(), date);
         }
-        return new AttendanceAssignmentSnapshot(null, employee.getCostCenter());
+        Integer fallbackCostCenter = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .flatMap(s -> contractRepository.findFirstByEmployeeIdAndContractStatusId(employee.getId(), s.getId()))
+                .map(Contract::getCostCenter)
+                .orElse(null);
+        return new AttendanceAssignmentSnapshot(null, fallbackCostCenter);
     }
 
     private record AttendanceAssignmentSnapshot(Long projectAssignmentId, Integer costCenter) {}

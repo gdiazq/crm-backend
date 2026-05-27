@@ -337,7 +337,11 @@ public class AttendanceMarkServiceImpl implements AttendanceMarkService {
             throw new IllegalArgumentException("El empleado tiene varias asignaciones para la fecha. Debe indicar projectAssignmentId. Candidatas: " + candidates);
         }
 
-        Integer fallbackCostCenter = requestedCostCenter != null ? requestedCostCenter : employee.getCostCenter();
+        Integer activeContractCostCenter = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .flatMap(s -> contractRepository.findFirstByEmployeeIdAndContractStatusId(employee.getId(), s.getId()))
+                .map(Contract::getCostCenter)
+                .orElse(null);
+        Integer fallbackCostCenter = requestedCostCenter != null ? requestedCostCenter : activeContractCostCenter;
         if (fallbackCostCenter != null) validateCostCenter(fallbackCostCenter);
         return new AttendanceAssignmentSnapshot(null, fallbackCostCenter);
     }

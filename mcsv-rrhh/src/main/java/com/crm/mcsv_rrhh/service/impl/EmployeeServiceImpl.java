@@ -1,10 +1,11 @@
 package com.crm.mcsv_rrhh.service.impl;
 
-import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.EmployeeStatus;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
@@ -46,8 +47,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
-    private final ProjectClient projectClient;
     private final EmployeeStatusRepository employeeStatusRepository;
+    private final ContractStatusRepository contractStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ObjectMapper objectMapper;
@@ -126,7 +127,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .shoeSize(request.getShoeSize())
                 .pantSize(request.getPantSize())
                 .statusId(pendingStatusId)
-                .costCenter(request.getCostCenter())
                 .rehireEligible(request.getRehireEligible() != null ? request.getRehireEligible() : true)
                 .active(true)
                 .build();
@@ -190,7 +190,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                    Pageable pageable) {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
-        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, costCenter, createdFrom, createdTo);
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
+        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, costCenter, activeContractStatusId, createdFrom, createdTo);
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         EmployeeStatus::getId,
@@ -203,10 +205,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Map<String, Long> getEmployeeStats(Integer costCenter) {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
         Specification<Employee> baseSpec = EmployeeSpecification.withFilters(
-                null, null, rejectedStatusId, null, costCenter, null, null);
+                null, null, rejectedStatusId, null, costCenter, activeContractStatusId, null, null);
         Specification<Employee> activeSpec = EmployeeSpecification.withFilters(
-                null, true, rejectedStatusId, null, costCenter, null, null);
+                null, true, rejectedStatusId, null, costCenter, activeContractStatusId, null, null);
         long total  = employeeRepository.count(baseSpec);
         long active = employeeRepository.count(activeSpec);
         return Map.of("total", total, "active", active);
@@ -273,6 +277,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
 
         List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
                 .map(Contract::getEmployeeId)
@@ -286,8 +292,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .map(e -> new EmployeeService.AttendanceEmployeeSelectItem(
                         e.getId(),
                         fullName(e),
-                        e.getCostCenter()))
+                        activeContractCostCenter(e.getId(), activeContractStatusId)))
                 .toList();
+    }
+
+    private Integer activeContractCostCenter(Long employeeId, Long activeContractStatusId) {
+        if (employeeId == null || activeContractStatusId == null) return null;
+        return contractRepository.findFirstByEmployeeIdAndContractStatusId(employeeId, activeContractStatusId)
+                .map(Contract::getCostCenter)
+                .orElse(null);
     }
 
     @Override
@@ -360,8 +373,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .corporateEmail(e.getCorporateEmail())
                 .phone(e.getPhone())
                 .statusName(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : null)
-                .costCenter(e.getCostCenter())
-                .projectName(resolveProjectName(e.getCostCenter()))
                 .active(e.getActive())
                 .rehireEligible(e.getRehireEligible())
                 .hasContract(e.getHasContract())
@@ -552,8 +563,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .bank(resolve(e.getBankId(), bankRepository))
                 .bankAccount(e.getBankAccount())
                 .status(resolve(e.getStatusId(), employeeStatusRepository))
-                .costCenter(e.getCostCenter())
-                .projectName(resolveProjectName(e.getCostCenter()))
                 .clothingSize(e.getClothingSize())
                 .shoeSize(e.getShoeSize())
                 .pantSize(e.getPantSize())
@@ -572,17 +581,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         builder.hasContract(e.getHasContract());
 
         return builder.build();
-    }
-
-    private String resolveProjectName(Integer costCenter) {
-        if (costCenter == null) return null;
-        try {
-            ProjectClient.ProjectNameDTO dto = projectClient.getByCostCenter(costCenter);
-            return dto != null ? dto.getName() : null;
-        } catch (Exception e) {
-            log.warn("No se pudo resolver nombre de proyecto para costCenter={}: {}", costCenter, e.getMessage());
-            return null;
-        }
     }
 
     private String fullName(Employee employee) {

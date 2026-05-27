@@ -76,8 +76,6 @@ public class EmployeeDetailResponse {
 
     // ─── Datos Organizacionales ───────────────────────────────────────────────
     private CatalogItem status;
-    private Integer costCenter;
-    private String projectName;
 
     // ─── Otros Datos ─────────────────────────────────────────────────────────
     private String clothingSize;

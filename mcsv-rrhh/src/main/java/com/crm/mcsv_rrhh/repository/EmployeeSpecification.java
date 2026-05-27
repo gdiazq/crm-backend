@@ -1,7 +1,9 @@
 package com.crm.mcsv_rrhh.repository;
 
+import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.Employee;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -13,7 +15,7 @@ public class EmployeeSpecification {
     private EmployeeSpecification() {}
 
     public static Specification<Employee> withFilters(String search, Boolean active, Long excludeStatusId, Long statusId,
-                                                      Integer costCenter,
+                                                      Integer costCenter, Long activeContractStatusId,
                                                       LocalDate createdFrom, LocalDate createdTo) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -41,8 +43,16 @@ public class EmployeeSpecification {
                 ));
             }
 
-            if (costCenter != null) {
-                predicates.add(cb.equal(root.get("costCenter"), costCenter));
+            if (costCenter != null && activeContractStatusId != null) {
+                Subquery<Long> sub = query.subquery(Long.class);
+                var contractRoot = sub.from(Contract.class);
+                sub.select(contractRoot.get("id"))
+                        .where(
+                                cb.equal(contractRoot.get("employeeId"), root.get("id")),
+                                cb.equal(contractRoot.get("costCenter"), costCenter),
+                                cb.equal(contractRoot.get("contractStatusId"), activeContractStatusId)
+                        );
+                predicates.add(cb.exists(sub));
             }
 
             if (createdFrom != null) {
