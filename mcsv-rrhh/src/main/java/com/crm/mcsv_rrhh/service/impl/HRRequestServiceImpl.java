@@ -64,6 +64,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -391,7 +392,10 @@ public class HRRequestServiceImpl implements HRRequestService {
                 Contract contract = contractRepository.findById(hr.getContractId())
                         .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
 
-                if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
+                Integer previousCostCenter = contract.getCostCenter();
+                boolean isUpdate = "UPDATE".equals(hr.getAction()) && hr.getProposedData() != null;
+
+                if (isUpdate) {
                     try {
                         UpdateContractRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractRequest.class);
                         contract.setName(proposed.getName());
@@ -429,6 +433,14 @@ public class HRRequestServiceImpl implements HRRequestService {
                     }
                 }
                 contractRepository.save(contract);
+
+                if (isUpdate) {
+                    if (!Objects.equals(previousCostCenter, contract.getCostCenter())) {
+                        projectAssignmentSyncService.syncCostCenterChange(contract, previousCostCenter, LocalDate.now());
+                    }
+                } else {
+                    projectAssignmentSyncService.openInitialAssignment(contract);
+                }
 
             } else if (HRRequestTypeName.SETTLEMENT.getDisplayName().equals(requestTypeName)) {
                 Settlement settlement = settlementRepository.findById(hr.getSettlementId())
@@ -497,9 +509,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                     activeContract.setCostCenter(transfer.getToCostCenter());
                     contractRepository.save(activeContract);
                     projectAssignmentSyncService.syncCostCenterChange(
-                            employee,
+                            activeContract,
                             previousCostCenter,
-                            transfer.getToCostCenter(),
                             transfer.getEffectiveDate() != null ? transfer.getEffectiveDate() : LocalDate.now());
                 }
                 transferRepository.save(transfer);
@@ -580,8 +591,6 @@ public class HRRequestServiceImpl implements HRRequestService {
             } else {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
-                Integer previousCostCenter = employee.getCostCenter();
-                Integer approvedCostCenter = employee.getCostCenter();
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
                     try {
@@ -634,16 +643,13 @@ public class HRRequestServiceImpl implements HRRequestService {
                         employee.setActive(proposed.getActive());
                         employee.setRehireEligible(proposed.getRehireEligible());
                         employee.setCostCenter(proposed.getCostCenter());
-                        approvedCostCenter = proposed.getCostCenter();
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
                 } else {
                     employee.setStatusId(approvedStatusId);
-                    approvedCostCenter = employee.getCostCenter();
                 }
                 employeeRepository.save(employee);
-                projectAssignmentSyncService.syncCostCenterChange(employee, previousCostCenter, approvedCostCenter, LocalDate.now());
             }
 
             hr.setHhrrApproverId(approverId);

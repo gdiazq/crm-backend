@@ -1,15 +1,15 @@
 package com.crm.mcsv_rrhh.service;
 
-import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.ProjectAssignment;
 
 import java.time.LocalDate;
 
 public interface ProjectAssignmentSyncService {
 
-    void openInitialAssignment(Employee employee, LocalDate startDate);
+    void openInitialAssignment(Contract contract);
 
-    void syncCostCenterChange(Employee employee, Integer previousCostCenter, Integer newCostCenter, LocalDate effectiveDate);
+    void syncCostCenterChange(Contract contract, Integer previousCostCenter, LocalDate effectiveDate);
 
     ProjectAssignment resolveAssignmentForDate(Long employeeId, LocalDate date);
 }

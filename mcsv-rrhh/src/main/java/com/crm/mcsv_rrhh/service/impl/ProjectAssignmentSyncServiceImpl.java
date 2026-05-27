@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.Contract;
 import com.crm.mcsv_rrhh.entity.ProjectAssignment;
 import com.crm.mcsv_rrhh.repository.ProjectAssignmentRepository;
 import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
@@ -23,41 +23,44 @@ public class ProjectAssignmentSyncServiceImpl implements ProjectAssignmentSyncSe
 
     @Override
     @Transactional
-    public void openInitialAssignment(Employee employee, LocalDate startDate) {
-        if (employee == null || employee.getId() == null || employee.getCostCenter() == null) {
+    public void openInitialAssignment(Contract contract) {
+        if (contract == null || contract.getEmployeeId() == null || contract.getCostCenter() == null) {
             return;
         }
-        validateCostCenter(employee.getCostCenter());
+        validateCostCenter(contract.getCostCenter());
         if (repository.findFirstByEmployeeIdAndCostCenterAndActiveTrueAndEndDateIsNullOrderByStartDateDesc(
-                employee.getId(), employee.getCostCenter()).isPresent()) {
+                contract.getEmployeeId(), contract.getCostCenter()).isPresent()) {
             return;
         }
+        LocalDate startDate = contract.getStartDate() != null ? contract.getStartDate() : LocalDate.now();
         repository.save(ProjectAssignment.builder()
-                .employeeId(employee.getId())
-                .costCenter(employee.getCostCenter())
+                .employeeId(contract.getEmployeeId())
+                .costCenter(contract.getCostCenter())
                 .allocationPercent(BigDecimal.valueOf(100))
-                .startDate(startDate != null ? startDate : LocalDate.now())
+                .startDate(startDate)
                 .active(true)
                 .build());
     }
 
     @Override
     @Transactional
-    public void syncCostCenterChange(Employee employee, Integer previousCostCenter, Integer newCostCenter, LocalDate effectiveDate) {
-        if (employee == null || employee.getId() == null || Objects.equals(previousCostCenter, newCostCenter)) {
+    public void syncCostCenterChange(Contract contract, Integer previousCostCenter, LocalDate effectiveDate) {
+        if (contract == null || contract.getEmployeeId() == null
+                || Objects.equals(previousCostCenter, contract.getCostCenter())) {
             return;
         }
 
         LocalDate startDate = effectiveDate != null ? effectiveDate : LocalDate.now();
-        closeOpenAssignments(employee.getId(), startDate);
+        closeOpenAssignments(contract.getEmployeeId(), startDate);
 
+        Integer newCostCenter = contract.getCostCenter();
         if (newCostCenter == null) {
             return;
         }
 
         validateCostCenter(newCostCenter);
         repository.save(ProjectAssignment.builder()
-                .employeeId(employee.getId())
+                .employeeId(contract.getEmployeeId())
                 .costCenter(newCostCenter)
                 .allocationPercent(BigDecimal.valueOf(100))
                 .startDate(startDate)

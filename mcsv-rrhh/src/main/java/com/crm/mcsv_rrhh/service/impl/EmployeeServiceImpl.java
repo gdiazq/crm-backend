@@ -22,7 +22,6 @@ import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.EmployeeService;
 import com.crm.mcsv_rrhh.service.HRRequestService;
-import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +72,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final BankRepository bankRepository;
     private final ContractRepository contractRepository;
-    private final ProjectAssignmentSyncService projectAssignmentSyncService;
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
@@ -135,7 +132,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
 
         Employee saved = employeeRepository.save(employee);
-        projectAssignmentSyncService.openInitialAssignment(saved, LocalDate.now());
         HRRequest req = hrRequestService.createForEmployee(saved.getId(), HRRequestTypeName.EMPLOYEE.getDisplayName(), "CREATE", null);
         return toDetailResponse(saved, null, req.getId());
     }
