@@ -271,48 +271,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .toList();
     }
 
-    @Override
-    public List<EmployeeService.EmployeeSelectItem> getSupervisors() {
-        try {
-            List<Long> userIds = userClient.getSupervisors().stream().map(UserDTO::getId).toList();
-            if (userIds.isEmpty()) return List.of();
-            return employeeRepository.findByUserIdIn(userIds).stream()
-                    .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
-                    .toList();
-        } catch (Exception e) {
-            log.warn("No se pudieron obtener supervisores: {}", e.getMessage());
-            return List.of();
-        }
-    }
-
-    @Override
-    public List<EmployeeService.EmployeeSelectItem> getVisitors() {
-        try {
-            List<Long> userIds = userClient.getVisitors().stream().map(UserDTO::getId).toList();
-            if (userIds.isEmpty()) return List.of();
-            return employeeRepository.findByUserIdIn(userIds).stream()
-                    .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
-                    .toList();
-        } catch (Exception e) {
-            log.warn("No se pudieron obtener visitadores: {}", e.getMessage());
-            return List.of();
-        }
-    }
-
-    @Override
-    public List<EmployeeService.EmployeeSelectItem> getCompanyRepresentatives() {
-        try {
-            List<Long> userIds = userClient.getCompanyRepresentatives().stream().map(UserDTO::getId).toList();
-            if (userIds.isEmpty()) return List.of();
-            return employeeRepository.findByUserIdIn(userIds).stream()
-                    .map(e -> new EmployeeService.EmployeeSelectItem(e.getId(), e.getFirstName() + " " + e.getPaternalLastName()))
-                    .toList();
-        } catch (Exception e) {
-            log.warn("No se pudieron obtener representantes de empresa: {}", e.getMessage());
-            return List.of();
-        }
-    }
-
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private Employee findOrThrow(Long id) {

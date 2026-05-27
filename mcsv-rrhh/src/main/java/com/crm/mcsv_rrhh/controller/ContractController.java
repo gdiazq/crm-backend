@@ -114,4 +114,25 @@ public class ContractController {
     public ResponseEntity<List<ContractService.AttendanceEmployeeSelectItem>> getEmployeesForAttendance() {
         return ResponseEntity.ok(contractService.getEmployeesForAttendance());
     }
+
+    @GetMapping("/select/supervisors")
+    @Operation(summary = "Empleados supervisores con contrato activo",
+               description = "Retorna empleados (aprobados+activos+con contrato ACTIVE) cuyo usuario tiene rol de supervisor")
+    public ResponseEntity<List<ContractService.EmployeeSelectItem>> getSupervisors() {
+        return ResponseEntity.ok(contractService.getSupervisors());
+    }
+
+    @GetMapping("/select/visitors")
+    @Operation(summary = "Empleados visitadores con contrato activo",
+               description = "Retorna empleados (aprobados+activos+con contrato ACTIVE) cuyo usuario tiene rol de visitador")
+    public ResponseEntity<List<ContractService.EmployeeSelectItem>> getVisitors() {
+        return ResponseEntity.ok(contractService.getVisitors());
+    }
+
+    @GetMapping("/select/company-representatives")
+    @Operation(summary = "Empleados representantes de empresa con contrato activo",
+               description = "Retorna empleados (aprobados+activos+con contrato ACTIVE) cuyo usuario tiene rol de representante de empresa")
+    public ResponseEntity<List<ContractService.EmployeeSelectItem>> getCompanyRepresentatives() {
+        return ResponseEntity.ok(contractService.getCompanyRepresentatives());
+    }
 }

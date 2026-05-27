@@ -10,13 +10,13 @@ import java.util.List;
 @FeignClient(name = "mcsv-rrhh")
 public interface RrhhClient {
 
-    @GetMapping("/employee/select/supervisors")
+    @GetMapping("/contract/select/supervisors")
     List<PersonSelectItem> getSupervisors();
 
-    @GetMapping("/employee/select/visitors")
+    @GetMapping("/contract/select/visitors")
     List<PersonSelectItem> getVisitors();
 
-    @GetMapping("/employee/select/company-representatives")
+    @GetMapping("/contract/select/company-representatives")
     List<PersonSelectItem> getCompanyRepresentatives();
 
     @GetMapping("/select/legal-termination-causes")

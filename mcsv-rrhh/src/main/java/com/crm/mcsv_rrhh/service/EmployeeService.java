@@ -39,11 +39,5 @@ public interface EmployeeService {
 
     List<EmployeeSelectItem> getEmployeesWithContract();
 
-    List<EmployeeSelectItem> getSupervisors();
-
-    List<EmployeeSelectItem> getVisitors();
-
-    List<EmployeeSelectItem> getCompanyRepresentatives();
-
     record EmployeeSelectItem(Long id, String name) {}
 }

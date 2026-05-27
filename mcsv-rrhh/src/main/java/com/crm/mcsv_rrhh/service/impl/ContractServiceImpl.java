@@ -3,7 +3,9 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.client.ProjectClient;
+import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
+import com.crm.mcsv_rrhh.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
 import com.crm.mcsv_rrhh.dto.CreateContractRequest;
@@ -38,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import com.crm.common.util.CsvUtil;
 import java.util.*;
+import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +69,7 @@ public class ContractServiceImpl implements ContractService {
     private final MealTypeRepository mealTypeRepository;
     private final TransportTypeRepository transportTypeRepository;
     private final ProjectClient projectClient;
+    private final UserClient userClient;
 
     @Override
     @Transactional
@@ -243,6 +247,53 @@ public class ContractServiceImpl implements ContractService {
                             c.getCostCenter());
                 })
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.EmployeeSelectItem> getSupervisors() {
+        return findEmployeesByRole(userClient::getSupervisors, "supervisores");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.EmployeeSelectItem> getVisitors() {
+        return findEmployeesByRole(userClient::getVisitors, "visitadores");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.EmployeeSelectItem> getCompanyRepresentatives() {
+        return findEmployeesByRole(userClient::getCompanyRepresentatives, "representantes de empresa");
+    }
+
+    private List<ContractService.EmployeeSelectItem> findEmployeesByRole(Supplier<List<UserDTO>> userFetcher, String roleLabel) {
+        try {
+            List<Long> userIds = userFetcher.get().stream().map(UserDTO::getId).toList();
+            if (userIds.isEmpty()) return List.of();
+
+            Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
+                    .map(EmployeeStatus::getId).orElse(null);
+            Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                    .map(ContractStatus::getId).orElse(null);
+            if (approvedStatusId == null || activeContractStatusId == null) return List.of();
+
+            Set<Long> employeeIdsWithActiveContract = Set.copyOf(
+                    contractRepository.findEmployeeIdsByContractStatusId(activeContractStatusId));
+            if (employeeIdsWithActiveContract.isEmpty()) return List.of();
+
+            return employeeRepository.findByUserIdIn(userIds).stream()
+                    .filter(e -> Boolean.TRUE.equals(e.getActive()))
+                    .filter(e -> approvedStatusId.equals(e.getStatusId()))
+                    .filter(e -> employeeIdsWithActiveContract.contains(e.getId()))
+                    .map(e -> new ContractService.EmployeeSelectItem(
+                            e.getId(),
+                            e.getFirstName() + " " + e.getPaternalLastName()))
+                    .toList();
+        } catch (Exception ex) {
+            log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());
+            return List.of();
+        }
     }
 
     private String fullName(Employee employee) {

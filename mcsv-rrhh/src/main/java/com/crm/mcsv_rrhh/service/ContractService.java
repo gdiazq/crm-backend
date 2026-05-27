@@ -39,5 +39,13 @@ public interface ContractService {
 
     List<AttendanceEmployeeSelectItem> getEmployeesForAttendance();
 
+    List<EmployeeSelectItem> getSupervisors();
+
+    List<EmployeeSelectItem> getVisitors();
+
+    List<EmployeeSelectItem> getCompanyRepresentatives();
+
     record AttendanceEmployeeSelectItem(Long id, String name, Integer costCenter) {}
+
+    record EmployeeSelectItem(Long id, String name) {}
 }
