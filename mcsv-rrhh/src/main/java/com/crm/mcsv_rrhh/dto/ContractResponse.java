@@ -23,6 +23,8 @@ public class ContractResponse {
     private String contractStatus;
     private String company;
     private String jobTitle;
+    private Integer costCenter;
+    private String projectName;
     private String baseSalary;
     private LocalDate startDate;
     private LocalDate endDate;

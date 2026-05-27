@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.impl;
 
 import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.ContractResponse;
@@ -64,10 +65,13 @@ public class ContractServiceImpl implements ContractService {
     private final LaborUnionRepository laborUnionRepository;
     private final MealTypeRepository mealTypeRepository;
     private final TransportTypeRepository transportTypeRepository;
+    private final ProjectClient projectClient;
 
     @Override
     @Transactional
     public ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files) {
+        validateCostCenter(request.getCostCenter());
+
         Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
@@ -97,6 +101,7 @@ public class ContractServiceImpl implements ContractService {
                 .jobTitleId(request.getJobTitleId())
                 .siteId(request.getSiteId())
                 .laborUnionId(request.getLaborUnionId())
+                .costCenter(request.getCostCenter())
                 .weeklyWorkHours(request.getWeeklyWorkHours())
                 .workDays(request.getWorkDays())
                 .startDate(request.getStartDate())
@@ -132,6 +137,8 @@ public class ContractServiceImpl implements ContractService {
     public ContractDetailResponse updateContract(Long id, UpdateContractRequest req, List<MultipartFile> files) {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
+
+        validateCostCenter(req.getCostCenter());
 
         String proposedData;
         try {
@@ -231,6 +238,8 @@ public class ContractServiceImpl implements ContractService {
                 .contractStatus(resolveName(c.getContractStatusId(), contractStatusRepository))
                 .company(resolveName(c.getCompanyId(), companyRepository))
                 .jobTitle(resolveName(c.getJobTitleId(), jobTitleRepository))
+                .costCenter(c.getCostCenter())
+                .projectName(resolveProjectName(c.getCostCenter()))
                 .baseSalary(c.getBaseSalary())
                 .startDate(c.getStartDate())
                 .endDate(c.getEndDate())
@@ -272,6 +281,8 @@ public class ContractServiceImpl implements ContractService {
                 .jobTitle(resolve(c.getJobTitleId(), jobTitleRepository))
                 .site(resolve(c.getSiteId(), siteRepository))
                 .laborUnion(resolve(c.getLaborUnionId(), laborUnionRepository))
+                .costCenter(c.getCostCenter())
+                .projectName(resolveProjectName(c.getCostCenter()))
                 .weeklyWorkHours(c.getWeeklyWorkHours())
                 .workDays(c.getWorkDays())
                 .startDate(c.getStartDate())
@@ -292,6 +303,32 @@ public class ContractServiceImpl implements ContractService {
             try { return (String) e.getClass().getMethod("getName").invoke(e); }
             catch (Exception ex) { return null; }
         }).orElse(null);
+    }
+
+    private void validateCostCenter(Integer costCenter) {
+        if (costCenter == null || costCenter <= 0) {
+            throw new IllegalArgumentException("El centro de costo es obligatorio y debe ser mayor a 0");
+        }
+        ProjectClient.ProjectNameDTO project;
+        try {
+            project = projectClient.getByCostCenter(costCenter);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
+        }
+        if (project == null || project.getId() == null) {
+            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
+        }
+    }
+
+    private String resolveProjectName(Integer costCenter) {
+        if (costCenter == null) return null;
+        try {
+            ProjectClient.ProjectNameDTO project = projectClient.getByCostCenter(costCenter);
+            return project != null ? project.getName() : null;
+        } catch (Exception e) {
+            log.warn("No se pudo resolver nombre de proyecto para costCenter={}: {}", costCenter, e.getMessage());
+            return null;
+        }
     }
 
     private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {
@@ -324,7 +361,7 @@ public class ContractServiceImpl implements ContractService {
                 .collect(java.util.stream.Collectors.toMap(Employee::getId, e -> e));
 
         StringBuilder csv = new StringBuilder();
-        csv.append("ID,RUT Trabajador,Nombre Trabajador,Nombre Contrato,Número Contrato,Tipo Contrato,Estado Contrato,Empresa,Cargo,Salario Base,Fecha Inicio,Fecha Fin,Fecha Creación,Fecha Actualización\n");
+        csv.append("ID,RUT Trabajador,Nombre Trabajador,Nombre Contrato,Número Contrato,Tipo Contrato,Estado Contrato,Empresa,Cargo,Centro Costo,Salario Base,Fecha Inicio,Fecha Fin,Fecha Creación,Fecha Actualización\n");
 
         contractRepository.findAll().forEach(c -> {
             Employee emp = employeeMap.get(c.getEmployeeId());
@@ -337,6 +374,7 @@ public class ContractServiceImpl implements ContractService {
                .append(escape(contractStatusMap.get(c.getContractStatusId()))).append(",")
                .append(escape(companyMap.get(c.getCompanyId()))).append(",")
                .append(escape(jobTitleMap.get(c.getJobTitleId()))).append(",")
+               .append(c.getCostCenter() != null ? c.getCostCenter() : "").append(",")
                .append(escape(c.getBaseSalary())).append(",")
                .append(formatDate(c.getStartDate())).append(",")
                .append(formatDate(c.getEndDate())).append(",")
@@ -378,9 +416,10 @@ public class ContractServiceImpl implements ContractService {
             int iBaseSalary     = idx.getOrDefault("salario base", -1);
             int iStartDate      = idx.getOrDefault("fecha inicio", -1);
             int iEndDate        = idx.getOrDefault("fecha fin", -1);
+            int iCostCenter     = idx.getOrDefault("centro costo", idx.getOrDefault("centro de costo", -1));
 
-            if (iRut < 0 || iName < 0) {
-                errors.add(new BulkImportResult.RowError(1, "Faltan columnas requeridas: 'RUT Trabajador' y 'Nombre Contrato'"));
+            if (iRut < 0 || iName < 0 || iCostCenter < 0) {
+                errors.add(new BulkImportResult.RowError(1, "Faltan columnas requeridas: 'RUT Trabajador', 'Nombre Contrato' y 'Centro Costo'"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
 
@@ -414,12 +453,25 @@ public class ContractServiceImpl implements ContractService {
                                 : null;
                     }
 
+                    String costCenterRaw = CsvUtil.col(cols, iCostCenter);
+                    if (costCenterRaw.isBlank()) {
+                        throw new IllegalArgumentException("Centro de costo es requerido");
+                    }
+                    Integer costCenter;
+                    try {
+                        costCenter = Integer.parseInt(costCenterRaw.trim());
+                    } catch (NumberFormatException nfe) {
+                        throw new IllegalArgumentException("Centro de costo inválido: " + costCenterRaw);
+                    }
+                    validateCostCenter(costCenter);
+
                     Contract contract = Contract.builder()
                             .employeeId(employee.getId())
                             .name(CsvUtil.col(cols, iName))
                             .contractNumber(CsvUtil.col(cols, iContractNumber).isEmpty() ? null : CsvUtil.col(cols, iContractNumber))
                             .contractTypeId(contractTypeId)
                             .contractStatusId(suspendedContractStatusId)
+                            .costCenter(costCenter)
                             .baseSalary(CsvUtil.col(cols, iBaseSalary).isEmpty() ? null : CsvUtil.col(cols, iBaseSalary))
                             .startDate(startDate)
                             .endDate(endDate)

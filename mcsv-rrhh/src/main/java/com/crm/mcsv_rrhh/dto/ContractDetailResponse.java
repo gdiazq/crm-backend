@@ -37,6 +37,8 @@ public class ContractDetailResponse {
     private CatalogItem jobTitle;
     private CatalogItem site;
     private CatalogItem laborUnion;
+    private Integer costCenter;
+    private String projectName;
 
     // ─── Jornada laboral ──────────────────────────────────────────────────────
     private String weeklyWorkHours;

@@ -405,6 +405,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         contract.setJobTitleId(proposed.getJobTitleId());
                         contract.setSiteId(proposed.getSiteId());
                         contract.setLaborUnionId(proposed.getLaborUnionId());
+                        contract.setCostCenter(proposed.getCostCenter());
                         contract.setWeeklyWorkHours(proposed.getWeeklyWorkHours());
                         contract.setWorkDays(proposed.getWorkDays());
                         contract.setStartDate(proposed.getStartDate());

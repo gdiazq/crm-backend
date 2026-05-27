@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.dto;
 
 import lombok.Data;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
@@ -13,6 +14,9 @@ public class UpdateContractRequest {
 
     @NotNull(message = "employeeId es requerido")
     private Long employeeId;
+
+    @NotNull(message = "costCenter es requerido")
+    private Integer costCenter;
 
     // ─── Datos del contrato ───────────────────────────────────────────────────
     private String name;

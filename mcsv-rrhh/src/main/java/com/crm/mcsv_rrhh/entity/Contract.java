@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_contract_status_id",         columnList = "status_id"),
         @Index(name = "idx_contract_contract_status_id",columnList = "contract_status_id"),
         @Index(name = "idx_contract_company_id",        columnList = "company_id"),
+        @Index(name = "idx_contract_cost_center",       columnList = "cost_center"),
         @Index(name = "idx_contract_start_date",        columnList = "start_date"),
         @Index(name = "idx_contract_created_at",        columnList = "created_at"),
         @Index(name = "idx_contract_employee_status",   columnList = "employee_id, contract_status_id")
@@ -48,6 +49,9 @@ public class Contract {
     private Long jobTitleId;
     private Long siteId;
     private Long laborUnionId;
+
+    @Column(name = "cost_center", nullable = false)
+    private Integer costCenter;
 
     // ─── Jornada laboral ──────────────────────────────────────────────────────
     private String weeklyWorkHours;
