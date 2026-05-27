@@ -31,13 +31,12 @@ public interface RrhhClient {
     @GetMapping("/select/no-re-hired-causes")
     List<PersonSelectItem> getNoReHiredCauses();
 
-    @GetMapping("/employee/paged")
-    PagedResponse<EmployeeResponseDTO> getEmployeesByCostCenter(@RequestParam("costCenter") Integer costCenter,
-                                                              @RequestParam(value = "search", required = false) String search,
-                                                              @RequestParam(value = "active", required = false) Boolean active,
-                                                              @RequestParam(value = "statusId", required = false) Long statusId,
-                                                              @RequestParam("page") int page,
-                                                              @RequestParam("size") int size,
-                                                              @RequestParam("sortBy") String sortBy,
-                                                              @RequestParam("sortDir") String sortDir);
+    @GetMapping("/contract/paged")
+    PagedResponse<ContractResponseDTO> getContractsByCostCenter(@RequestParam("costCenter") Integer costCenter,
+                                                                @RequestParam(value = "search", required = false) String search,
+                                                                @RequestParam(value = "contractStatusId", required = false) Long contractStatusId,
+                                                                @RequestParam("page") int page,
+                                                                @RequestParam("size") int size,
+                                                                @RequestParam("sortBy") String sortBy,
+                                                                @RequestParam("sortDir") String sortDir);
 }
