@@ -221,6 +221,42 @@ public class ContractServiceImpl implements ContractService {
         return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, contractId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.AttendanceEmployeeSelectItem> getEmployeesForAttendance() {
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
+        if (activeContractStatusId == null) return List.of();
+
+        Long approvedEmployeeStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
+                .map(EmployeeStatus::getId).orElse(null);
+        if (approvedEmployeeStatusId == null) return List.of();
+
+        return contractRepository
+                .findActiveContractsWithApprovedEmployees(activeContractStatusId, approvedEmployeeStatusId)
+                .stream()
+                .map(c -> {
+                    Employee e = c.getEmployee();
+                    return new ContractService.AttendanceEmployeeSelectItem(
+                            e.getId(),
+                            fullName(e),
+                            c.getCostCenter());
+                })
+                .toList();
+    }
+
+    private String fullName(Employee employee) {
+        if (employee == null) return null;
+        return String.join(" ",
+                safe(employee.getFirstName()),
+                safe(employee.getPaternalLastName()),
+                safe(employee.getMaternalLastName())).trim();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private ContractResponse toResponse(Contract c) {

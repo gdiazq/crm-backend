@@ -107,4 +107,11 @@ public class ContractController {
     public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(contractService.importFromCsv(file));
     }
+
+    @GetMapping("/select/attendance")
+    @Operation(summary = "Selector de empleados con contrato activo para asistencia",
+               description = "Retorna empleados activos y aprobados que tienen un contrato ACTIVE, con su centro de costo")
+    public ResponseEntity<List<ContractService.AttendanceEmployeeSelectItem>> getEmployeesForAttendance() {
+        return ResponseEntity.ok(contractService.getEmployeesForAttendance());
+    }
 }

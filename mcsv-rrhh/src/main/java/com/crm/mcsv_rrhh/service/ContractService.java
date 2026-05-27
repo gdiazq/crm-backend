@@ -36,4 +36,8 @@ public interface ContractService {
     byte[] exportCsv();
 
     BulkImportResult importFromCsv(MultipartFile file);
+
+    List<AttendanceEmployeeSelectItem> getEmployeesForAttendance();
+
+    record AttendanceEmployeeSelectItem(Long id, String name, Integer costCenter) {}
 }

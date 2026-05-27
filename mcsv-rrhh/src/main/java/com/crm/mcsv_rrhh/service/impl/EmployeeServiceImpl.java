@@ -3,9 +3,7 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.entity.Contract;
-import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.EmployeeStatus;
-import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
@@ -48,7 +46,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
     private final EmployeeStatusRepository employeeStatusRepository;
-    private final ContractStatusRepository contractStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ObjectMapper objectMapper;
@@ -266,37 +263,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                         e.getId(),
                         e.getFirstName() + " " + e.getPaternalLastName()))
                 .toList();
-    }
-
-    @Override
-    public List<EmployeeService.AttendanceEmployeeSelectItem> getEmployeesForAttendance() {
-        Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
-                .map(EmployeeStatus::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
-        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
-                .map(ContractStatus::getId).orElse(null);
-
-        List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
-                .map(Contract::getEmployeeId)
-                .distinct()
-                .toList();
-
-        if (employeeIdsWithContract.isEmpty()) return List.of();
-
-        return employeeRepository.findByActiveTrueAndStatusIdAndIdIn(approvedStatusId, employeeIdsWithContract)
-                .stream()
-                .map(e -> new EmployeeService.AttendanceEmployeeSelectItem(
-                        e.getId(),
-                        fullName(e),
-                        activeContractCostCenter(e.getId(), activeContractStatusId)))
-                .toList();
-    }
-
-    private Integer activeContractCostCenter(Long employeeId, Long activeContractStatusId) {
-        if (employeeId == null || activeContractStatusId == null) return null;
-        return contractRepository.findFirstByEmployeeIdAndContractStatusId(employeeId, activeContractStatusId)
-                .map(Contract::getCostCenter)
-                .orElse(null);
     }
 
     @Override
