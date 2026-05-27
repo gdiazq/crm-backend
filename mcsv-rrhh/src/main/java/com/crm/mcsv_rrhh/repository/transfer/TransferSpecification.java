@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.transfer;
 
 import com.crm.mcsv_rrhh.entity.HRRequest;
-import com.crm.mcsv_rrhh.entity.Transfer;
+import com.crm.mcsv_rrhh.entity.transfer.Transfer;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;

@@ -1,11 +1,11 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.transfer;
 
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.client.ProjectClient.ProjectNameDTO;
-import com.crm.mcsv_rrhh.dto.TransferRequest;
-import com.crm.mcsv_rrhh.dto.TransferResponse;
-import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
-import com.crm.mcsv_rrhh.service.TransferService;
+import com.crm.mcsv_rrhh.dto.transfer.TransferRequest;
+import com.crm.mcsv_rrhh.dto.transfer.TransferResponse;
+import com.crm.mcsv_rrhh.dto.transfer.UpdateTransferRequest;
+import com.crm.mcsv_rrhh.service.transfer.TransferService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

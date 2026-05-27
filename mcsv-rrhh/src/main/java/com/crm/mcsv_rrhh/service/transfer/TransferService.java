@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.transfer;
 
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.client.ProjectClient.ProjectNameDTO;
-import com.crm.mcsv_rrhh.dto.TransferRequest;
-import com.crm.mcsv_rrhh.dto.TransferResponse;
-import com.crm.mcsv_rrhh.dto.UpdateTransferRequest;
+import com.crm.mcsv_rrhh.dto.transfer.TransferRequest;
+import com.crm.mcsv_rrhh.dto.transfer.TransferResponse;
+import com.crm.mcsv_rrhh.dto.transfer.UpdateTransferRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
