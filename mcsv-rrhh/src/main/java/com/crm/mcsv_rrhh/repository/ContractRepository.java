@@ -15,6 +15,9 @@ public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSp
 
     Optional<Contract> findFirstByEmployeeIdAndContractStatusId(Long employeeId, Long contractStatusId);
 
+    @Query("SELECT DISTINCT c.employeeId FROM Contract c WHERE c.contractStatusId = :contractStatusId")
+    List<Long> findEmployeeIdsByContractStatusId(@Param("contractStatusId") Long contractStatusId);
+
     @Query("SELECT c FROM Contract c JOIN FETCH c.employee e " +
            "WHERE c.contractStatusId = :activeContractStatusId " +
            "AND e.active = true " +

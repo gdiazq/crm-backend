@@ -3,7 +3,9 @@ package com.crm.mcsv_rrhh.service.impl;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.entity.Contract;
+import com.crm.mcsv_rrhh.entity.ContractStatus;
 import com.crm.mcsv_rrhh.entity.EmployeeStatus;
+import com.crm.mcsv_rrhh.enums.ContractStatusName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.CreateEmployeeRequest;
@@ -46,6 +48,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final UserClient userClient;
     private final EmployeeStatusRepository employeeStatusRepository;
+    private final ContractStatusRepository contractStatusRepository;
     private final HRRequestRepository hrRequestRepository;
     private final HRRequestService hrRequestService;
     private final ObjectMapper objectMapper;
@@ -227,15 +230,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
 
-        List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
-                .map(Contract::getEmployeeId)
-                .distinct()
-                .toList();
+        List<Long> employeeIdsWithActiveContract = activeContractStatusId == null
+                ? List.of()
+                : contractRepository.findEmployeeIdsByContractStatusId(activeContractStatusId);
 
-        List<Employee> employees = employeeIdsWithContract.isEmpty()
+        List<Employee> employees = employeeIdsWithActiveContract.isEmpty()
                 ? employeeRepository.findByActiveTrueAndStatusId(approvedStatusId)
-                : employeeRepository.findByActiveTrueAndStatusIdAndIdNotIn(approvedStatusId, employeeIdsWithContract);
+                : employeeRepository.findByActiveTrueAndStatusIdAndIdNotIn(approvedStatusId, employeeIdsWithActiveContract);
 
         return employees.stream()
                 .map(e -> new EmployeeService.EmployeeSelectItem(
@@ -249,15 +253,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Aprobado"));
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
 
-        List<Long> employeeIdsWithContract = contractRepository.findAll().stream()
-                .map(Contract::getEmployeeId)
-                .distinct()
-                .toList();
+        if (activeContractStatusId == null) return List.of();
 
-        if (employeeIdsWithContract.isEmpty()) return List.of();
+        List<Long> employeeIdsWithActiveContract =
+                contractRepository.findEmployeeIdsByContractStatusId(activeContractStatusId);
 
-        return employeeRepository.findByActiveTrueAndStatusIdAndIdIn(approvedStatusId, employeeIdsWithContract)
+        if (employeeIdsWithActiveContract.isEmpty()) return List.of();
+
+        return employeeRepository.findByActiveTrueAndStatusIdAndIdIn(approvedStatusId, employeeIdsWithActiveContract)
                 .stream()
                 .map(e -> new EmployeeService.EmployeeSelectItem(
                         e.getId(),
