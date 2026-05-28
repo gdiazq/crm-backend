@@ -1,0 +1,32 @@
+package com.crm.mcsv_rrhh.service.settlement;
+
+import com.crm.common.dto.PagedResponse;
+import com.crm.mcsv_rrhh.dto.settlement.TerminationQuizQuestionGroupedResponse;
+import com.crm.mcsv_rrhh.dto.settlement.TerminationQuizQuestionRequest;
+import com.crm.mcsv_rrhh.dto.settlement.TerminationQuizQuestionResponse;
+import com.crm.mcsv_rrhh.dto.settlement.UpdateTerminationQuizQuestionRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public interface TerminationQuizQuestionService {
+
+    PagedResponse<TerminationQuizQuestionResponse> list(String search, Boolean active, Long questionGroupId,
+                                                         Long employeeId,
+                                                         LocalDate createdFrom, LocalDate createdTo,
+                                                         LocalDate updatedFrom, LocalDate updatedTo,
+                                                         Pageable pageable);
+
+    TerminationQuizQuestionResponse getById(Long id);
+
+    TerminationQuizQuestionResponse create(TerminationQuizQuestionRequest request);
+
+    TerminationQuizQuestionResponse update(UpdateTerminationQuizQuestionRequest request);
+
+    void updateStatus(Long id, Boolean active);
+
+    List<TerminationQuizQuestionResponse> getActiveQuestions();
+
+    List<TerminationQuizQuestionGroupedResponse> getGroupedQuestions(Long employeeId);
+}
