@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.familyallowancetier;
 
-import com.crm.mcsv_rrhh.repository.FamilyAllowanceTierRepository;
+import com.crm.mcsv_rrhh.repository.familyallowancetier.FamilyAllowanceTierRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
