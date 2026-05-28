@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.laborunion;
 
 import jakarta.persistence.*;
 import lombok.*;

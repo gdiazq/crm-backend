@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.laborunion;
 
-import com.crm.mcsv_rrhh.entity.LaborUnion;
+import com.crm.mcsv_rrhh.entity.laborunion.LaborUnion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
