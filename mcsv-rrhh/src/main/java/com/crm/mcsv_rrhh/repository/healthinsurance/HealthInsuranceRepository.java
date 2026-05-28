@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.healthinsurance;
 
-import com.crm.mcsv_rrhh.entity.HealthInsurance;
+import com.crm.mcsv_rrhh.entity.healthinsurance.HealthInsurance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.healthinsurance;
 
-import com.crm.mcsv_rrhh.repository.HealthInsuranceRepository;
+import com.crm.mcsv_rrhh.repository.healthinsurance.HealthInsuranceRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
