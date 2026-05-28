@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.identificationtype;
 
-import com.crm.mcsv_rrhh.entity.IdentificationType;
+import com.crm.mcsv_rrhh.entity.identificationtype.IdentificationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

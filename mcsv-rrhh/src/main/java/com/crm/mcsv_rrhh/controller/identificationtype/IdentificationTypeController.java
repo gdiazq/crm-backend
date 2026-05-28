@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.identificationtype;
 
-import com.crm.mcsv_rrhh.repository.IdentificationTypeRepository;
+import com.crm.mcsv_rrhh.repository.identificationtype.IdentificationTypeRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
