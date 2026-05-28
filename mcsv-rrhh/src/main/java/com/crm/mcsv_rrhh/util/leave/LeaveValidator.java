@@ -1,13 +1,13 @@
-package com.crm.mcsv_rrhh.util;
+package com.crm.mcsv_rrhh.util.leave;
 
 import com.crm.common.service.StorageService;
-import com.crm.mcsv_rrhh.entity.EmployeeLeave;
-import com.crm.mcsv_rrhh.entity.LeaveType;
-import com.crm.mcsv_rrhh.enums.RequestStatus;
-import com.crm.mcsv_rrhh.repository.EmployeeLeaveRepository;
-import com.crm.mcsv_rrhh.repository.EmployeeLeaveSpecification;
-import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
-import com.crm.mcsv_rrhh.repository.LeaveTypeRepository;
+import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
+import com.crm.mcsv_rrhh.entity.leave.LeaveType;
+import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
+import com.crm.mcsv_rrhh.repository.leave.EmployeeLeaveRepository;
+import com.crm.mcsv_rrhh.repository.leave.EmployeeLeaveSpecification;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.repository.leave.LeaveTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

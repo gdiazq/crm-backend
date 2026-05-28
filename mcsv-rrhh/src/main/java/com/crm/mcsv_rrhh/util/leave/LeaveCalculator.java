@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.util;
+package com.crm.mcsv_rrhh.util.leave;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
