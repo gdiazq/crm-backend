@@ -1,10 +1,8 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.attendance;
 
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.entity.*;
-import com.crm.mcsv_rrhh.enums.ContractStatusName;
-import com.crm.mcsv_rrhh.repository.*;
-import com.crm.mcsv_rrhh.service.AttendanceLeaveSyncService;
+import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceLeaveSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import com.crm.mcsv_rrhh.entity.attendance.Attendance;
+import com.crm.mcsv_rrhh.entity.attendance.AttendanceStatus;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceRepository;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceStatusRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
+import com.crm.mcsv_rrhh.repository.projectassignment.ProjectAssignmentRepository;
 
 @Service
 @RequiredArgsConstructor

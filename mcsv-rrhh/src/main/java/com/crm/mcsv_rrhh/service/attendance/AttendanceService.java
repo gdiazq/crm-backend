@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.attendance;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceResponse;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;

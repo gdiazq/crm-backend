@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.attendance;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +11,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AttendanceMarkRequest {
+public class UpdateAttendanceMarkRequest {
+
+    @NotNull(message = "El ID del marcaje es obligatorio")
+    private Long id;
 
     @NotNull(message = "El empleado es obligatorio")
     private Long employeeId;

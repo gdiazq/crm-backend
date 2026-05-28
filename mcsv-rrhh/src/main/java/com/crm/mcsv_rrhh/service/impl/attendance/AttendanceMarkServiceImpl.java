@@ -1,16 +1,14 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.attendance;
 
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkRequest;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkTypeSelectItem;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceMarkRequest;
-import com.crm.mcsv_rrhh.entity.*;
-import com.crm.mcsv_rrhh.enums.ContractStatusName;
-import com.crm.mcsv_rrhh.repository.*;
-import com.crm.mcsv_rrhh.service.AttendanceMarkService;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkRequest;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkResponse;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkTypeSelectItem;
+import com.crm.mcsv_rrhh.dto.attendance.UpdateAttendanceMarkRequest;
+import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceMarkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +20,21 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import com.crm.mcsv_rrhh.entity.attendance.Attendance;
+import com.crm.mcsv_rrhh.entity.attendance.AttendanceMark;
+import com.crm.mcsv_rrhh.entity.attendance.AttendanceStatus;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceMarkRepository;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceRepository;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceStatusRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
+import com.crm.mcsv_rrhh.repository.leave.EmployeeLeaveRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
+import com.crm.mcsv_rrhh.repository.projectassignment.ProjectAssignmentRepository;
 
 @Service
 @RequiredArgsConstructor

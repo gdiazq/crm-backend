@@ -1,5 +1,7 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.attendance;
 
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Formula;

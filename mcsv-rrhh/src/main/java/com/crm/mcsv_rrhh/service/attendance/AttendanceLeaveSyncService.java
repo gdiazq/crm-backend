@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.attendance;
 
-import com.crm.mcsv_rrhh.entity.EmployeeLeave;
+import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
 
 public interface AttendanceLeaveSyncService {
 

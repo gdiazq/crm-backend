@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.attendance;
 
-import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
-import com.crm.mcsv_rrhh.service.AttendanceStatusService;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceStatusResponse;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

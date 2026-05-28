@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.attendance;
 
-import com.crm.mcsv_rrhh.dto.AttendanceMarkRequest;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkTypeSelectItem;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceMarkRequest;
-import com.crm.mcsv_rrhh.service.AttendanceMarkService;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkRequest;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkResponse;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkTypeSelectItem;
+import com.crm.mcsv_rrhh.dto.attendance.UpdateAttendanceMarkRequest;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceMarkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

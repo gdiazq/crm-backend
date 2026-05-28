@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.attendance;
 
-import com.crm.mcsv_rrhh.entity.Attendance;
-import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.attendance.Attendance;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;

@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.attendance;
 
-import com.crm.mcsv_rrhh.entity.Attendance;
+import com.crm.mcsv_rrhh.entity.attendance.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

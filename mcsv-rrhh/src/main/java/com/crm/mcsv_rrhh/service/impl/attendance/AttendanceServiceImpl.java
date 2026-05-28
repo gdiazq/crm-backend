@@ -1,12 +1,10 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.attendance;
 
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.dto.AttendanceResponse;
-import com.crm.mcsv_rrhh.entity.*;
-import com.crm.mcsv_rrhh.repository.*;
-import com.crm.mcsv_rrhh.service.AttendanceService;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceResponse;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +18,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
+import com.crm.mcsv_rrhh.entity.attendance.Attendance;
+import com.crm.mcsv_rrhh.entity.attendance.AttendanceStatus;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceRepository;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceSpecification;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceStatusRepository;
 
 @Service
 @RequiredArgsConstructor

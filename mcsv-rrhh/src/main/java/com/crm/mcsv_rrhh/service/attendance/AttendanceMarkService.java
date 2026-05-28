@@ -1,9 +1,9 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.attendance;
 
-import com.crm.mcsv_rrhh.dto.AttendanceMarkRequest;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkResponse;
-import com.crm.mcsv_rrhh.dto.AttendanceMarkTypeSelectItem;
-import com.crm.mcsv_rrhh.dto.UpdateAttendanceMarkRequest;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkRequest;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkResponse;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceMarkTypeSelectItem;
+import com.crm.mcsv_rrhh.dto.attendance.UpdateAttendanceMarkRequest;
 
 import java.util.List;
 

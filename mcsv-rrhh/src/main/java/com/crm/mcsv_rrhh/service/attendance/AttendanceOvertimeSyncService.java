@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.attendance;
 
-import com.crm.mcsv_rrhh.entity.Overtime;
+import com.crm.mcsv_rrhh.entity.overtime.Overtime;
 
 public interface AttendanceOvertimeSyncService {
 

@@ -1,11 +1,11 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.attendance;
 
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.entity.Attendance;
-import com.crm.mcsv_rrhh.entity.Overtime;
-import com.crm.mcsv_rrhh.repository.AttendanceRepository;
-import com.crm.mcsv_rrhh.repository.OvertimeRepository;
-import com.crm.mcsv_rrhh.service.AttendanceOvertimeSyncService;
+import com.crm.mcsv_rrhh.entity.attendance.Attendance;
+import com.crm.mcsv_rrhh.entity.overtime.Overtime;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceRepository;
+import com.crm.mcsv_rrhh.repository.overtime.OvertimeRepository;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceOvertimeSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,9 +1,9 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.attendance;
 
-import com.crm.mcsv_rrhh.dto.AttendanceStatusResponse;
-import com.crm.mcsv_rrhh.entity.AttendanceStatus;
-import com.crm.mcsv_rrhh.repository.AttendanceStatusRepository;
-import com.crm.mcsv_rrhh.service.AttendanceStatusService;
+import com.crm.mcsv_rrhh.dto.attendance.AttendanceStatusResponse;
+import com.crm.mcsv_rrhh.entity.attendance.AttendanceStatus;
+import com.crm.mcsv_rrhh.repository.attendance.AttendanceStatusRepository;
+import com.crm.mcsv_rrhh.service.attendance.AttendanceStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
