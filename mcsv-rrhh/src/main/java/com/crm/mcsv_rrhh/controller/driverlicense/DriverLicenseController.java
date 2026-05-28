@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.driverlicense;
 
-import com.crm.mcsv_rrhh.repository.DriverLicenseRepository;
+import com.crm.mcsv_rrhh.repository.driverlicense.DriverLicenseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

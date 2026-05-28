@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.driverlicense;
 
 import jakarta.persistence.*;
 import lombok.*;
