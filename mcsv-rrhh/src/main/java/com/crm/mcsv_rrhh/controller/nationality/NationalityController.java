@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.nationality;
 
-import com.crm.mcsv_rrhh.repository.NationalityRepository;
+import com.crm.mcsv_rrhh.repository.nationality.NationalityRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
