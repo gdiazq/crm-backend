@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.gender;
 
-import com.crm.mcsv_rrhh.entity.Gender;
+import com.crm.mcsv_rrhh.entity.gender.Gender;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
