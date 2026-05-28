@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.commune;
 
-import com.crm.mcsv_rrhh.repository.CommuneRepository;
+import com.crm.mcsv_rrhh.repository.commune.CommuneRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
