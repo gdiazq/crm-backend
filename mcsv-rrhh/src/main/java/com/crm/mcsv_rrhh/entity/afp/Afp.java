@@ -1,12 +1,17 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.afp;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "afps")
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Afp {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
