@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.jobtitle;
 
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.repository.JobTitleRepository;
+import com.crm.mcsv_rrhh.repository.jobtitle.JobTitleRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.jobtitle;
 
-import com.crm.mcsv_rrhh.entity.JobTitle;
+import com.crm.mcsv_rrhh.entity.jobtitle.JobTitle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
