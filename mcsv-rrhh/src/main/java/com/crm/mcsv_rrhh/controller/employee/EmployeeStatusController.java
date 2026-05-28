@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.employee;
 
-import com.crm.mcsv_rrhh.enums.RequestStatus;
-import com.crm.mcsv_rrhh.repository.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

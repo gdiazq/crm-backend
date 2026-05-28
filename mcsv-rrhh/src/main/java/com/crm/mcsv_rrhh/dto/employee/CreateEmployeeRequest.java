@@ -1,15 +1,11 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.employee;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
-public class UpdateEmployeeRequest {
-
-    @NotNull(message = "id es requerido")
-    private Long id;
+public class CreateEmployeeRequest {
 
     // ─── Datos Personales ─────────────────────────────────────────────────────
     private String identification;
@@ -68,13 +64,9 @@ public class UpdateEmployeeRequest {
     private Long bankId;
     private String bankAccount;
 
-    // ─── Datos Organizacionales ───────────────────────────────────────────────
-    private Long statusId;
-
     // ─── Otros Datos ──────────────────────────────────────────────────────────
     private String clothingSize;
     private String shoeSize;
     private String pantSize;
-    private Boolean active;
     private Boolean rehireEligible;
 }

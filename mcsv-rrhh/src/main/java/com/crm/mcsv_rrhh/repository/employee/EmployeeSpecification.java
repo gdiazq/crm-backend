@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.employee;
 
-import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

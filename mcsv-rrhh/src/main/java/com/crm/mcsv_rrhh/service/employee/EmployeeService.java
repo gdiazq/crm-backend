@@ -1,13 +1,17 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.employee;
 
 import com.crm.common.dto.BulkImportResult;
-import com.crm.mcsv_rrhh.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import com.crm.mcsv_rrhh.dto.CatalogItem;
+import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
+import com.crm.mcsv_rrhh.dto.employee.EmployeeResponse;
+import com.crm.mcsv_rrhh.dto.employee.UpdateEmployeeRequest;
 
 public interface EmployeeService {
 

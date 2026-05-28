@@ -1,10 +1,9 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.employee;
 
 import com.crm.common.dto.BulkImportResult;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.*;
-import com.crm.mcsv_rrhh.service.EmployeeService;
+import com.crm.mcsv_rrhh.service.employee.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,6 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.crm.mcsv_rrhh.dto.CatalogItem;
+import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
+import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
+import com.crm.mcsv_rrhh.dto.employee.EmployeeResponse;
+import com.crm.mcsv_rrhh.dto.employee.UpdateEmployeeRequest;
 
 @RestController
 @RequestMapping("/employee")

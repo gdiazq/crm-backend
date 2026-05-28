@@ -1,46 +1,27 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.dto.employee;
 
-import jakarta.persistence.*;
-import lombok.*;
+import com.crm.common.dto.FileMetadataResponse;
+import com.crm.mcsv_rrhh.dto.CatalogItem;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Representa un colaborador (empleado) dentro del módulo de RRHH.
- * Se vincula en relación 1:1 con el User de mcsv-user mediante userId.
- * Los catálogos se referencian por ID (Long) para mantener autonomía del microservicio.
- */
-@Entity
-@Table(name = "employees", indexes = {
-        @Index(name = "idx_employee_user_id",       columnList = "user_id"),
-        @Index(name = "idx_employee_status_id",     columnList = "status_id"),
-        @Index(name = "idx_employee_active",        columnList = "active"),
-        @Index(name = "idx_employee_identification",columnList = "identification"),
-        @Index(name = "idx_employee_created_at",    columnList = "created_at"),
-        @Index(name = "idx_employee_active_status", columnList = "active, status_id")
-})
-@Getter
-@Setter
+@Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class Employee {
+public class EmployeeDetailResponse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // ─── Vínculo 1:1 con mcsv-user ───────────────────────────────────────────
-    /**
-     * ID del User en mcsv-user. Garantiza la relación 1:1 con la restricción UNIQUE.
-     */
-    @Column(unique = true)
     private Long userId;
 
     // ─── Datos Personales ─────────────────────────────────────────────────────
     private String identification;
-    private Long identificationTypeId;
+    private CatalogItem identificationType;
 
     private String firstName;
     private String paternalLastName;
@@ -48,11 +29,11 @@ public class Employee {
 
     private LocalDate birthDate;
 
-    private Long genderId;
-    private Long maritalStatusId;
-    private Long educationLevelId;
-    private Long driverLicenseId;
-    private Long professionId;
+    private CatalogItem gender;
+    private CatalogItem maritalStatus;
+    private CatalogItem educationLevel;
+    private CatalogItem driverLicense;
+    private CatalogItem profession;
 
     // ─── Datos de Contacto ────────────────────────────────────────────────────
     private String personalEmail;
@@ -62,7 +43,7 @@ public class Employee {
 
     // ─── Contacto de Emergencia ───────────────────────────────────────────────
     private String emergencyContactName;
-    private Long emergencyContactRelationshipId;
+    private CatalogItem emergencyContactRelationship;
     private String emergencyContactPhone;
     private String emergencyContactPhone2;
 
@@ -73,66 +54,50 @@ public class Employee {
     private String department;
     private String village;
     private String block;
-
-    private Long regionId;
-    private Long cityId;
-    private Long communeId;
+    private CatalogItem region;
+    private CatalogItem city;
+    private CatalogItem commune;
 
     // ─── Previsión y Salud ────────────────────────────────────────────────────
-    private Long expatId;
-    private Long nationalityId;
-    private Long familyAllowanceTierId;
-    private Long retirementStatusId;
-
+    private CatalogItem expat;
+    private CatalogItem nationality;
+    private CatalogItem familyAllowanceTier;
+    private CatalogItem retirementStatus;
     private String isapreFun;
-    private Long pensionStatusId;
-    private Long afpId;
-    private Long healthInsuranceId;
-    private Long healthInsuranceTariffId;
+    private CatalogItem pensionStatus;
+    private CatalogItem afp;
+    private CatalogItem healthInsurance;
+    private CatalogItem healthInsuranceTariff;
     private String healthInsuranceUF;
     private String healthInsurancePesos;
 
     // ─── Forma de Pago ────────────────────────────────────────────────────────
-    private Long paymentMethodId;
-    private Long bankId;
+    private CatalogItem paymentMethod;
+    private CatalogItem bank;
     private String bankAccount;
 
     // ─── Datos Organizacionales ───────────────────────────────────────────────
-    private Long statusId;
+    private CatalogItem status;
 
     // ─── Otros Datos ─────────────────────────────────────────────────────────
     private String clothingSize;
     private String shoeSize;
     private String pantSize;
-
-    /**
-     * Indica si el colaborador está activo (empleado actualmente).
-     */
-    @Builder.Default
-    private Boolean active = true;
-
-    /**
-     * Indica si es elegible para recontratación según su historial.
-     */
-    @Builder.Default
-    private Boolean rehireEligible = true;
-
-    private Boolean hasContract;
+    private Boolean active;
+    private Boolean rehireEligible;
 
     // ─── Auditoría ────────────────────────────────────────────────────────────
-    @Column(updatable = false)
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
+    // ─── Datos del User vinculado (mcsv-user via Feign) ───────────────────────
+    private String username;
+    private String userEmail;
+    private Boolean userEnabled;
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    // ─── Contrato ─────────────────────────────────────────────────────────────
+    private Boolean hasContract;
+
+    // ─── Solicitud RRHH ───────────────────────────────────────────────────────
+    private Long requestId;
 }
