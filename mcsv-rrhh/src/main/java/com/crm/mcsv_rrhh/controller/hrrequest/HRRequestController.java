@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.hrrequest;
 
-import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
-import com.crm.mcsv_rrhh.dto.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestDetailResponse;
+import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestResponse;
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
-import com.crm.mcsv_rrhh.service.HRRequestService;
+import com.crm.mcsv_rrhh.dto.hrrequest.RejectHRRequestRequest;
+import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

@@ -1,9 +1,9 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.hrrequest;
 
-import com.crm.mcsv_rrhh.dto.HRRequestDetailResponse;
-import com.crm.mcsv_rrhh.dto.HRRequestResponse;
-import com.crm.mcsv_rrhh.dto.RejectHRRequestRequest;
-import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestDetailResponse;
+import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestResponse;
+import com.crm.mcsv_rrhh.dto.hrrequest.RejectHRRequestRequest;
+import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

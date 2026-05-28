@@ -1,5 +1,6 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.hrrequest;
 
+import com.crm.mcsv_rrhh.dto.CatalogItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class HRRequestResponse {
+public class HRRequestDetailResponse {
 
     private Long id;
     private Long idModule;
@@ -20,18 +21,15 @@ public class HRRequestResponse {
     private String paternalLastName;
     private String maternalLastName;
 
-    private Long requestTypeId;
-    private String requestTypeName;
+    private CatalogItem requestType;
+    private CatalogItem status;
 
-    private Long statusId;
-    private String statusName;
+    private Boolean requireApproval;
 
-    private Long approverId;
-    private String approverFullName;
+    private CatalogItem approver;
     private LocalDateTime approvalDate;
 
-    private Long hhrrApproverId;
-    private String hhrrApproverFullName;
+    private CatalogItem hhrrApprover;
     private LocalDateTime hhrrApprovalDate;
 
     private String action;

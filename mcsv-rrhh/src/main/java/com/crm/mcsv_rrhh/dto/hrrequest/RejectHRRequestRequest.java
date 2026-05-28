@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.hrrequest;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
