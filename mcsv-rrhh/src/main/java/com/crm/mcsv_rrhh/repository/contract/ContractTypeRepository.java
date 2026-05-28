@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.contract;
 
-import com.crm.mcsv_rrhh.entity.ContractType;
+import com.crm.mcsv_rrhh.entity.contract.ContractType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

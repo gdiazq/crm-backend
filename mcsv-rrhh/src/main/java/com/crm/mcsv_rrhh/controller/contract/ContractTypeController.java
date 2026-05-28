@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.contract;
 
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.repository.ContractTypeRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractTypeRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

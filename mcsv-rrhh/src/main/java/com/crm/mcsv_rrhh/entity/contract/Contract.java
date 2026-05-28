@@ -1,5 +1,6 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.contract;
 
+import com.crm.mcsv_rrhh.entity.employee.Employee;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +18,11 @@ import java.time.LocalDateTime;
         @Index(name = "idx_contract_created_at",        columnList = "created_at"),
         @Index(name = "idx_contract_employee_status",   columnList = "employee_id, contract_status_id")
 })
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Contract {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

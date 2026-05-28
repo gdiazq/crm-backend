@@ -1,12 +1,16 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.contract;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "contract_types")
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
-public class ContractType {
+@Table(name = "contract_statuses")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ContractStatus {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 

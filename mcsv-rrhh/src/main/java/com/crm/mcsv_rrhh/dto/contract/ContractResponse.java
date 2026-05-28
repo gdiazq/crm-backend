@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.contract;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.contract;
 
 import lombok.Data;
 
@@ -7,7 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 @Data
-public class CreateContractRequest {
+public class UpdateContractRequest {
+
+    @NotNull(message = "id es requerido")
+    private Long id;
 
     @NotNull(message = "employeeId es requerido")
     private Long employeeId;
@@ -19,7 +22,6 @@ public class CreateContractRequest {
     private String name;
     private String contractNumber;
     private Long contractTypeId;
-    private Long contractStatusId;
     private Long safetyGroupId;
     private String contractDetail;
     private String baseSalary;

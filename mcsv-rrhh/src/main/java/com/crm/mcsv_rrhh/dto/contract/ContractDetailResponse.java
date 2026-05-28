@@ -1,5 +1,6 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.contract;
 
+import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.common.dto.FileMetadataResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

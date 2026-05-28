@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.entity.contractannex;
 
-import com.crm.mcsv_rrhh.entity.Employee;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Formula;
