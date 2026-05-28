@@ -1,9 +1,9 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.leave;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.EmployeeLeaveRequest;
-import com.crm.mcsv_rrhh.dto.EmployeeLeaveResponse;
-import com.crm.mcsv_rrhh.dto.UpdateEmployeeLeaveRequest;
+import com.crm.mcsv_rrhh.dto.leave.EmployeeLeaveRequest;
+import com.crm.mcsv_rrhh.dto.leave.EmployeeLeaveResponse;
+import com.crm.mcsv_rrhh.dto.leave.UpdateEmployeeLeaveRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 

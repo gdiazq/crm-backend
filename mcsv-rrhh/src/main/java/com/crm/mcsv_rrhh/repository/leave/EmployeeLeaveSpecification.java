@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.leave;
 
-import com.crm.mcsv_rrhh.entity.EmployeeLeave;
-import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
+import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;

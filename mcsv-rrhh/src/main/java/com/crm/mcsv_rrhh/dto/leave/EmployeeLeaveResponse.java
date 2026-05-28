@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.dto.leave;
 
 import com.crm.common.dto.FileMetadataResponse;
 import lombok.AllArgsConstructor;

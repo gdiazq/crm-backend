@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.leave;
 
-import com.crm.mcsv_rrhh.entity.EmployeeLeave;
+import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

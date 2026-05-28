@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.leave;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.EmployeeLeaveRequest;
-import com.crm.mcsv_rrhh.dto.EmployeeLeaveResponse;
-import com.crm.mcsv_rrhh.dto.UpdateEmployeeLeaveRequest;
-import com.crm.mcsv_rrhh.service.EmployeeLeaveService;
+import com.crm.mcsv_rrhh.dto.leave.EmployeeLeaveRequest;
+import com.crm.mcsv_rrhh.dto.leave.EmployeeLeaveResponse;
+import com.crm.mcsv_rrhh.dto.leave.UpdateEmployeeLeaveRequest;
+import com.crm.mcsv_rrhh.service.leave.EmployeeLeaveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
