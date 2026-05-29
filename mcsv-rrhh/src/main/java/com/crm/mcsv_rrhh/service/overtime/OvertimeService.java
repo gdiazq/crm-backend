@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.overtime;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.OvertimeRequest;
-import com.crm.mcsv_rrhh.dto.OvertimeResponse;
-import com.crm.mcsv_rrhh.dto.OvertimeTypeResponse;
-import com.crm.mcsv_rrhh.dto.OvertimeUpdateRequest;
+import com.crm.mcsv_rrhh.dto.overtime.OvertimeRequest;
+import com.crm.mcsv_rrhh.dto.overtime.OvertimeResponse;
+import com.crm.mcsv_rrhh.dto.overtime.OvertimeTypeResponse;
+import com.crm.mcsv_rrhh.dto.overtime.OvertimeUpdateRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;

@@ -1,8 +1,8 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.overtime;
 
-import com.crm.mcsv_rrhh.entity.Employee;
-import com.crm.mcsv_rrhh.entity.HRRequest;
-import com.crm.mcsv_rrhh.entity.Overtime;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
+import com.crm.mcsv_rrhh.entity.overtime.Overtime;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
