@@ -14,4 +14,5 @@ services:
 
 networks:
   crm-network:
-    external: true
+    name: crm-network
+    driver: bridge

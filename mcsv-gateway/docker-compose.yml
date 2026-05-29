@@ -1,14 +1,6 @@
-# API gateway + its Redis (used by the rate limiter). Start after eureka + config.
+# API gateway. Start after eureka + config.
+# Redis is external (Upstash); the gateway connects via REDIS_URL from ../.env.
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-    networks:
-      - crm-network
-
   mcsv-gateway:
     build:
       context: ..
@@ -21,13 +13,11 @@ services:
       - ../.env
     environment:
       EUREKA_SERVER: http://mcsv-eureka:8761/eureka/
-      REDIS_URL: redis://redis:6379
-    depends_on:
-      - redis
     restart: unless-stopped
     networks:
       - crm-network
 
 networks:
   crm-network:
-    external: true
+    name: crm-network
+    driver: bridge
