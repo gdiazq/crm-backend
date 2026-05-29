@@ -46,15 +46,11 @@ public class AuthUserLookupServiceImpl implements AuthUserLookupService {
     @Override
     public UserDTO getByUsernameOrEmail(String usernameOrEmail) {
         try {
-            return getByUsername(usernameOrEmail);
+            return usernameOrEmail.contains("@")
+                    ? getByEmail(usernameOrEmail)
+                    : getByUsername(usernameOrEmail);
         } catch (Exception e) {
-            log.debug("User not found by username, trying email");
-        }
-
-        try {
-            return getByEmail(usernameOrEmail);
-        } catch (Exception e) {
-            log.error("User not found by email", e);
+            log.debug("User not found by {}", usernameOrEmail.contains("@") ? "email" : "username");
         }
 
         throw new AuthenticationException("Invalid username or password");
