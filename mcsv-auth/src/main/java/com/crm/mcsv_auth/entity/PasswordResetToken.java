@@ -10,7 +10,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,8 @@ import java.time.LocalDateTime;
 @Table(name = "password_reset_tokens", indexes = {
     @Index(name = "idx_password_reset_user_id", columnList = "user_id")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

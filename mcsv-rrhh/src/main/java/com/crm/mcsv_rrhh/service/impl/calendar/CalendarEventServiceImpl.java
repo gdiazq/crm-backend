@@ -3,8 +3,6 @@ package com.crm.mcsv_rrhh.service.impl.calendar;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.dto.calendar.CalendarEventResponse;
 import com.crm.mcsv_rrhh.dto.calendar.CalendarEventsResponse;
-import com.crm.mcsv_rrhh.entity.*;
-import com.crm.mcsv_rrhh.repository.*;
 import com.crm.mcsv_rrhh.service.calendar.CalendarEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
+import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
+import com.crm.mcsv_rrhh.repository.leave.EmployeeLeaveRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
+import com.crm.mcsv_rrhh.repository.projectassignment.ProjectAssignmentRepository;
+import com.crm.mcsv_rrhh.repository.settlement.SettlementRepository;
+import com.crm.mcsv_rrhh.repository.transfer.TransferRepository;
 
 @Service
 @RequiredArgsConstructor

@@ -11,7 +11,8 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_user_session_user_revoked_expires", columnList = "user_id, revoked, expires_at"),
     @Index(name = "idx_user_session_user_device_revoked", columnList = "user_id, device_id, revoked")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

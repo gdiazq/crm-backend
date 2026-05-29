@@ -15,7 +15,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_refresh_token_session_revoked", columnList = "session_id, revoked"),
     @Index(name = "idx_refresh_token_session_expires", columnList = "session_id, expires_at")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

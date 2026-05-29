@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.dto;
+package com.crm.mcsv_rrhh.client.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;

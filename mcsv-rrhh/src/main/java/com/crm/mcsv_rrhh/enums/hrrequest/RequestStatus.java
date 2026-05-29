@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.enums;
+package com.crm.mcsv_rrhh.enums.hrrequest;
 
 import java.util.Arrays;
 import java.util.Set;

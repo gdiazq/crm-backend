@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 @Table(name = "email_verification_codes", indexes = {
     @Index(name = "idx_email_verification_user_id", columnList = "user_id")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
