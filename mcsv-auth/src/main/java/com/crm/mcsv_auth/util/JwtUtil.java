@@ -43,6 +43,23 @@ public class JwtUtil {
         return createToken(claims, username);
     }
 
+    /**
+     * Short-lived token used for service-to-service calls (e.g. pre-login auth → user lookups),
+     * where there is no authenticated user. Signed with the shared secret so downstream services
+     * accept it through the common JWT filter; carries no userId.
+     */
+    public String generateServiceToken() {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 60 * 1000);
+        return Jwts.builder()
+                .subject("internal-service")
+                .claim("type", "service")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     private String createToken(Map<String, Object> claims, String subject) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtConfig.getExpireAt() * 60 * 1000);

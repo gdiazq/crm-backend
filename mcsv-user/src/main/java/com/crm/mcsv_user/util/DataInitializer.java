@@ -254,7 +254,7 @@ public class DataInitializer implements CommandLineRunner {
 
         userRepository.save(User.builder()
                 .username("admin").email("admin@crm.com")
-                .password(passwordEncoder.encode("admin123"))
+                .password(passwordEncoder.encode("admin123gedq"))
                 .firstName("System").lastName("Administrator")
                 .phoneNumber("+1111111111")
                 .enabled(true).accountNonExpired(true)

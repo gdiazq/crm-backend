@@ -53,3 +53,14 @@ springdoc:
     path: /api/api-docs/user #these urls will be used to load the swagger ui of this service by the api gateway
   swagger-ui:
     path: /api-docs/swagger-ui.html
+
+app:
+    security:
+        jwt:
+            enabled: true
+            exclude-paths:
+                - /api/api-docs/**
+                - /api-docs/**
+                - /v3/api-docs/**
+                - /swagger-ui/**
+                - /swagger-ui.html
