@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.zone;
 
-import com.crm.mcsv_rrhh.entity.Zone;
+import com.crm.mcsv_rrhh.entity.zone.Zone;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
