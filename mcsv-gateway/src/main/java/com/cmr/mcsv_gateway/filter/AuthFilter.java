@@ -199,13 +199,8 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions"));
                 }
 
-                return checkExchangeValidUrl(mutatedExchange).flatMap(validUrl -> {
-                    if (!validUrl.isValid()) {
-                        return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, validUrl.getErrorMessage()));
-                    }
-                    ServerWebExchange enrichedExchange = injectUserIdHeader(mutatedExchange);
-                    return chain.filter(enrichedExchange);
-                });
+                ServerWebExchange enrichedExchange = injectUserIdHeader(mutatedExchange);
+                return chain.filter(enrichedExchange);
             });
         });
     }
@@ -344,26 +339,4 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
         return exchange;
     }
 
-    private Mono<ValidationError> checkExchangeValidUrl(ServerWebExchange exchange) {
-        String token = getTokenHeader(exchange);
-        String method = exchange.getRequest().getMethod().name();
-        String urlPath = getUrlPath(exchange);
-
-        return webClient.build()
-                .post()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("lb")
-                        .host("mcsv-auth")
-                        .path("/v1/validateTokenUrl")
-                        .queryParam("jwt", token)
-                        .queryParam("urlPath", urlPath)
-                        .queryParam("method", method)
-                        .build())
-                .retrieve()
-                .bodyToMono(ValidationError.class)
-                .onErrorResume(e -> {
-                    logger.error("Exception during url validation", e);
-                    return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage()));
-                });
-    }
 }

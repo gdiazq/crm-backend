@@ -25,19 +25,6 @@ public class AuthorizerController {
         return new TokenValidationResponse(false, "Invalid token");
     }
 
-    @PostMapping("/v1/validateTokenUrl")
-    public TokenValidationResponse validateTokenUrl(
-            @RequestParam String jwt,
-            @RequestParam String urlPath,
-            @RequestParam String method
-    ) {
-        boolean isValid = authService.validateToken(extractToken(jwt));
-        if (isValid) {
-            return new TokenValidationResponse(true, null);
-        }
-        return new TokenValidationResponse(false, "Invalid token");
-    }
-
     @PostMapping("/v1/validateTicket")
     public TicketValidationResponse validateTicket(@RequestParam String ticket) {
         return wsTicketService.validateAndConsumeTicket(ticket);

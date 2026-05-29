@@ -33,8 +33,8 @@ public class AuthTokenResponseServiceImpl implements AuthTokenResponseService {
     public AuthResponse createSessionResponse(UserDTO user, String ipAddress, String userAgent, String deviceId, String avatarUrl) {
         Set<String> roles = extractRoles(user);
         Set<String> permissions = extractPermissions(user);
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions);
         UserSession session = userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions, session.getId());
         RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
 
         return buildAuthResponse(accessToken, refreshToken.getPlainToken(), user, roles, avatarUrl);
@@ -46,8 +46,8 @@ public class AuthTokenResponseServiceImpl implements AuthTokenResponseService {
     }
 
     @Override
-    public String createAccessToken(UserDTO user) {
-        return jwtUtil.generateAccessToken(user.getId(), user.getUsername(), extractRoles(user), extractPermissions(user));
+    public String createAccessToken(UserDTO user, Long sessionId) {
+        return jwtUtil.generateAccessToken(user.getId(), user.getUsername(), extractRoles(user), extractPermissions(user), sessionId);
     }
 
     @Override

@@ -30,12 +30,15 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateAccessToken(Long userId, String username, Set<String> roles, Set<String> permissions) {
+    public String generateAccessToken(Long userId, String username, Set<String> roles, Set<String> permissions, Long sessionId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("username", username);
         claims.put("roles", roles);
         claims.put("permissions", permissions);
+        if (sessionId != null) {
+            claims.put("sessionId", sessionId);
+        }
 
         return createToken(claims, username);
     }
@@ -60,6 +63,15 @@ public class JwtUtil {
     public Long extractUserId(String token) {
         Claims claims = extractAllClaims(token);
         return claims.get("userId", Long.class);
+    }
+
+    public Long extractSessionId(String token) {
+        Claims claims = extractAllClaims(token);
+        Object sessionId = claims.get("sessionId");
+        if (sessionId instanceof Number number) {
+            return number.longValue();
+        }
+        return null;
     }
 
     public Set<String> extractRoles(String token) {

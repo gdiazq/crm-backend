@@ -156,8 +156,6 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO user = authUserLookupService.getById(refreshToken.getUserId());
 
-        String newAccessToken = authTokenResponseService.createAccessToken(user);
-
         tokenService.revokeRefreshToken(request.getRefreshToken());
         UserSession session = userSessionManager.attachSession(
                 user.getId(),
@@ -165,6 +163,7 @@ public class AuthServiceImpl implements AuthService {
                 ipAddress,
                 userAgent,
                 deviceId);
+        String newAccessToken = authTokenResponseService.createAccessToken(user, session.getId());
         RefreshToken newRefreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
@@ -236,7 +235,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean validateToken(String token) {
-        return jwtUtil.validateToken(token);
+        if (!jwtUtil.validateToken(token)) {
+            return false;
+        }
+        try {
+            Long sessionId = jwtUtil.extractSessionId(token);
+            // Backward-compat: tokens issued before session binding carry no sessionId.
+            if (sessionId == null) {
+                return true;
+            }
+            Long userId = jwtUtil.extractUserId(token);
+            return userSessionRepository
+                    .findByIdAndUserIdAndRevokedFalseAndExpiresAtAfter(sessionId, userId, LocalDateTime.now())
+                    .isPresent();
+        } catch (Exception e) {
+            log.error("Error validating session bound to token", e);
+            return false;
+        }
     }
 
     @Override

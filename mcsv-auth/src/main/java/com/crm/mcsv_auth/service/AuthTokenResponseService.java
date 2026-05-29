@@ -11,7 +11,7 @@ public interface AuthTokenResponseService {
 
     AuthResponse buildAuthResponse(String accessToken, String refreshToken, UserDTO user);
 
-    String createAccessToken(UserDTO user);
+    String createAccessToken(UserDTO user, Long sessionId);
 
     AuthResponse.UserInfo buildCurrentUserInfo(UserDTO user);
 }
