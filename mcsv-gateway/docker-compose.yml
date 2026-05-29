@@ -1,0 +1,33 @@
+# API gateway + its Redis (used by the rate limiter). Start after eureka + config.
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+  mcsv-gateway:
+    build:
+      context: ..
+      dockerfile: mcsv-gateway/Dockerfile
+    image: crm/mcsv-gateway:latest
+    container_name: mcsv-gateway
+    ports:
+      - "9090:9090"
+    env_file:
+      - ../.env
+    environment:
+      EUREKA_SERVER: http://mcsv-eureka:8761/eureka/
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    external: true

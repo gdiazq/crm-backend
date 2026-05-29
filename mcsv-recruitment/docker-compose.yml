@@ -1,0 +1,22 @@
+# Recruitment service. Requires eureka + config (and the external Supabase DB via ../.env).
+services:
+  mcsv-recruitment:
+    build:
+      context: ..
+      dockerfile: mcsv-recruitment/Dockerfile
+    image: crm/mcsv-recruitment:latest
+    container_name: mcsv-recruitment
+    ports:
+      - "9098:9098"
+    env_file:
+      - ../.env
+    environment:
+      CONFIG_SERVER_URI: http://mcsv-config:8888
+      EUREKA_SERVER: http://mcsv-eureka:8761/eureka/
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    external: true

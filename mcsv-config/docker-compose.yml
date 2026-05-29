@@ -1,0 +1,21 @@
+# Config server. Start this SECOND (after eureka, before the business services).
+services:
+  mcsv-config:
+    build:
+      context: ..
+      dockerfile: mcsv-config/Dockerfile
+    image: crm/mcsv-config:latest
+    container_name: mcsv-config
+    ports:
+      - "8888:8888"
+    env_file:
+      - ../.env
+    environment:
+      EUREKA_SERVER: http://mcsv-eureka:8761/eureka/
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    external: true

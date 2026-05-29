@@ -1,0 +1,17 @@
+# Service discovery. Start this FIRST (config + all services register here).
+services:
+  mcsv-eureka:
+    build:
+      context: ..
+      dockerfile: mcsv-eureka/Dockerfile
+    image: crm/mcsv-eureka:latest
+    container_name: mcsv-eureka
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    external: true

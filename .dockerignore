@@ -1,0 +1,11 @@
+# Build artifacts (the multi-stage build compiles inside the image)
+**/target/
+# Local tooling / IDE
+.git/
+.idea/
+*.iml
+# Terraform state & working dirs
+terraform/.terraform/
+**/*.tfstate*
+# Local env is injected at runtime via docker-compose env_file, not baked into images
+.env
