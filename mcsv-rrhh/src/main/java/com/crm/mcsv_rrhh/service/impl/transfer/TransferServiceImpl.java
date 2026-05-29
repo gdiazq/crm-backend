@@ -9,16 +9,14 @@ import com.crm.mcsv_rrhh.client.ProjectClient.ProjectNameDTO;
 import com.crm.mcsv_rrhh.dto.transfer.TransferRequest;
 import com.crm.mcsv_rrhh.dto.transfer.TransferResponse;
 import com.crm.mcsv_rrhh.dto.transfer.UpdateTransferRequest;
-import com.crm.mcsv_rrhh.entity.Contract;
-import com.crm.mcsv_rrhh.entity.ContractStatus;
-import com.crm.mcsv_rrhh.entity.Employee;
-import com.crm.mcsv_rrhh.entity.HRRequest;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import com.crm.mcsv_rrhh.entity.transfer.Transfer;
-import com.crm.mcsv_rrhh.enums.ContractStatusName;
-import com.crm.mcsv_rrhh.enums.RequestStatus;
-import com.crm.mcsv_rrhh.repository.*;
-import com.crm.mcsv_rrhh.repository.transfer.*;
-import com.crm.mcsv_rrhh.service.HRRequestService;
+import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
+import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
+import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import com.crm.mcsv_rrhh.service.transfer.TransferService;
 import com.crm.mcsv_rrhh.util.FileUploadHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +37,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import com.crm.mcsv_rrhh.repository.contract.ContractRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
+import com.crm.mcsv_rrhh.repository.transfer.TransferRepository;
+import com.crm.mcsv_rrhh.repository.transfer.TransferSpecification;
 
 @Service
 @RequiredArgsConstructor
@@ -263,7 +268,7 @@ public class TransferServiceImpl implements TransferService {
             if (employeeId != null) predicates.add(cb.equal(root.get("employeeId"), employeeId));
             if (statusId != null) {
                 var subquery = query.subquery(Long.class);
-                var hrRoot = subquery.from(com.crm.mcsv_rrhh.entity.HRRequest.class);
+                var hrRoot = subquery.from(com.crm.mcsv_rrhh.entity.hrrequest.HRRequest.class);
                 subquery.select(hrRoot.get("transferId"))
                         .where(
                             cb.equal(hrRoot.get("statusId"), statusId),
