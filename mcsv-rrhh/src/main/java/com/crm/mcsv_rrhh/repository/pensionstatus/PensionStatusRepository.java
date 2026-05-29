@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.pensionstatus;
 
-import com.crm.mcsv_rrhh.entity.PensionStatus;
+import com.crm.mcsv_rrhh.entity.pensionstatus.PensionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
