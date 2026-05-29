@@ -1,0 +1,21 @@
+# Copy to terraform.tfvars and fill in. Do NOT commit terraform.tfvars (see .gitignore).
+
+aws_region  = "us-east-1"
+project     = "crm"
+environment = "dev"
+
+# Built by: mvn -pl aws-serverless -am package
+lambda_jar_path = "../aws-serverless/target/aws-serverless-0.0.1-SNAPSHOT.jar"
+
+# Notifications database (the JDBC_URL the Lambdas connect to)
+db_jdbc_url = "jdbc:postgresql://your-rds-endpoint:5432/crm"
+db_user     = "crm_app"
+db_password = "change-me" # prefer Secrets Manager in production (see README)
+
+from_email = "no-reply@yourdomain.com" # must be a verified SES identity
+
+# Only needed if RDS is in private subnets; leave empty to run Lambdas outside a VPC.
+vpc_subnet_ids         = []
+vpc_security_group_ids = []
+
+cors_allowed_origins = ["http://localhost:5173"]

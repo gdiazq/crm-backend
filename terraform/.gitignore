@@ -1,0 +1,13 @@
+# Local Terraform state & working dirs
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Never commit real variable values
+terraform.tfvars
+*.auto.tfvars
+
+# Plan outputs
+*.tfplan
