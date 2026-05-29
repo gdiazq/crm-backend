@@ -44,3 +44,14 @@ springdoc:
     path: /api/api-docs/recruitment
   swagger-ui:
     path: /api-docs/swagger-ui.html
+
+app:
+    security:
+        jwt:
+            enabled: true
+            exclude-paths:
+                - /api/api-docs/**
+                - /api-docs/**
+                - /v3/api-docs/**
+                - /swagger-ui/**
+                - /swagger-ui.html
