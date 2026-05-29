@@ -17,7 +17,11 @@ import java.util.List;
         @Index(name = "idx_project_status_id",    columnList = "status_id"),
         @Index(name = "idx_project_specialty_id", columnList = "specialty_id")
 })
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor @Builder
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Project {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

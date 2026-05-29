@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.projectassignment;
 
-import com.crm.mcsv_rrhh.entity.Contract;
-import com.crm.mcsv_rrhh.entity.ProjectAssignment;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
 
 import java.time.LocalDate;
 

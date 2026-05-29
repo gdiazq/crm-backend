@@ -1,5 +1,6 @@
-package com.crm.mcsv_rrhh.entity;
+package com.crm.mcsv_rrhh.entity.projectassignment;
 
+import com.crm.mcsv_rrhh.entity.employee.Employee;
 import jakarta.persistence.*;
 import lombok.*;
 

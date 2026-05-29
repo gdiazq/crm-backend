@@ -1,10 +1,10 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.projectassignment;
 
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.entity.Contract;
-import com.crm.mcsv_rrhh.entity.ProjectAssignment;
-import com.crm.mcsv_rrhh.repository.ProjectAssignmentRepository;
-import com.crm.mcsv_rrhh.service.ProjectAssignmentSyncService;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
+import com.crm.mcsv_rrhh.repository.projectassignment.ProjectAssignmentRepository;
+import com.crm.mcsv_rrhh.service.projectassignment.ProjectAssignmentSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.service;
+package com.crm.mcsv_rrhh.service.projectassignment;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.ProjectAssignmentResponse;
+import com.crm.mcsv_rrhh.dto.projectassignment.ProjectAssignmentResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;

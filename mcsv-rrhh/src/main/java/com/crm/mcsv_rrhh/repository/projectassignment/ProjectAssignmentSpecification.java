@@ -1,7 +1,7 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.projectassignment;
 
-import com.crm.mcsv_rrhh.entity.Employee;
-import com.crm.mcsv_rrhh.entity.ProjectAssignment;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;

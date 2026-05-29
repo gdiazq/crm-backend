@@ -1,15 +1,15 @@
-package com.crm.mcsv_rrhh.service.impl;
+package com.crm.mcsv_rrhh.service.impl.projectassignment;
 
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.client.ProjectClient;
-import com.crm.mcsv_rrhh.dto.ProjectAssignmentResponse;
-import com.crm.mcsv_rrhh.entity.Employee;
-import com.crm.mcsv_rrhh.entity.ProjectAssignment;
-import com.crm.mcsv_rrhh.repository.EmployeeRepository;
-import com.crm.mcsv_rrhh.repository.ProjectAssignmentRepository;
-import com.crm.mcsv_rrhh.repository.ProjectAssignmentSpecification;
-import com.crm.mcsv_rrhh.service.ProjectAssignmentService;
+import com.crm.mcsv_rrhh.dto.projectassignment.ProjectAssignmentResponse;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.projectassignment.ProjectAssignment;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
+import com.crm.mcsv_rrhh.repository.projectassignment.ProjectAssignmentRepository;
+import com.crm.mcsv_rrhh.repository.projectassignment.ProjectAssignmentSpecification;
+import com.crm.mcsv_rrhh.service.projectassignment.ProjectAssignmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

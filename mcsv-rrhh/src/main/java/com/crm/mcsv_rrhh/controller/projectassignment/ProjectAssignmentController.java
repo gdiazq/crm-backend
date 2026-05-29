@@ -1,8 +1,8 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.projectassignment;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.mcsv_rrhh.dto.ProjectAssignmentResponse;
-import com.crm.mcsv_rrhh.service.ProjectAssignmentService;
+import com.crm.mcsv_rrhh.dto.projectassignment.ProjectAssignmentResponse;
+import com.crm.mcsv_rrhh.service.projectassignment.ProjectAssignmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
