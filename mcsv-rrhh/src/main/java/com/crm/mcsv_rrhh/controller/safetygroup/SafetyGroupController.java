@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.safetygroup;
 
-import com.crm.mcsv_rrhh.repository.SafetyGroupRepository;
+import com.crm.mcsv_rrhh.repository.safetygroup.SafetyGroupRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
