@@ -1,6 +1,6 @@
-package com.crm.mcsv_rrhh.repository;
+package com.crm.mcsv_rrhh.repository.overtime;
 
-import com.crm.mcsv_rrhh.entity.OvertimeType;
+import com.crm.mcsv_rrhh.entity.overtime.OvertimeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
