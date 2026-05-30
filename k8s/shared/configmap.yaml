@@ -1,0 +1,11 @@
+# Non-secret config. These OVERRIDE the localhost values that come from the .env-based
+# Secret, pointing services at the in-cluster DNS names instead.
+# (envFrom lists the Secret first, then this ConfigMap, so these keys win.)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crm-config
+  namespace: crm
+data:
+  CONFIG_SERVER_URI: "http://mcsv-config:8888"
+  EUREKA_SERVER: "http://mcsv-eureka:8761/eureka/"

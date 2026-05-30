@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcsv-eureka
+  namespace: crm
+  labels: { app: mcsv-eureka }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mcsv-eureka }
+  template:
+    metadata:
+      labels: { app: mcsv-eureka }
+    spec:
+      containers:
+        - name: mcsv-eureka
+          image: crm/mcsv-eureka:latest
+          ports:
+            - containerPort: 8761
+          startupProbe:
+            tcpSocket: { port: 8761 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket: { port: 8761 }
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 8761 }
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }

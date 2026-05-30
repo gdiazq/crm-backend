@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcsv-recruitment
+  namespace: crm
+  labels: { app: mcsv-recruitment }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mcsv-recruitment }
+  template:
+    metadata:
+      labels: { app: mcsv-recruitment }
+    spec:
+      serviceAccountName: crm-aws
+      containers:
+        - name: mcsv-recruitment
+          image: crm/mcsv-recruitment:latest
+          ports:
+            - containerPort: 9098
+          envFrom:
+            - secretRef: { name: crm-secrets }
+            - configMapRef: { name: crm-config }
+          startupProbe:
+            httpGet: { path: /actuator/health, port: 9098 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 9098 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 9098 }
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { memory: 1Gi }

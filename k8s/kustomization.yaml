@@ -1,0 +1,62 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: crm
+
+resources:
+  - shared/namespace.yaml
+  - shared/serviceaccount.yaml
+  - shared/configmap.yaml
+  - mcsv-eureka/deployment.yaml
+  - mcsv-eureka/service.yaml
+  - mcsv-config/deployment.yaml
+  - mcsv-config/service.yaml
+  - mcsv-auth/deployment.yaml
+  - mcsv-auth/service.yaml
+  - mcsv-user/deployment.yaml
+  - mcsv-user/service.yaml
+  - mcsv-rrhh/deployment.yaml
+  - mcsv-rrhh/service.yaml
+  - mcsv-project/deployment.yaml
+  - mcsv-project/service.yaml
+  - mcsv-recruitment/deployment.yaml
+  - mcsv-recruitment/service.yaml
+  - mcsv-gateway/deployment.yaml
+  - mcsv-gateway/service.yaml
+  - mcsv-gateway/ingress.yaml
+
+# The crm-secrets Secret is NOT part of this kustomization (it would mean committing
+# secret values). Generate it from your .env into k8s/secret.yaml (gitignored) and apply it
+# separately, BEFORE `kubectl apply -k`:
+#   kubectl create secret generic crm-secrets --from-env-file=.env -n crm \
+#     --dry-run=client -o yaml > k8s/secret.yaml
+#   kubectl apply -f k8s/secret.yaml
+# secret.example.yaml stays as a reference of the expected keys.
+
+# Point all images at your ECR registry in one place. Replace the account/region, then:
+#   kubectl apply -k k8s/
+# Or override without editing: kustomize edit set image crm/mcsv-auth=<ECR>/crm/mcsv-auth:<tag>
+images:
+  - name: crm/mcsv-eureka
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-eureka
+    newTag: latest
+  - name: crm/mcsv-config
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-config
+    newTag: latest
+  - name: crm/mcsv-gateway
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-gateway
+    newTag: latest
+  - name: crm/mcsv-auth
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-auth
+    newTag: latest
+  - name: crm/mcsv-user
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-user
+    newTag: latest
+  - name: crm/mcsv-rrhh
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-rrhh
+    newTag: latest
+  - name: crm/mcsv-project
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-project
+    newTag: latest
+  - name: crm/mcsv-recruitment
+    newName: REPLACE_WITH_ECR_REGISTRY/crm/mcsv-recruitment
+    newTag: latest

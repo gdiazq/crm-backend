@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcsv-gateway
+  namespace: crm
+  labels: { app: mcsv-gateway }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: mcsv-gateway }
+  template:
+    metadata:
+      labels: { app: mcsv-gateway }
+    spec:
+      containers:
+        - name: mcsv-gateway
+          image: crm/mcsv-gateway:latest
+          ports:
+            - containerPort: 9090
+          envFrom:
+            - secretRef: { name: crm-secrets }   # REDIS_URL (Upstash), SECRET_KEY
+            - configMapRef: { name: crm-config }  # EUREKA_SERVER
+          startupProbe:
+            httpGet: { path: /actuator/health, port: 9090 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 9090 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 9090 }
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { memory: 1Gi }

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcsv-config
+  namespace: crm
+  labels: { app: mcsv-config }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mcsv-config }
+  template:
+    metadata:
+      labels: { app: mcsv-config }
+    spec:
+      containers:
+        - name: mcsv-config
+          image: crm/mcsv-config:latest
+          ports:
+            - containerPort: 8888
+          envFrom:
+            - secretRef: { name: crm-secrets }
+            - configMapRef: { name: crm-config }
+          startupProbe:
+            tcpSocket: { port: 8888 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket: { port: 8888 }
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 8888 }
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcsv-user
+  namespace: crm
+spec:
+  selector: { app: mcsv-user }
+  ports:
+    - port: 9091
+      targetPort: 9091

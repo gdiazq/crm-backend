@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcsv-auth
+  namespace: crm
+  labels: { app: mcsv-auth }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mcsv-auth }
+  template:
+    metadata:
+      labels: { app: mcsv-auth }
+    spec:
+      serviceAccountName: crm-aws
+      containers:
+        - name: mcsv-auth
+          image: crm/mcsv-auth:latest
+          ports:
+            - containerPort: 9092
+          envFrom:
+            - secretRef: { name: crm-secrets }
+            - configMapRef: { name: crm-config }
+          startupProbe:
+            httpGet: { path: /actuator/health, port: 9092 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 9092 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 9092 }
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { memory: 1Gi }

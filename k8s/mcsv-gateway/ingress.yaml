@@ -1,0 +1,25 @@
+# Public entry point. Requires the AWS Load Balancer Controller installed in the cluster;
+# it provisions an ALB from this Ingress. ALB supports the gateway's WebSocket routes.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcsv-gateway
+  namespace: crm
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<region>:<account>:certificate/<id>
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mcsv-gateway
+                port:
+                  number: 9090
