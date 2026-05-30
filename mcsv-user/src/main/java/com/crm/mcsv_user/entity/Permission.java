@@ -31,6 +31,9 @@ public class Permission {
     @Column(nullable = false, unique = true, length = 100)
     private String name; // USER:CREATE, USER:READ, ROLE:CREATE, etc.
 
+    @Column(length = 100)
+    private String label; // Short human-readable name for the frontend, e.g. "Crear usuarios"
+
     @Column(length = 255)
     private String description;
 

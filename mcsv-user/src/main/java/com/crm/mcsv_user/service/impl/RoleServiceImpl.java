@@ -227,6 +227,7 @@ public class RoleServiceImpl implements RoleService {
                 .map(p -> PermissionDTO.builder()
                         .id(p.getId())
                         .name(p.getName())
+                        .label(p.getLabel())
                         .description(p.getDescription())
                         .build())
                 .collect(Collectors.toList());

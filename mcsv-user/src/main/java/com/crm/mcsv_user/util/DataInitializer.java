@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -131,13 +132,75 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Permissions initialized.");
     }
 
-    private void createPermissionIfNotExists(String name, String description) {
-        if (permissionRepository.findByName(name).isEmpty()) {
-            permissionRepository.save(Permission.builder()
-                    .name(name)
-                    .description(description)
-                    .build());
+    // Acción y recurso en español para construir el label "Acción: Recurso" del frontend.
+    private static final Map<String, String> ACTION_LABELS = Map.of(
+            "CREATE", "Crear",
+            "READ", "Ver",
+            "UPDATE", "Editar",
+            "DELETE", "Eliminar",
+            "APPROVE", "Aprobar",
+            "REJECT", "Rechazar"
+    );
+
+    private static final Map<String, String> RESOURCE_LABELS = Map.ofEntries(
+            Map.entry("USER", "Usuarios"),
+            Map.entry("ROLE", "Roles"),
+            Map.entry("EMPLOYEE", "Empleados"),
+            Map.entry("HR_REQUEST", "Solicitudes RRHH"),
+            Map.entry("CONTRACT", "Contratos"),
+            Map.entry("TRANSFER", "Traspasos"),
+            Map.entry("ANNEX", "Anexos"),
+            Map.entry("LEAVE", "Permisos"),
+            Map.entry("OVERTIME", "Horas Extras"),
+            Map.entry("CALENDAR", "Calendario"),
+            Map.entry("PROJECT_ASSIGNMENT", "Asignaciones de Proyecto"),
+            Map.entry("ATTENDANCE", "Asistencia"),
+            Map.entry("JOB_OPENING", "Vacantes"),
+            Map.entry("ATTENDANCE_STATUS", "Estados de Asistencia"),
+            Map.entry("PROJECT_TYPE", "Tipos de Proyecto"),
+            Map.entry("PROJECT_STATUS", "Estados de Proyecto"),
+            Map.entry("PROJECT_SPECIALTY", "Especialidades de Proyecto"),
+            Map.entry("PROJECT", "Proyectos"),
+            Map.entry("LEGAL_TERMINATION_CAUSE", "Causas Legales de Terminación"),
+            Map.entry("QUALITY_OF_WORK", "Calidad de Trabajo"),
+            Map.entry("SAFETY_COMPLIANCE", "Cumplimiento de Seguridad"),
+            Map.entry("NO_RE_HIRED_CAUSE", "Causas de No Recontratación"),
+            Map.entry("TERMINATION", "Finiquitos"),
+            Map.entry("TERMINATION_QUIZ_QUESTION", "Preguntas de Finiquito")
+    );
+
+    /**
+     * Builds the frontend label "Acción: Recurso" from the permission code.
+     * E.g. "USER:CREATE" -> "Crear: Usuarios", "PROJECT_TYPE:READ" -> "Ver: Tipos de Proyecto".
+     */
+    private String buildLabel(String name) {
+        String[] parts = name.split(":", 2);
+        String resource = parts[0];
+        String action = parts.length > 1 ? parts[1] : "";
+        String actionLabel = ACTION_LABELS.getOrDefault(action, action);
+        String resourceLabel = RESOURCE_LABELS.getOrDefault(resource, titleCase(resource));
+        return actionLabel + ": " + resourceLabel;
+    }
+
+    // Fallback for resources not in the map: "PROJECT_TYPE" -> "Project Type".
+    private String titleCase(String resource) {
+        String[] words = resource.toLowerCase().split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String w : words) {
+            if (w.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
         }
+        return sb.toString();
+    }
+
+    private void createPermissionIfNotExists(String name, String description) {
+        // Upsert so existing rows also get the label backfilled.
+        Permission permission = permissionRepository.findByName(name).orElseGet(Permission::new);
+        permission.setName(name);
+        permission.setLabel(buildLabel(name));
+        permission.setDescription(description);
+        permissionRepository.save(permission);
     }
 
     // -------------------------------------------------------------------------
