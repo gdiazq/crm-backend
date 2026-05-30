@@ -18,6 +18,9 @@
 
     <properties>
         <java.version>21</java.version>
+        <!-- Override Spring Boot's managed Lombok (1.18.36), which breaks on JDK 21.0.10+
+             with "TypeTag :: UNKNOWN". 1.18.42 supports the newer javac internals. -->
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencies>
