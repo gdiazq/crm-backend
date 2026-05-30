@@ -1,6 +1,8 @@
 package com.crm.mcsv_auth.client;
 
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
+import com.crm.mcsv_auth.dto.CredentialsRequest;
+import com.crm.mcsv_auth.dto.UpdatePasswordRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -48,57 +50,4 @@ public interface UserClient {
     ResponseEntity<Boolean> validateAndConsumeCode(
             @PathVariable("id") Long userId,
             @RequestBody java.util.Map<String, String> body);
-
-    class UpdatePasswordRequest {
-        private Long userId;
-        private String newPassword;
-
-        public UpdatePasswordRequest(Long userId, String newPassword) {
-            this.userId = userId;
-            this.newPassword = newPassword;
-        }
-
-        public Long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-
-        public String getNewPassword() {
-            return newPassword;
-        }
-
-        public void setNewPassword(String newPassword) {
-            this.newPassword = newPassword;
-        }
-    }
-
-    // DTO para la solicitud de credenciales
-    class CredentialsRequest {
-        private String usernameOrEmail;
-        private String password;
-
-        public CredentialsRequest(String usernameOrEmail, String password) {
-            this.usernameOrEmail = usernameOrEmail;
-            this.password = password;
-        }
-
-        public String getUsernameOrEmail() {
-            return usernameOrEmail;
-        }
-
-        public void setUsernameOrEmail(String usernameOrEmail) {
-            this.usernameOrEmail = usernameOrEmail;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-    }
 }

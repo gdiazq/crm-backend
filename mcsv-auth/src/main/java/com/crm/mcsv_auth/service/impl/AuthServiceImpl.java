@@ -2,6 +2,7 @@ package com.crm.mcsv_auth.service.impl;
 
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.dto.AuthResponse;
+import com.crm.mcsv_auth.dto.CredentialsRequest;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
@@ -102,7 +103,7 @@ public class AuthServiceImpl implements AuthService {
         final Boolean body;
         try {
             body = userClient.validateCredentials(
-                    new UserClient.CredentialsRequest(request.getEmail(), request.getPassword())
+                    new CredentialsRequest(request.getEmail(), request.getPassword())
             ).getBody();
         } catch (Exception e) {
             log.error("Exception while validating credentials: {}", e.getMessage());

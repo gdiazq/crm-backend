@@ -4,6 +4,7 @@ import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_auth.client.UserClient;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
+import com.crm.mcsv_auth.dto.UpdatePasswordRequest;
 import com.crm.mcsv_auth.entity.PasswordResetToken;
 import com.crm.mcsv_auth.exception.TokenException;
 import com.crm.mcsv_auth.repository.PasswordResetTokenRepository;
@@ -39,7 +40,7 @@ public class PasswordTokenConsumptionServiceImpl implements PasswordTokenConsump
         }
 
         userClient.updatePassword(
-                new UserClient.UpdatePasswordRequest(resetToken.getUserId(), request.getNewPassword())
+                new UpdatePasswordRequest(resetToken.getUserId(), request.getNewPassword())
         );
 
         resetToken.setUsed(true);
