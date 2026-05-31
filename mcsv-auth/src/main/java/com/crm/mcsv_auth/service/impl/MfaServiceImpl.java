@@ -6,35 +6,26 @@ import com.crm.mcsv_auth.entity.UserMfa;
 import com.crm.mcsv_auth.exception.AuthenticationException;
 import com.crm.mcsv_auth.repository.UserMfaRepository;
 import com.crm.mcsv_auth.service.MfaService;
+import com.crm.mcsv_auth.service.TotpService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base32;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class MfaServiceImpl implements MfaService {
 
-    private static final int TIME_STEP_SECONDS = 30;
-    private static final int CODE_DIGITS = 6;
     private static final String ISSUER = "CRM";
 
     private final UserMfaRepository userMfaRepository;
-    private final SecureRandom secureRandom = new SecureRandom();
-    private final Base32 base32 = new Base32();
+    private final TotpService totpService;
 
     @Override
     @Transactional
     public MfaSetupResponse setupTotp(Long userId, String username) {
-        String secret = generateSecret();
+        String secret = totpService.generateSecret();
         UserMfa userMfa = userMfaRepository.findByUserId(userId)
                 .orElse(UserMfa.builder().userId(userId).build());
         userMfa.setTotpSecret(secret);
@@ -42,8 +33,7 @@ public class MfaServiceImpl implements MfaService {
         userMfa.setVerifiedAt(null);
         userMfaRepository.save(userMfa);
 
-        String otpauth = String.format("otpauth://totp/%s:%s?secret=%s&issuer=%s&digits=%d&period=%d",
-                ISSUER, username, secret, ISSUER, CODE_DIGITS, TIME_STEP_SECONDS);
+        String otpauth = totpService.buildOtpAuthUrl(ISSUER, username, secret);
 
         return MfaSetupResponse.builder()
                 .secret(secret)
@@ -57,7 +47,7 @@ public class MfaServiceImpl implements MfaService {
         UserMfa userMfa = userMfaRepository.findByUserId(userId)
                 .orElseThrow(() -> new AuthenticationException("MFA not configured"));
 
-        boolean valid = validateCode(userMfa.getTotpSecret(), code);
+        boolean valid = totpService.validateCode(userMfa.getTotpSecret(), code);
         if (valid) {
             userMfa.setEnabled(true);
             userMfa.setVerifiedAt(LocalDateTime.now());
@@ -100,45 +90,4 @@ public class MfaServiceImpl implements MfaService {
         });
     }
 
-    private String generateSecret() {
-        byte[] bytes = new byte[20];
-        secureRandom.nextBytes(bytes);
-        return base32.encodeToString(bytes).replace("=", "");
-    }
-
-    private boolean validateCode(String base32Secret, String code) {
-        long timeWindow = System.currentTimeMillis() / 1000 / TIME_STEP_SECONDS;
-        for (int i = -1; i <= 1; i++) {
-            String candidate = generateCode(base32Secret, timeWindow + i);
-            if (candidate.equals(code)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private String generateCode(String base32Secret, long timeWindow) {
-        try {
-            byte[] key = base32.decode(base32Secret);
-            ByteBuffer buffer = ByteBuffer.allocate(8).putLong(timeWindow);
-            byte[] counter = buffer.array();
-
-            Mac mac = Mac.getInstance("HmacSHA1");
-            mac.init(new SecretKeySpec(key, "HmacSHA1"));
-            byte[] hash = mac.doFinal(counter);
-
-            int offset = hash[hash.length - 1] & 0x0F;
-            int binary =
-                    ((hash[offset] & 0x7f) << 24) |
-                    ((hash[offset + 1] & 0xff) << 16) |
-                    ((hash[offset + 2] & 0xff) << 8) |
-                    (hash[offset + 3] & 0xff);
-
-            int otp = binary % (int) Math.pow(10, CODE_DIGITS);
-            return String.format("%0" + CODE_DIGITS + "d", otp);
-        } catch (Exception e) {
-            log.error("Error generating TOTP code", e);
-            throw new AuthenticationException("Invalid TOTP configuration");
-        }
-    }
 }
