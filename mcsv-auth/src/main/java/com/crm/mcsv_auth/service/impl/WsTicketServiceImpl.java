@@ -2,29 +2,30 @@ package com.crm.mcsv_auth.service.impl;
 
 import com.crm.mcsv_auth.dto.TicketValidationResponse;
 import com.crm.mcsv_auth.service.WsTicketService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.Map;
+import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class WsTicketServiceImpl implements WsTicketService {
 
-    private static final long TICKET_TTL_SECONDS = 30;
+    private static final Duration TICKET_TTL = Duration.ofSeconds(30);
+    private static final String KEY_PREFIX = "ws:ticket:";
 
-    private record TicketData(Long userId, Instant createdAt) {}
-
-    private final Map<String, TicketData> tickets = new ConcurrentHashMap<>();
+    // Redis-backed so tickets work across multiple auth instances; the TTL expires
+    // them automatically (no scheduled cleanup needed).
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public String createTicket(Long userId) {
         String ticket = UUID.randomUUID().toString();
-        tickets.put(ticket, new TicketData(userId, Instant.now()));
+        redisTemplate.opsForValue().set(KEY_PREFIX + ticket, String.valueOf(userId), TICKET_TTL);
         log.debug("Created WS ticket for userId={}", userId);
         return ticket;
     }
@@ -38,36 +39,19 @@ public class WsTicketServiceImpl implements WsTicketService {
                     .build();
         }
 
-        TicketData data = tickets.remove(ticket);
+        // GETDEL: atomically read and delete, so a ticket can only be consumed once.
+        String userId = redisTemplate.opsForValue().getAndDelete(KEY_PREFIX + ticket);
 
-        if (data == null) {
+        if (userId == null) {
             return TicketValidationResponse.builder()
                     .valid(false)
-                    .errorMessage("Invalid or already used ticket")
-                    .build();
-        }
-
-        if (Instant.now().isAfter(data.createdAt().plusSeconds(TICKET_TTL_SECONDS))) {
-            return TicketValidationResponse.builder()
-                    .valid(false)
-                    .errorMessage("Ticket expired")
+                    .errorMessage("Invalid, expired or already used ticket")
                     .build();
         }
 
         return TicketValidationResponse.builder()
                 .valid(true)
-                .userId(data.userId())
+                .userId(Long.valueOf(userId))
                 .build();
-    }
-
-    @Scheduled(fixedRate = 60_000)
-    public void cleanupExpiredTickets() {
-        Instant cutoff = Instant.now().minusSeconds(TICKET_TTL_SECONDS);
-        int before = tickets.size();
-        tickets.entrySet().removeIf(entry -> entry.getValue().createdAt().isBefore(cutoff));
-        int removed = before - tickets.size();
-        if (removed > 0) {
-            log.debug("Cleaned up {} expired WS tickets", removed);
-        }
     }
 }
