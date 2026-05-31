@@ -17,6 +17,7 @@ import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.RateLimiterService;
 import com.crm.mcsv_auth.service.WsTicketService;
 import com.crm.mcsv_auth.util.CookieUtil;
+import com.crm.mcsv_auth.util.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -94,7 +95,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user and return access and refresh tokens via cookies")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        String ipAddress = getClientIp(httpRequest);
+        String ipAddress = HttpRequestUtils.clientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         String deviceId = httpRequest.getHeader("X-Device-Id");
         rateLimiterService.checkRateLimit("login:" + ipAddress, LOGIN_LIMIT, WINDOW_SECONDS);
@@ -111,7 +112,7 @@ public class AuthController {
             @Valid @RequestBody MfaSetupRequest request,
             HttpServletRequest httpRequest
     ) {
-        String deviceId = getRequiredDeviceId(httpRequest);
+        String deviceId = HttpRequestUtils.requiredDeviceId(httpRequest);
         var user = authService.getUserByUsername(request.getUsername());
         MfaSetupResponse response = mfaService.setupTotp(user.getId(), user.getUsername());
         return ResponseEntity.ok(response);
@@ -122,7 +123,7 @@ public class AuthController {
             @Valid @RequestBody MfaVerifyRequest request,
             HttpServletRequest httpRequest
     ) {
-        String deviceId = getRequiredDeviceId(httpRequest);
+        String deviceId = HttpRequestUtils.requiredDeviceId(httpRequest);
         var user = authService.getUserByUsername(request.getUsername());
         boolean isValid = mfaService.verifyTotp(user.getId(), request.getCode());
         Map<String, Boolean> response = new HashMap<>();
@@ -135,7 +136,7 @@ public class AuthController {
             @Valid @RequestBody MfaSetupRequest request,
             HttpServletRequest httpRequest
     ) {
-        String deviceId = getRequiredDeviceId(httpRequest);
+        String deviceId = HttpRequestUtils.requiredDeviceId(httpRequest);
         var user = authService.getUserByUsername(request.getUsername());
         mfaService.disableTotp(user.getId());
         Map<String, Boolean> response = new HashMap<>();
@@ -157,7 +158,7 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, Long> body
     ) {
-        String token = resolveToken(accessTokenCookie, authHeader);
+        String token = HttpRequestUtils.resolveToken(accessTokenCookie, authHeader);
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
         Long sessionId = body.get("sessionId");
         if (sessionId == null) {
@@ -175,7 +176,7 @@ public class AuthController {
             @CookieValue(name = "access_token", required = false) String accessTokenCookie,
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        String token = resolveToken(accessTokenCookie, authHeader);
+        String token = HttpRequestUtils.resolveToken(accessTokenCookie, authHeader);
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
         List<UserSessionDto> sessions = authService.listActiveSessions(userInfo.getId());
         return ResponseEntity.ok(sessions);
@@ -202,7 +203,7 @@ public class AuthController {
                 .build();
         AuthResponse response = authService.refreshToken(
                 tokenRequest,
-                getClientIp(httpRequest),
+                HttpRequestUtils.clientIp(httpRequest),
                 httpRequest.getHeader("User-Agent"),
                 httpRequest.getHeader("X-Device-Id"));
 
@@ -235,7 +236,7 @@ public class AuthController {
             authService.logout(
                     refreshToken,
                     logoutAll,
-                    getClientIp(httpRequest),
+                    HttpRequestUtils.clientIp(httpRequest),
                     httpRequest.getHeader("User-Agent"),
                     httpRequest.getHeader("X-Device-Id"));
         }
@@ -255,7 +256,7 @@ public class AuthController {
             @Valid @RequestBody ForgotPasswordRequest request,
             HttpServletRequest httpRequest
     ) {
-        String ipAddress = getClientIp(httpRequest);
+        String ipAddress = HttpRequestUtils.clientIp(httpRequest);
         rateLimiterService.checkRateLimit("forgot-password:" + ipAddress, FORGOT_PASSWORD_LIMIT, WINDOW_SECONDS);
         authService.forgotPassword(request);
 
@@ -282,7 +283,7 @@ public class AuthController {
             @CookieValue(name = "access_token", required = false) String accessTokenCookie,
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        String token = resolveToken(accessTokenCookie, authHeader);
+        String token = HttpRequestUtils.resolveToken(accessTokenCookie, authHeader);
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
         return ResponseEntity.ok(userInfo);
     }
@@ -305,35 +306,10 @@ public class AuthController {
             @CookieValue(name = "access_token", required = false) String accessTokenCookie,
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        String token = resolveToken(accessTokenCookie, authHeader);
+        String token = HttpRequestUtils.resolveToken(accessTokenCookie, authHeader);
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(token);
         String ticket = wsTicketService.createTicket(userInfo.getId());
         return ResponseEntity.ok(WsTicketResponse.builder().ticket(ticket).build());
     }
 
-    private String resolveToken(String accessTokenCookie, String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        if (accessTokenCookie != null && !accessTokenCookie.isBlank()) {
-            return accessTokenCookie;
-        }
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authentication token provided");
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
-
-    private String getRequiredDeviceId(HttpServletRequest request) {
-        String deviceId = request.getHeader("X-Device-Id");
-        if (deviceId == null || deviceId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Device ID required for MFA");
-        }
-        return deviceId;
-    }
 }

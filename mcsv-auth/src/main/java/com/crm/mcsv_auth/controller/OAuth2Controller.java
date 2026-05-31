@@ -4,6 +4,7 @@ import com.crm.mcsv_auth.config.GitHubOAuth2Config;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.service.GitHubOAuth2Service;
 import com.crm.mcsv_auth.util.CookieUtil;
+import com.crm.mcsv_auth.util.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,7 +42,7 @@ public class OAuth2Controller {
             @RequestParam("code") String code,
             HttpServletRequest httpRequest
     ) {
-        String ipAddress = httpRequest.getRemoteAddr();
+        String ipAddress = HttpRequestUtils.clientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         String deviceId = httpRequest.getHeader("X-Device-Id");
 
