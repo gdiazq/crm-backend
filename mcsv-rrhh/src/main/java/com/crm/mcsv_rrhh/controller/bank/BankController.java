@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.bank;
 
-import com.crm.mcsv_rrhh.repository.bank.BankRepository;
+import com.crm.mcsv_rrhh.dto.bank.BankResponse;
+import com.crm.mcsv_rrhh.service.bank.BankService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class BankController {
 
-    private final BankRepository bankRepository;
+    private final BankService service;
 
     @GetMapping
     @Operation(summary = "Bancos")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = bankRepository.findAll().stream()
-                .map(b -> new Item(b.getId(), b.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<BankResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
