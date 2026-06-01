@@ -1,0 +1,638 @@
+package com.crm.mcsv_rrhh.service.contract.impl;
+
+import com.crm.common.service.StorageService;
+import com.crm.common.dto.BulkImportResult;
+import com.crm.mcsv_rrhh.client.ProjectClient;
+import com.crm.mcsv_rrhh.client.UserClient;
+import com.crm.mcsv_rrhh.dto.CatalogItem;
+import com.crm.mcsv_rrhh.client.dto.UserDTO;
+import com.crm.mcsv_rrhh.dto.contract.ContractDetailResponse;
+import com.crm.mcsv_rrhh.dto.contract.ContractResponse;
+import com.crm.mcsv_rrhh.dto.contract.CreateContractRequest;
+import com.crm.common.dto.FileMetadataResponse;
+import com.crm.mcsv_rrhh.dto.contract.UpdateContractRequest;
+import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
+import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.crm.common.exception.ResourceNotFoundException;
+import com.crm.mcsv_rrhh.repository.contract.ContractSpecification;
+import com.crm.mcsv_rrhh.service.contract.ContractService;
+import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
+import com.crm.mcsv_rrhh.util.FileUploadHelper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import com.crm.common.util.CsvUtil;
+import java.util.*;
+import java.util.function.Supplier;
+import com.crm.mcsv_rrhh.entity.company.Company;
+import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.entity.contract.ContractType;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
+import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
+import com.crm.mcsv_rrhh.entity.jobtitle.JobTitle;
+import com.crm.mcsv_rrhh.repository.company.CompanyRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
+import com.crm.mcsv_rrhh.repository.contract.ContractTypeRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
+import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
+import com.crm.mcsv_rrhh.repository.jobtitle.JobTitleRepository;
+import com.crm.mcsv_rrhh.repository.laborunion.LaborUnionRepository;
+import com.crm.mcsv_rrhh.repository.mealtype.MealTypeRepository;
+import com.crm.mcsv_rrhh.repository.safetygroup.SafetyGroupRepository;
+import com.crm.mcsv_rrhh.repository.site.SiteRepository;
+import com.crm.mcsv_rrhh.repository.transporttype.TransportTypeRepository;
+import com.crm.mcsv_rrhh.repository.zone.ZoneRepository;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class ContractServiceImpl implements ContractService {
+
+    private static final String ENTITY_TYPE = "CONTRACT";
+    private static final int MAX_DOCUMENTS = 5;
+
+    private final ContractRepository contractRepository;
+    private final EmployeeRepository employeeRepository;
+    private final HRRequestRepository hrRequestRepository;
+    private final HRRequestService hrRequestService;
+    private final ObjectMapper objectMapper;
+    private final StorageService storageService;
+    private final FileUploadHelper fileUploadHelper;
+    private final EmployeeStatusRepository employeeStatusRepository;
+    private final ContractStatusRepository contractStatusRepository;
+    private final ContractTypeRepository contractTypeRepository;
+    private final SafetyGroupRepository safetyGroupRepository;
+    private final CompanyRepository companyRepository;
+    private final ZoneRepository zoneRepository;
+    private final JobTitleRepository jobTitleRepository;
+    private final SiteRepository siteRepository;
+    private final LaborUnionRepository laborUnionRepository;
+    private final MealTypeRepository mealTypeRepository;
+    private final TransportTypeRepository transportTypeRepository;
+    private final ProjectClient projectClient;
+    private final UserClient userClient;
+
+    @Override
+    @Transactional
+    public ContractDetailResponse createContract(CreateContractRequest request, List<MultipartFile> files) {
+        validateCostCenter(request.getCostCenter());
+
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
+                .map(EmployeeStatus::getId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
+
+        Long suspendedContractStatusId = contractStatusRepository.findByName(ContractStatusName.SUSPENDED.getDisplayName())
+                .map(ContractStatus::getId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: Suspendido"));
+
+        Long contractTypeId = request.getEndDate() == null
+                ? contractTypeRepository.findByName("Indefinido")
+                        .map(ContractType::getId)
+                        .orElse(request.getContractTypeId())
+                : request.getContractTypeId();
+
+        Contract contract = Contract.builder()
+                .employeeId(request.getEmployeeId())
+                .name(request.getName())
+                .contractNumber(request.getContractNumber())
+                .contractTypeId(contractTypeId)
+                .contractStatusId(suspendedContractStatusId)
+                .safetyGroupId(request.getSafetyGroupId())
+                .contractDetail(request.getContractDetail())
+                .baseSalary(request.getBaseSalary())
+                .agreedSalary(request.getAgreedSalary())
+                .companyId(request.getCompanyId())
+                .zoneId(request.getZoneId())
+                .jobTitleId(request.getJobTitleId())
+                .siteId(request.getSiteId())
+                .laborUnionId(request.getLaborUnionId())
+                .costCenter(request.getCostCenter())
+                .weeklyWorkHours(request.getWeeklyWorkHours())
+                .workDays(request.getWorkDays())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .mealTypeId(request.getMealTypeId())
+                .transportTypeId(request.getTransportTypeId())
+                .statusId(pendingStatusId)
+                .build();
+
+        Contract saved = contractRepository.save(contract);
+        HRRequest req = hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
+
+        List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
+        return toDetailResponse(saved, req.getId(), documents);
+    }
+
+    // ─── Detalle ──────────────────────────────────────────────────────────────
+
+    @Override
+    public ContractDetailResponse getById(Long id) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
+        Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
+                .map(HRRequest::getId).orElse(null);
+        List<FileMetadataResponse> documents = fetchDocuments(id);
+        return toDetailResponse(contract, requestId, documents);
+    }
+
+    // ─── Editar ───────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public ContractDetailResponse updateContract(Long id, UpdateContractRequest req, List<MultipartFile> files) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + id));
+
+        validateCostCenter(req.getCostCenter());
+
+        String proposedData;
+        try {
+            proposedData = objectMapper.writeValueAsString(req);
+        } catch (Exception e) {
+            throw new RuntimeException("Error serializando proposedData", e);
+        }
+
+        HRRequest hrReq = hrRequestService.createForContract(id, contract.getEmployeeId(), "UPDATE", proposedData);
+
+        // Archivos pendientes de aprobación: se suben con CONTRACT_PENDING + hrRequestId
+        uploadPendingFiles(hrReq.getId(), contract.getEmployeeId(), files);
+
+        Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
+                .map(HRRequest::getId).orElse(hrReq.getId());
+
+        List<FileMetadataResponse> documents = fetchDocuments(id);
+        return toDetailResponse(contract, requestId, documents);
+    }
+
+    // ─── Listar ───────────────────────────────────────────────────────────────
+
+    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
+
+    @Override
+    public Page<ContractResponse> list(String search,
+                                       Long employeeId, Long statusId,
+                                       Long contractStatusId, Long contractTypeId,
+                                       Integer costCenter,
+                                       LocalDate createdFrom, LocalDate createdTo,
+                                       LocalDate startDateFrom, LocalDate startDateTo,
+                                       LocalDate endDateFrom, LocalDate endDateTo,
+                                       LocalDate updatedFrom, LocalDate updatedTo,
+                                       Pageable pageable, String sortBy, String sortDir) {
+        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
+                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                : pageable;
+        Specification<Contract> spec = ContractSpecification.withFilters(search, employeeId, statusId, contractStatusId, contractTypeId, costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, sortBy, sortDir);
+        return contractRepository.findAll(spec, effectivePageable).map(this::toResponse);
+    }
+
+    @Override
+    public Map<String, Long> getStats(Long employeeId) {
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
+                .map(EmployeeStatus::getId).orElse(-1L);
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(-1L);
+
+        long total   = employeeId != null ? contractRepository.countByEmployeeId(employeeId) : contractRepository.count();
+        long active  = employeeId != null ? contractRepository.countByEmployeeIdAndContractStatusId(employeeId, activeContractStatusId) : contractRepository.countByContractStatusId(activeContractStatusId);
+        long pending = employeeId != null ? contractRepository.countByEmployeeIdAndStatusId(employeeId, pendingStatusId) : contractRepository.countByStatusId(pendingStatusId);
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", total);
+        stats.put("active", active);
+        stats.put("pending", pending);
+        return stats;
+    }
+
+    // ─── Documentos ───────────────────────────────────────────────────────────
+
+    private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return;
+        for (MultipartFile file : files) {
+            fileUploadHelper.validateFile(file);
+            storageService.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
+        }
+    }
+
+    private List<FileMetadataResponse> uploadFiles(Long contractId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return Collections.emptyList();
+
+        List<FileMetadataResponse> existing = fetchDocuments(contractId);
+        if (existing.size() + files.size() > MAX_DOCUMENTS) {
+            throw new IllegalArgumentException(
+                    "El contrato ya tiene " + existing.size() + " documento(s). " +
+                    "Máximo permitido: " + MAX_DOCUMENTS + ".");
+        }
+
+        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, contractId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.AttendanceEmployeeSelectItem> getEmployeesForAttendance() {
+        Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
+        if (activeContractStatusId == null) return List.of();
+
+        Long approvedEmployeeStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
+                .map(EmployeeStatus::getId).orElse(null);
+        if (approvedEmployeeStatusId == null) return List.of();
+
+        return contractRepository
+                .findActiveContractsWithApprovedEmployees(activeContractStatusId, approvedEmployeeStatusId)
+                .stream()
+                .map(c -> {
+                    Employee e = c.getEmployee();
+                    return new ContractService.AttendanceEmployeeSelectItem(
+                            e.getId(),
+                            fullName(e),
+                            c.getCostCenter());
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.EmployeeSelectItem> getSupervisors() {
+        return findEmployeesByRole(userClient::getSupervisors, "supervisores");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.EmployeeSelectItem> getVisitors() {
+        return findEmployeesByRole(userClient::getVisitors, "visitadores");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractService.EmployeeSelectItem> getCompanyRepresentatives() {
+        return findEmployeesByRole(userClient::getCompanyRepresentatives, "representantes de empresa");
+    }
+
+    private List<ContractService.EmployeeSelectItem> findEmployeesByRole(Supplier<List<UserDTO>> userFetcher, String roleLabel) {
+        try {
+            List<Long> userIds = userFetcher.get().stream().map(UserDTO::getId).toList();
+            if (userIds.isEmpty()) return List.of();
+
+            Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
+                    .map(EmployeeStatus::getId).orElse(null);
+            Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                    .map(ContractStatus::getId).orElse(null);
+            if (approvedStatusId == null || activeContractStatusId == null) return List.of();
+
+            Set<Long> employeeIdsWithActiveContract = Set.copyOf(
+                    contractRepository.findEmployeeIdsByContractStatusId(activeContractStatusId));
+            if (employeeIdsWithActiveContract.isEmpty()) return List.of();
+
+            return employeeRepository.findByUserIdIn(userIds).stream()
+                    .filter(e -> Boolean.TRUE.equals(e.getActive()))
+                    .filter(e -> approvedStatusId.equals(e.getStatusId()))
+                    .filter(e -> employeeIdsWithActiveContract.contains(e.getId()))
+                    .map(e -> new ContractService.EmployeeSelectItem(
+                            e.getId(),
+                            e.getFirstName() + " " + e.getPaternalLastName()))
+                    .toList();
+        } catch (Exception ex) {
+            log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());
+            return List.of();
+        }
+    }
+
+    private String fullName(Employee employee) {
+        if (employee == null) return null;
+        return String.join(" ",
+                safe(employee.getFirstName()),
+                safe(employee.getPaternalLastName()),
+                safe(employee.getMaternalLastName())).trim();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private ContractResponse toResponse(Contract c) {
+        var employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
+        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
+        String employeeIdentification = employee != null ? employee.getIdentification() : null;
+
+        return ContractResponse.builder()
+                .id(c.getId())
+                .employeeId(c.getEmployeeId())
+                .employeeName(employeeName)
+                .employeeIdentification(employeeIdentification)
+                .name(c.getName())
+                .contractNumber(c.getContractNumber())
+                .contractType(resolveName(c.getContractTypeId(), contractTypeRepository))
+                .contractStatus(resolveName(c.getContractStatusId(), contractStatusRepository))
+                .company(resolveName(c.getCompanyId(), companyRepository))
+                .jobTitle(resolveName(c.getJobTitleId(), jobTitleRepository))
+                .costCenter(c.getCostCenter())
+                .projectName(resolveProjectName(c.getCostCenter()))
+                .baseSalary(c.getBaseSalary())
+                .startDate(c.getStartDate())
+                .endDate(c.getEndDate())
+                .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
+                .build();
+    }
+
+    private List<FileMetadataResponse> fetchDocuments(Long contractId) {
+        try {
+            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, contractId);
+            return response != null ? response : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener documentos del contrato {}: {}", contractId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private ContractDetailResponse toDetailResponse(Contract c, Long requestId, List<FileMetadataResponse> documents) {
+        var employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
+        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
+        String employeeIdentification = employee != null ? employee.getIdentification() : null;
+
+        return ContractDetailResponse.builder()
+                .id(c.getId())
+                .employeeId(c.getEmployeeId())
+                .employeeName(employeeName)
+                .employeeIdentification(employeeIdentification)
+                .name(c.getName())
+                .contractNumber(c.getContractNumber())
+                .contractType(resolve(c.getContractTypeId(), contractTypeRepository))
+                .contractStatus(resolve(c.getContractStatusId(), contractStatusRepository))
+                .safetyGroup(resolve(c.getSafetyGroupId(), safetyGroupRepository))
+                .contractDetail(c.getContractDetail())
+                .baseSalary(c.getBaseSalary())
+                .agreedSalary(c.getAgreedSalary())
+                .company(resolve(c.getCompanyId(), companyRepository))
+                .zone(resolve(c.getZoneId(), zoneRepository))
+                .jobTitle(resolve(c.getJobTitleId(), jobTitleRepository))
+                .site(resolve(c.getSiteId(), siteRepository))
+                .laborUnion(resolve(c.getLaborUnionId(), laborUnionRepository))
+                .costCenter(c.getCostCenter())
+                .projectName(resolveProjectName(c.getCostCenter()))
+                .weeklyWorkHours(c.getWeeklyWorkHours())
+                .workDays(c.getWorkDays())
+                .startDate(c.getStartDate())
+                .endDate(c.getEndDate())
+                .mealType(resolve(c.getMealTypeId(), mealTypeRepository))
+                .transportType(resolve(c.getTransportTypeId(), transportTypeRepository))
+                .status(resolve(c.getStatusId(), employeeStatusRepository))
+                .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
+                .requestId(requestId)
+                .documents(documents)
+                .build();
+    }
+
+    private <T> String resolveName(Long id, JpaRepository<T, Long> repo) {
+        if (id == null) return null;
+        return repo.findById(id).map(e -> {
+            try { return (String) e.getClass().getMethod("getName").invoke(e); }
+            catch (Exception ex) { return null; }
+        }).orElse(null);
+    }
+
+    private void validateCostCenter(Integer costCenter) {
+        if (costCenter == null || costCenter <= 0) {
+            throw new IllegalArgumentException("El centro de costo es obligatorio y debe ser mayor a 0");
+        }
+        ProjectClient.ProjectNameDTO project;
+        try {
+            project = projectClient.getByCostCenter(costCenter);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
+        }
+        if (project == null || project.getId() == null) {
+            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
+        }
+    }
+
+    private String resolveProjectName(Integer costCenter) {
+        if (costCenter == null) return null;
+        try {
+            ProjectClient.ProjectNameDTO project = projectClient.getByCostCenter(costCenter);
+            return project != null ? project.getName() : null;
+        } catch (Exception e) {
+            log.warn("No se pudo resolver nombre de proyecto para costCenter={}: {}", costCenter, e.getMessage());
+            return null;
+        }
+    }
+
+    private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {
+        if (id == null) return null;
+        return repo.findById(id)
+                .map(e -> {
+                    try {
+                        var getName = e.getClass().getMethod("getName");
+                        return new CatalogItem(id, (String) getName.invoke(e));
+                    } catch (Exception ex) {
+                        return new CatalogItem(id, null);
+                    }
+                })
+                .orElse(null);
+    }
+
+    // ─── Export CSV ───────────────────────────────────────────────────────────
+
+    @Override
+    public byte[] exportCsv() {
+        Map<Long, String> contractStatusMap = contractStatusRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(ContractStatus::getId, ContractStatus::getName));
+        Map<Long, String> contractTypeMap = contractTypeRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(ContractType::getId, ContractType::getName));
+        Map<Long, String> companyMap = companyRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(Company::getId, Company::getName));
+        Map<Long, String> jobTitleMap = jobTitleRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(JobTitle::getId, JobTitle::getName));
+        Map<Long, Employee> employeeMap = employeeRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(Employee::getId, e -> e));
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,RUT Trabajador,Nombre Trabajador,Nombre Contrato,Número Contrato,Tipo Contrato,Estado Contrato,Empresa,Cargo,Centro Costo,Salario Base,Fecha Inicio,Fecha Fin,Fecha Creación,Fecha Actualización\n");
+
+        contractRepository.findAll().forEach(c -> {
+            Employee emp = employeeMap.get(c.getEmployeeId());
+            csv.append(c.getId()).append(",")
+               .append(escape(emp != null ? emp.getIdentification() : "")).append(",")
+               .append(escape(emp != null ? emp.getFirstName() + " " + emp.getPaternalLastName() : "")).append(",")
+               .append(escape(c.getName())).append(",")
+               .append(escape(c.getContractNumber())).append(",")
+               .append(escape(contractTypeMap.get(c.getContractTypeId()))).append(",")
+               .append(escape(contractStatusMap.get(c.getContractStatusId()))).append(",")
+               .append(escape(companyMap.get(c.getCompanyId()))).append(",")
+               .append(escape(jobTitleMap.get(c.getJobTitleId()))).append(",")
+               .append(c.getCostCenter() != null ? c.getCostCenter() : "").append(",")
+               .append(escape(c.getBaseSalary())).append(",")
+               .append(formatDate(c.getStartDate())).append(",")
+               .append(formatDate(c.getEndDate())).append(",")
+               .append(formatDateTime(c.getCreatedAt())).append(",")
+               .append(formatDateTime(c.getUpdatedAt())).append("\n");
+        });
+
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    // ─── Import CSV ───────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public BulkImportResult importFromCsv(MultipartFile file) {
+        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        int total = 0;
+        int success = 0;
+
+        Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
+                .map(EmployeeStatus::getId).orElse(null);
+        Long suspendedContractStatusId = contractStatusRepository.findByName(ContractStatusName.SUSPENDED.getDisplayName())
+                .map(ContractStatus::getId).orElse(null);
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
+            }
+            String[] headers = CsvUtil.parseLine(headerLine);
+            Map<String, Integer> idx = CsvUtil.headerIndex(headers);
+
+            int iRut            = idx.getOrDefault("rut trabajador", -1);
+            int iName           = idx.getOrDefault("nombre contrato", -1);
+            int iContractNumber = idx.getOrDefault("número contrato", idx.getOrDefault("numero contrato", -1));
+            int iContractType   = idx.getOrDefault("tipo contrato", -1);
+            int iBaseSalary     = idx.getOrDefault("salario base", -1);
+            int iStartDate      = idx.getOrDefault("fecha inicio", -1);
+            int iEndDate        = idx.getOrDefault("fecha fin", -1);
+            int iCostCenter     = idx.getOrDefault("centro costo", idx.getOrDefault("centro de costo", -1));
+
+            if (iRut < 0 || iName < 0 || iCostCenter < 0) {
+                errors.add(new BulkImportResult.RowError(1, "Faltan columnas requeridas: 'RUT Trabajador', 'Nombre Contrato' y 'Centro Costo'"));
+                return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
+            }
+
+            String line;
+            int row = 1;
+            while ((line = reader.readLine()) != null) {
+                row++;
+                if (line.isBlank()) continue;
+                total++;
+                try {
+                    String[] cols = CsvUtil.parseLine(line);
+
+                    String rut = CsvUtil.col(cols, iRut);
+                    Employee employee = employeeRepository.findByIdentification(rut)
+                            .orElseThrow(() -> new IllegalArgumentException("Empleado no encontrado con RUT: " + rut));
+
+                    Long contractTypeId = null;
+                    String contractTypeName = CsvUtil.col(cols, iContractType);
+                    if (!contractTypeName.isBlank()) {
+                        contractTypeId = contractTypeRepository.findByName(contractTypeName)
+                                .map(ContractType::getId)
+                                .orElseThrow(() -> new IllegalArgumentException("Tipo de contrato no encontrado: " + contractTypeName));
+                    }
+
+                    LocalDate startDate = parseDate(CsvUtil.col(cols, iStartDate));
+                    LocalDate endDate   = parseDate(CsvUtil.col(cols, iEndDate));
+
+                    if (contractTypeId == null) {
+                        contractTypeId = endDate == null
+                                ? contractTypeRepository.findByName("Indefinido").map(ContractType::getId).orElse(null)
+                                : null;
+                    }
+
+                    String costCenterRaw = CsvUtil.col(cols, iCostCenter);
+                    if (costCenterRaw.isBlank()) {
+                        throw new IllegalArgumentException("Centro de costo es requerido");
+                    }
+                    Integer costCenter;
+                    try {
+                        costCenter = Integer.parseInt(costCenterRaw.trim());
+                    } catch (NumberFormatException nfe) {
+                        throw new IllegalArgumentException("Centro de costo inválido: " + costCenterRaw);
+                    }
+                    validateCostCenter(costCenter);
+
+                    Contract contract = Contract.builder()
+                            .employeeId(employee.getId())
+                            .name(CsvUtil.col(cols, iName))
+                            .contractNumber(CsvUtil.col(cols, iContractNumber).isEmpty() ? null : CsvUtil.col(cols, iContractNumber))
+                            .contractTypeId(contractTypeId)
+                            .contractStatusId(suspendedContractStatusId)
+                            .costCenter(costCenter)
+                            .baseSalary(CsvUtil.col(cols, iBaseSalary).isEmpty() ? null : CsvUtil.col(cols, iBaseSalary))
+                            .startDate(startDate)
+                            .endDate(endDate)
+                            .statusId(pendingStatusId)
+                            .build();
+
+                    Contract saved = contractRepository.save(contract);
+                    hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
+                    success++;
+                } catch (Exception e) {
+                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error reading CSV file for contracts", e);
+            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+        }
+
+        return BulkImportResult.builder()
+                .total(total)
+                .success(success)
+                .failed(errors.size())
+                .errors(errors)
+                .build();
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalDate.parse(value.trim(), DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        } catch (DateTimeParseException e) {
+            try {
+                return LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (DateTimeParseException ex) {
+                throw new IllegalArgumentException("Fecha inválida: " + value + ". Use dd-MM-yyyy o yyyy-MM-dd");
+            }
+        }
+    }
+
+    private String formatDate(LocalDate date) {
+        if (date == null) return "";
+        return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    private String formatDateTime(java.time.LocalDateTime dt) {
+        if (dt == null) return "";
+        return dt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    private String escape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        return value;
+    }
+}
