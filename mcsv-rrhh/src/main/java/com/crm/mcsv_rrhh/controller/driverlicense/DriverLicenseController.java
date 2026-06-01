@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.driverlicense;
 
-import com.crm.mcsv_rrhh.repository.driverlicense.DriverLicenseRepository;
+import com.crm.mcsv_rrhh.dto.driverlicense.DriverLicenseResponse;
+import com.crm.mcsv_rrhh.service.driverlicense.DriverLicenseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class DriverLicenseController {
 
-    private final DriverLicenseRepository driverLicenseRepository;
+    private final DriverLicenseService service;
 
     @GetMapping
     @Operation(summary = "Tipos de licencia de conducir")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = driverLicenseRepository.findAll().stream()
-                .map(d -> new Item(d.getId(), d.getName()))
-                .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<DriverLicenseResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
