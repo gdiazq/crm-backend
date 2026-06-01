@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.company;
 
-import com.crm.mcsv_rrhh.repository.company.CompanyRepository;
+import com.crm.mcsv_rrhh.dto.company.CompanyResponse;
+import com.crm.mcsv_rrhh.service.company.CompanyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class CompanyController {
 
-    private final CompanyRepository companyRepository;
+    private final CompanyService service;
 
     @GetMapping
     @Operation(summary = "Empresas")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = companyRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<CompanyResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
