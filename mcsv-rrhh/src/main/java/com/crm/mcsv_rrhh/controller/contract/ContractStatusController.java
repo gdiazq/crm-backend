@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.contract;
 
-import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
+import com.crm.mcsv_rrhh.dto.contract.ContractStatusResponse;
+import com.crm.mcsv_rrhh.service.contract.ContractStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class ContractStatusController {
 
-    private final ContractStatusRepository contractStatusRepository;
+    private final ContractStatusService service;
 
     @GetMapping
     @Operation(summary = "Estados de contrato")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = contractStatusRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<ContractStatusResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
