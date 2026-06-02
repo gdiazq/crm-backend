@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.safetygroup;
 
-import com.crm.mcsv_rrhh.repository.safetygroup.SafetyGroupRepository;
+import com.crm.mcsv_rrhh.dto.safetygroup.SafetyGroupResponse;
+import com.crm.mcsv_rrhh.service.safetygroup.SafetyGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class SafetyGroupController {
 
-    private final SafetyGroupRepository safetyGroupRepository;
+    private final SafetyGroupService service;
 
     @GetMapping
     @Operation(summary = "Agrupaciones de seguridad")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = safetyGroupRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<SafetyGroupResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
