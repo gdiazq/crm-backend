@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.retirementstatus;
 
-import com.crm.mcsv_rrhh.repository.retirementstatus.RetirementStatusRepository;
+import com.crm.mcsv_rrhh.dto.retirementstatus.RetirementStatusResponse;
+import com.crm.mcsv_rrhh.service.retirementstatus.RetirementStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class RetirementStatusController {
 
-    private final RetirementStatusRepository retirementStatusRepository;
+    private final RetirementStatusService service;
 
     @GetMapping
     @Operation(summary = "Estados de jubilación")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = retirementStatusRepository.findAll().stream()
-                .map(r -> new Item(r.getId(), r.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<RetirementStatusResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
