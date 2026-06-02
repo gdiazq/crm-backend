@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.familyallowancetier;
 
-import com.crm.mcsv_rrhh.repository.familyallowancetier.FamilyAllowanceTierRepository;
+import com.crm.mcsv_rrhh.dto.familyallowancetier.FamilyAllowanceTierResponse;
+import com.crm.mcsv_rrhh.service.familyallowancetier.FamilyAllowanceTierService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class FamilyAllowanceTierController {
 
-    private final FamilyAllowanceTierRepository familyAllowanceTierRepository;
+    private final FamilyAllowanceTierService service;
 
     @GetMapping
     @Operation(summary = "Tramos de asignación familiar")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = familyAllowanceTierRepository.findAll().stream()
-                .map(f -> new Item(f.getId(), f.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<FamilyAllowanceTierResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
