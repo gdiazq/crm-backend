@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.mealtype;
 
-import com.crm.mcsv_rrhh.repository.mealtype.MealTypeRepository;
+import com.crm.mcsv_rrhh.dto.mealtype.MealTypeResponse;
+import com.crm.mcsv_rrhh.service.mealtype.MealTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class MealTypeController {
 
-    private final MealTypeRepository mealTypeRepository;
+    private final MealTypeService service;
 
     @GetMapping
     @Operation(summary = "Tipos de colación")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = mealTypeRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<MealTypeResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
