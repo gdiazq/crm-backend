@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.healthinsurance;
 
-import com.crm.mcsv_rrhh.repository.healthinsurance.HealthInsuranceRepository;
+import com.crm.mcsv_rrhh.dto.healthinsurance.HealthInsuranceResponse;
+import com.crm.mcsv_rrhh.service.healthinsurance.HealthInsuranceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class HealthInsuranceController {
 
-    private final HealthInsuranceRepository healthInsuranceRepository;
+    private final HealthInsuranceService service;
 
     @GetMapping
     @Operation(summary = "Instituciones de salud (Fonasa / Isapres)")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = healthInsuranceRepository.findAll().stream()
-                .map(h -> new Item(h.getId(), h.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<HealthInsuranceResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
