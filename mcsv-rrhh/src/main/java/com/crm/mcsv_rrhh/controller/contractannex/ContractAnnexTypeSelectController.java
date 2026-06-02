@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.contractannex;
 
-import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexTypeRepository;
+import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexTypeResponse;
+import com.crm.mcsv_rrhh.service.contractannex.ContractAnnexTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class ContractAnnexTypeSelectController {
 
-    private final ContractAnnexTypeRepository repository;
+    private final ContractAnnexTypeService service;
 
     @GetMapping
     @Operation(summary = "Tipos de anexo de contrato activos")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = repository.findByActiveTrue().stream()
-                .map(e -> new Item(e.getId(), e.getName(), e.getRequireApproval()))
-                .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<ContractAnnexTypeResponse>> getAll() {
+        return ResponseEntity.ok(service.selectActive());
     }
-
-    record Item(Long id, String name, Boolean requireApproval) {}
 }
