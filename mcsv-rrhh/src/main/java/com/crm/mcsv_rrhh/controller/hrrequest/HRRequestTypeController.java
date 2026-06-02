@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.hrrequest;
 
-import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestTypeRepository;
+import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestTypeResponse;
+import com.crm.mcsv_rrhh.service.hrrequest.HRRequestTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class HRRequestTypeController {
 
-    private final HRRequestTypeRepository hrRequestTypeRepository;
+    private final HRRequestTypeService service;
 
     @GetMapping
     @Operation(summary = "Tipos de solicitud RRHH")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = hrRequestTypeRepository.findAll().stream()
-                .map(t -> new Item(t.getId(), t.getName()))
-                .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<HRRequestTypeResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
