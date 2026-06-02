@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.city;
 
-import com.crm.mcsv_rrhh.repository.city.CityRepository;
+import com.crm.mcsv_rrhh.dto.city.CityResponse;
+import com.crm.mcsv_rrhh.service.city.CityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,18 +19,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class CityController {
 
-    private final CityRepository cityRepository;
+    private final CityService service;
 
     @GetMapping
     @Operation(summary = "Ciudades, filtrable por comuna")
-    public ResponseEntity<List<Item>> getAll(@RequestParam(required = false) Long communeId) {
-        List<Item> result = (communeId != null
-                ? cityRepository.findByCommuneId(communeId)
-                : cityRepository.findAll()).stream()
-                .map(c -> new Item(c.getId(), c.getName()))
-                .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<CityResponse>> getAll(@RequestParam(required = false) Long communeId) {
+        return ResponseEntity.ok(service.select(communeId));
     }
-
-    record Item(Long id, String name) {}
 }
