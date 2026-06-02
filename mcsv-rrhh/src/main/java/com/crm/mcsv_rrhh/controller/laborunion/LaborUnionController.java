@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.laborunion;
 
-import com.crm.mcsv_rrhh.repository.laborunion.LaborUnionRepository;
+import com.crm.mcsv_rrhh.dto.laborunion.LaborUnionResponse;
+import com.crm.mcsv_rrhh.service.laborunion.LaborUnionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class LaborUnionController {
 
-    private final LaborUnionRepository laborUnionRepository;
+    private final LaborUnionService service;
 
     @GetMapping
     @Operation(summary = "Sindicatos")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = laborUnionRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<LaborUnionResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
