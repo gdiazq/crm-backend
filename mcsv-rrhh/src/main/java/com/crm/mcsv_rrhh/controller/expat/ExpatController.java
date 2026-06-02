@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.expat;
 
-import com.crm.mcsv_rrhh.repository.expat.ExpatRepository;
+import com.crm.mcsv_rrhh.dto.expat.ExpatResponse;
+import com.crm.mcsv_rrhh.service.expat.ExpatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class ExpatController {
 
-    private final ExpatRepository expatRepository;
+    private final ExpatService service;
 
     @GetMapping
     @Operation(summary = "Condición de expatriado")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = expatRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<ExpatResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
-
-    record Item(Long id, String name) {}
 }
