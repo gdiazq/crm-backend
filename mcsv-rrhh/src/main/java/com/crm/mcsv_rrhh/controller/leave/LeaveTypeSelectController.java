@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.controller.leave;
 
 import com.crm.mcsv_rrhh.dto.leave.LeaveTypeResponse;
-import com.crm.mcsv_rrhh.repository.leave.LeaveTypeRepository;
+import com.crm.mcsv_rrhh.service.leave.LeaveTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,17 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class LeaveTypeSelectController {
 
-    private final LeaveTypeRepository repository;
+    private final LeaveTypeService service;
 
     @GetMapping
     @Operation(summary = "Tipos de permiso activos")
     public ResponseEntity<List<LeaveTypeResponse>> getAll() {
-        List<LeaveTypeResponse> result = repository.findByActiveTrue().stream()
-                .map(e -> LeaveTypeResponse.builder()
-                        .id(e.getId())
-                        .name(e.getName())
-                        .build())
-                .toList();
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(service.selectActive());
     }
 }
