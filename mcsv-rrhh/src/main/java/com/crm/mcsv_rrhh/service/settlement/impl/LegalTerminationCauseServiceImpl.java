@@ -3,6 +3,7 @@ package com.crm.mcsv_rrhh.service.settlement.impl;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.settlement.LegalTerminationCauseRequest;
 import com.crm.mcsv_rrhh.dto.settlement.LegalTerminationCauseResponse;
+import com.crm.mcsv_rrhh.dto.settlement.LegalTerminationCauseSelectResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.settlement.UpdateLegalTerminationCauseRequest;
 import com.crm.mcsv_rrhh.entity.settlement.LegalTerminationCause;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +73,16 @@ public class LegalTerminationCauseServiceImpl implements LegalTerminationCauseSe
     @Override
     public LegalTerminationCauseResponse getById(Long id) {
         return toResponse(findOrThrow(id));
+    }
+
+    @Override
+    public List<LegalTerminationCauseSelectResponse> selectActive() {
+        return repository.findByActiveTrue().stream()
+                .map(e -> LegalTerminationCauseSelectResponse.builder()
+                        .id(e.getId())
+                        .name(e.getName())
+                        .build())
+                .toList();
     }
 
     @Override
