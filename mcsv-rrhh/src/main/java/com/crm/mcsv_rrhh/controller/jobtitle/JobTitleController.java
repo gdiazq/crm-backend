@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.controller.jobtitle;
 
-import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.mcsv_rrhh.repository.jobtitle.JobTitleRepository;
+import com.crm.mcsv_rrhh.dto.jobtitle.JobTitleResponse;
+import com.crm.mcsv_rrhh.service.jobtitle.JobTitleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,23 +19,17 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class JobTitleController {
 
-    private final JobTitleRepository jobTitleRepository;
+    private final JobTitleService service;
 
     @GetMapping
     @Operation(summary = "Cargos / Títulos de puesto")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = jobTitleRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<JobTitleResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Cargo por ID")
-    public ResponseEntity<Item> getById(@PathVariable Long id) {
-        return jobTitleRepository.findById(id)
-                .map(e -> ResponseEntity.ok(new Item(e.getId(), e.getName())))
-                .orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado: " + id));
+    public ResponseEntity<JobTitleResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getById(id));
     }
-
-    record Item(Long id, String name) {}
 }
