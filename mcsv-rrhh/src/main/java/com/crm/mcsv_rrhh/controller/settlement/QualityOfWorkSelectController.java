@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.controller.settlement;
 
-import com.crm.mcsv_rrhh.repository.settlement.QualityOfWorkRepository;
+import com.crm.mcsv_rrhh.dto.settlement.QualityOfWorkSelectResponse;
+import com.crm.mcsv_rrhh.service.settlement.QualityOfWorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +18,11 @@ import java.util.List;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class QualityOfWorkSelectController {
 
-    private final QualityOfWorkRepository repository;
+    private final QualityOfWorkService service;
 
     @GetMapping
     @Operation(summary = "Evaluaciones de calidad de trabajo activas")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = repository.findByActiveTrue().stream()
-                .map(e -> new Item(e.getId(), e.getName()))
-                .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<QualityOfWorkSelectResponse>> getAll() {
+        return ResponseEntity.ok(service.selectActive());
     }
-
-    record Item(Long id, String name) {}
 }

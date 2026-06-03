@@ -4,6 +4,7 @@ import com.crm.common.dto.BulkImportResult;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.settlement.QualityOfWorkRequest;
 import com.crm.mcsv_rrhh.dto.settlement.QualityOfWorkResponse;
+import com.crm.mcsv_rrhh.dto.settlement.QualityOfWorkSelectResponse;
 import com.crm.mcsv_rrhh.dto.settlement.UpdateQualityOfWorkRequest;
 import com.crm.mcsv_rrhh.entity.settlement.QualityOfWork;
 import com.crm.common.exception.DuplicateResourceException;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +71,16 @@ public class QualityOfWorkServiceImpl implements QualityOfWorkService {
     @Override
     public QualityOfWorkResponse getById(Long id) {
         return toResponse(findOrThrow(id));
+    }
+
+    @Override
+    public List<QualityOfWorkSelectResponse> selectActive() {
+        return repository.findByActiveTrue().stream()
+                .map(e -> QualityOfWorkSelectResponse.builder()
+                        .id(e.getId())
+                        .name(e.getName())
+                        .build())
+                .toList();
     }
 
     @Override
