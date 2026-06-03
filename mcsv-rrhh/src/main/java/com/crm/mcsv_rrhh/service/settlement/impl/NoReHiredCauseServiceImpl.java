@@ -3,6 +3,7 @@ package com.crm.mcsv_rrhh.service.settlement.impl;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.dto.settlement.NoReHiredCauseRequest;
 import com.crm.mcsv_rrhh.dto.settlement.NoReHiredCauseResponse;
+import com.crm.mcsv_rrhh.dto.settlement.NoReHiredCauseSelectResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.settlement.UpdateNoReHiredCauseRequest;
 import com.crm.mcsv_rrhh.entity.settlement.NoReHiredCause;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +71,16 @@ public class NoReHiredCauseServiceImpl implements NoReHiredCauseService {
     @Override
     public NoReHiredCauseResponse getById(Long id) {
         return toResponse(findOrThrow(id));
+    }
+
+    @Override
+    public List<NoReHiredCauseSelectResponse> selectActive() {
+        return repository.findByActiveTrue().stream()
+                .map(e -> NoReHiredCauseSelectResponse.builder()
+                        .id(e.getId())
+                        .name(e.getName())
+                        .build())
+                .toList();
     }
 
     @Override
