@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.controller.employee;
 
-import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
-import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
+import com.crm.mcsv_rrhh.dto.employee.EmployeeStatusResponse;
+import com.crm.mcsv_rrhh.service.employee.EmployeeStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/select/employee-statuses")
@@ -19,32 +18,17 @@ import java.util.Set;
 @Tag(name = "Selectors", description = "Endpoints para selects del frontend")
 public class EmployeeStatusController {
 
-    private final EmployeeStatusRepository employeeStatusRepository;
-
-    private static final Set<String> APPROVAL_STATUSES = RequestStatus.displayNamesOf(
-            RequestStatus.PENDING_REVIEW,
-            RequestStatus.PENDING_APPROVAL,
-            RequestStatus.APPROVED,
-            RequestStatus.REJECTED
-    );
+    private final EmployeeStatusService service;
 
     @GetMapping
     @Operation(summary = "Estados del empleado")
-    public ResponseEntity<List<Item>> getAll() {
-        List<Item> result = employeeStatusRepository.findAll().stream()
-                .map(e -> new Item(e.getId(), e.getName())).toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<EmployeeStatusResponse>> getAll() {
+        return ResponseEntity.ok(service.selectAll());
     }
 
     @GetMapping("/approval")
     @Operation(summary = "Estados de aprobación de solicitudes RRHH")
-    public ResponseEntity<List<Item>> getApprovalStatuses() {
-        List<Item> result = employeeStatusRepository.findAll().stream()
-                .filter(e -> APPROVAL_STATUSES.contains(e.getName()))
-                .map(e -> new Item(e.getId(), e.getName()))
-                .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<EmployeeStatusResponse>> getApprovalStatuses() {
+        return ResponseEntity.ok(service.selectApprovalStatuses());
     }
-
-    record Item(Long id, String name) {}
 }
