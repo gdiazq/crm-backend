@@ -4,11 +4,13 @@ import com.crm.common.dto.BulkImportResult;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.settlement.SafetyComplianceRequest;
 import com.crm.mcsv_rrhh.dto.settlement.SafetyComplianceResponse;
+import com.crm.mcsv_rrhh.dto.settlement.SafetyComplianceSelectResponse;
 import com.crm.mcsv_rrhh.dto.settlement.UpdateSafetyComplianceRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface SafetyComplianceService {
 
@@ -19,6 +21,8 @@ public interface SafetyComplianceService {
     void updateStatus(Long id, Boolean active);
 
     SafetyComplianceResponse getById(Long id);
+
+    List<SafetyComplianceSelectResponse> selectActive();
 
     PagedResponse<SafetyComplianceResponse> list(String search, Boolean active,
                                                   LocalDate createdFrom, LocalDate createdTo,

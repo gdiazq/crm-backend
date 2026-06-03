@@ -4,6 +4,7 @@ import com.crm.common.dto.BulkImportResult;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.dto.settlement.SafetyComplianceRequest;
 import com.crm.mcsv_rrhh.dto.settlement.SafetyComplianceResponse;
+import com.crm.mcsv_rrhh.dto.settlement.SafetyComplianceSelectResponse;
 import com.crm.mcsv_rrhh.dto.settlement.UpdateSafetyComplianceRequest;
 import com.crm.mcsv_rrhh.entity.settlement.SafetyCompliance;
 import com.crm.common.exception.DuplicateResourceException;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +71,16 @@ public class SafetyComplianceServiceImpl implements SafetyComplianceService {
     @Override
     public SafetyComplianceResponse getById(Long id) {
         return toResponse(findOrThrow(id));
+    }
+
+    @Override
+    public List<SafetyComplianceSelectResponse> selectActive() {
+        return repository.findByActiveTrue().stream()
+                .map(e -> SafetyComplianceSelectResponse.builder()
+                        .id(e.getId())
+                        .name(e.getName())
+                        .build())
+                .toList();
     }
 
     @Override
