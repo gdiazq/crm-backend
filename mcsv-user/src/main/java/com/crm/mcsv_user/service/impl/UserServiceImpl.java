@@ -227,19 +227,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void deleteUser(Long id) {
-        log.info("Deleting user with id: {}", id);
-
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found with id: " + id);
-        }
-
-        userRepository.deleteById(id);
-        log.info("User deleted successfully with id: {}", id);
-    }
-
-    @Override
-    @Transactional
     public void updateLastLogin(Long userId) {
         log.info("Updating last login for user id: {}", userId);
 
