@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.employee.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.util.CsvUtil;
 import com.crm.mcsv_rrhh.entity.contract.Contract;
 import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
 import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
@@ -257,23 +258,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .toList();
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
-    private Employee findOrThrow(Long id) {
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + id));
-    }
-
-    private UserDTO fetchUser(Long userId) {
-        if (userId == null) return null;
-        try {
-            return userClient.getUserById(userId);
-        } catch (Exception e) {
-            log.warn("No se pudo obtener el usuario con id {}: {}", userId, e.getMessage());
-            return null;
-        }
-    }
-
     @Override
     public BulkImportResult importFromCsv(MultipartFile file) {
         List<BulkImportResult.RowError> errors = new ArrayList<>();
@@ -286,8 +270,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             if (headerLine == null) {
                 return BulkImportResult.builder().total(0).success(0).failed(0).errors(errors).build();
             }
-            String[] headers = parseCsvLine(headerLine);
-            Map<String, Integer> idx = buildHeaderIndex(headers);
+            String[] headers = CsvUtil.parseLine(headerLine);
+            Map<String, Integer> idx = CsvUtil.headerIndex(headers);
 
             int iRut      = idx.getOrDefault("rut", -1);
             int iFirst    = idx.getOrDefault("nombre", -1);
@@ -308,15 +292,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                 if (line.isBlank()) continue;
                 total++;
                 try {
-                    String[] cols = parseCsvLine(line);
+                    String[] cols = CsvUtil.parseLine(line);
 
                     CreateEmployeeRequest request = new CreateEmployeeRequest();
-                    request.setIdentification(col(cols, iRut).isEmpty() ? null : col(cols, iRut));
-                    request.setFirstName(col(cols, iFirst).isEmpty() ? null : col(cols, iFirst));
-                    request.setPaternalLastName(col(cols, iPat).isEmpty() ? null : col(cols, iPat));
-                    request.setMaternalLastName(col(cols, iMat).isEmpty() ? null : col(cols, iMat));
-                    request.setCorporateEmail(col(cols, iEmail).isEmpty() ? null : col(cols, iEmail));
-                    request.setPhone(col(cols, iPhone).isEmpty() ? null : col(cols, iPhone));
+                    request.setIdentification(CsvUtil.colOrEmpty(cols, iRut).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iRut));
+                    request.setFirstName(CsvUtil.colOrEmpty(cols, iFirst).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iFirst));
+                    request.setPaternalLastName(CsvUtil.colOrEmpty(cols, iPat).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iPat));
+                    request.setMaternalLastName(CsvUtil.colOrEmpty(cols, iMat).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iMat));
+                    request.setCorporateEmail(CsvUtil.colOrEmpty(cols, iEmail).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iEmail));
+                    request.setPhone(CsvUtil.colOrEmpty(cols, iPhone).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iPhone));
 
                     createEmployee(request);
                     success++;
@@ -337,43 +321,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
     }
 
-    private String[] parseCsvLine(String line) {
-        List<String> fields = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    sb.append('"');
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (c == ',' && !inQuotes) {
-                fields.add(sb.toString());
-                sb.setLength(0);
-            } else {
-                sb.append(c);
-            }
-        }
-        fields.add(sb.toString());
-        return fields.toArray(new String[0]);
-    }
-
-    private Map<String, Integer> buildHeaderIndex(String[] headers) {
-        Map<String, Integer> idx = new java.util.HashMap<>();
-        for (int i = 0; i < headers.length; i++) {
-            idx.put(headers[i].trim().toLowerCase(), i);
-        }
-        return idx;
-    }
-
-    private String col(String[] cols, int index) {
-        if (index < 0 || index >= cols.length) return "";
-        return cols[index].trim();
-    }
-
     @Override
     public byte[] exportCsv() {
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
@@ -384,29 +331,34 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employeeRepository.findAll().forEach(e -> csv
                 .append(e.getId()).append(",")
-                .append(escape(e.getIdentification())).append(",")
-                .append(escape(e.getFirstName())).append(",")
-                .append(escape(e.getPaternalLastName())).append(",")
-                .append(escape(e.getMaternalLastName())).append(",")
-                .append(escape(e.getCorporateEmail())).append(",")
-                .append(escape(e.getPhone())).append(",")
-                .append(escape(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : "")).append(",")
+                .append(CsvUtil.escape(e.getIdentification())).append(",")
+                .append(CsvUtil.escape(e.getFirstName())).append(",")
+                .append(CsvUtil.escape(e.getPaternalLastName())).append(",")
+                .append(CsvUtil.escape(e.getMaternalLastName())).append(",")
+                .append(CsvUtil.escape(e.getCorporateEmail())).append(",")
+                .append(CsvUtil.escape(e.getPhone())).append(",")
+                .append(CsvUtil.escape(e.getStatusId() != null ? statusMap.get(e.getStatusId()) : "")).append(",")
                 .append(e.getActive()).append(",")
-                .append(formatDate(e.getCreatedAt())).append("\n"));
+                .append(CsvUtil.formatDate(e.getCreatedAt())).append("\n"));
 
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    private String formatDate(java.time.LocalDateTime dt) {
-        if (dt == null) return "";
-        return dt.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    // ─── Helpers service ──────────────────────────────────────────────────────────────
+
+    private Employee findOrThrow(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + id));
     }
 
-    private String escape(String value) {
-        if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        return value;
+    private UserDTO fetchUser(Long userId) {
+        if (userId == null) return null;
+        try {
+            return userClient.getUserById(userId);
+        } catch (Exception e) {
+            log.warn("No se pudo obtener el usuario con id {}: {}", userId, e.getMessage());
+            return null;
+        }
     }
 
 }

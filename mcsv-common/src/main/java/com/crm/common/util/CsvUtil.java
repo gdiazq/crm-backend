@@ -89,6 +89,12 @@ public final class CsvUtil {
         return cols[index].trim();
     }
 
+    /** Variante tolerante de {@link #col}: devuelve "" si el índice está fuera de rango, en vez de lanzar. */
+    public static String colOrEmpty(String[] cols, int index) {
+        if (index < 0 || index >= cols.length) return "";
+        return cols[index].trim();
+    }
+
     @FunctionalInterface
     public interface NameDescProcessor {
         void process(String name, String description) throws Exception;
