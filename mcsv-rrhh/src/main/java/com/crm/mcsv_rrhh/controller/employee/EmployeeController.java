@@ -88,25 +88,6 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.updateEmployee(request.getId(), request));
     }
 
-    @GetMapping("/select/without-contract")
-    @Operation(summary = "Empleados sin contrato", description = "Retorna empleados activos y aprobados que aún no tienen contrato")
-    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithoutContract() {
-        return ResponseEntity.ok(employeeService.getEmployeesWithoutContract());
-    }
-
-    @GetMapping("/select/with-contract")
-    @Operation(summary = "Empleados con contrato", description = "Retorna empleados activos y aprobados que tienen contrato")
-    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithContract() {
-        return ResponseEntity.ok(employeeService.getEmployeesWithContract());
-    }
-
-    @GetMapping("/select/available-users")
-    @Operation(summary = "Usuarios disponibles para vincular a empleado", description = "Retorna usuarios excluyendo los ya vinculados a un empleado")
-    public ResponseEntity<List<CatalogItem>> getAvailableUsers(
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(employeeService.getAvailableUsersForEmployee(search));
-    }
-
     @PutMapping("/{id}/status")
     @Operation(summary = "Activar o desactivar empleado")
     public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
@@ -134,5 +115,24 @@ public class EmployeeController {
     @Operation(summary = "Importar empleados desde CSV")
     public ResponseEntity<BulkImportResult> importCsv(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(employeeService.importFromCsv(file));
+    }
+
+    @GetMapping("/select/without-contract")
+    @Operation(summary = "Empleados sin contrato", description = "Retorna empleados activos y aprobados que aún no tienen contrato")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithoutContract() {
+        return ResponseEntity.ok(employeeService.getEmployeesWithoutContract());
+    }
+
+    @GetMapping("/select/with-contract")
+    @Operation(summary = "Empleados con contrato", description = "Retorna empleados activos y aprobados que tienen contrato")
+    public ResponseEntity<List<EmployeeService.EmployeeSelectItem>> getEmployeesWithContract() {
+        return ResponseEntity.ok(employeeService.getEmployeesWithContract());
+    }
+
+    @GetMapping("/select/available-users")
+    @Operation(summary = "Usuarios disponibles para vincular a empleado", description = "Retorna usuarios excluyendo los ya vinculados a un empleado")
+    public ResponseEntity<List<CatalogItem>> getAvailableUsers(
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(employeeService.getAvailableUsersForEmployee(search));
     }
 }
