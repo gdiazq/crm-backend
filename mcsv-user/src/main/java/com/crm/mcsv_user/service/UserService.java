@@ -36,8 +36,6 @@ public interface UserService {
 
     void updateAvatarUrl(Long userId, String avatarUrl);
 
-    boolean existsByUsername(String username);
-
     boolean existsByEmail(String email);
 
     boolean validateCredentials(String usernameOrEmail, String password);
@@ -53,6 +51,8 @@ public interface UserService {
     boolean validateAndConsumeCode(Long userId, String code);
 
     Map<String, Long> getUserStats();
+
     byte[] exportCsv();
+
     BulkImportResult importUsersFromCsv(MultipartFile file);
 }
