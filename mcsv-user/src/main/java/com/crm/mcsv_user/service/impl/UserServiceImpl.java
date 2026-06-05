@@ -69,30 +69,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAllUsers(String search, Pageable pageable, String sortBy, String sortDir) {
-        log.info("Fetching users page: {}, size: {}, search: {}, sortBy: {}, sortDir: {}", pageable.getPageNumber(), pageable.getPageSize(), search, sortBy, sortDir);
-        boolean hasSearch = search != null && !search.isBlank();
-        boolean asc = !"desc".equalsIgnoreCase(sortDir);
-
-        if ("roles".equals(sortBy)) {
-            if (hasSearch) {
-                return (asc ? userRepository.searchUsersSortedByRoleAsc(search.trim(), pageable)
-                            : userRepository.searchUsersSortedByRoleDesc(search.trim(), pageable))
-                        .map(userMapper::toResponse);
-            }
-            return (asc ? userRepository.findAllSortedByRoleAsc(pageable)
-                        : userRepository.findAllSortedByRoleDesc(pageable))
-                    .map(userMapper::toResponse);
-        }
-
-        if (hasSearch) {
-            return userRepository.searchUsers(search.trim(), pageable).map(userMapper::toResponse);
-        }
-        return userRepository.findAll(pageable).map(userMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<UserResponse> filterUsers(String name, String email, Boolean status, Long roleId, Pageable pageable, String sortBy, String sortDir) {
         log.info("Filtering users - name: {}, email: {}, status: {}, roleId: {}", name, email, status, roleId);
         return userRepository.filterUsers(

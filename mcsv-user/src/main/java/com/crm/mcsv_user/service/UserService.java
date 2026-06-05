@@ -14,8 +14,6 @@ import java.util.Map;
 
 public interface UserService {
 
-    Page<UserResponse> getAllUsers(String search, Pageable pageable, String sortBy, String sortDir);
-
     Page<UserResponse> filterUsers(String name, String email, Boolean status, Long roleId, Pageable pageable, String sortBy, String sortDir);
 
     List<UserResponse> getAllUsersForSelect();
