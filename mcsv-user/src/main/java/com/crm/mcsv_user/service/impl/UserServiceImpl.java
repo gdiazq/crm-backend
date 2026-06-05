@@ -250,12 +250,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Override
     @Transactional
     public boolean validateCredentials(String usernameOrEmail, String password) {
         log.info("Validating credentials for: {}", usernameOrEmail);
