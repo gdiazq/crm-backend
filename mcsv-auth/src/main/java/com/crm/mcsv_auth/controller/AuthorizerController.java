@@ -18,25 +18,11 @@ public class AuthorizerController {
 
     @PostMapping("/v1/validateToken")
     public TokenValidationResponse validateToken(@RequestParam String jwt) {
-        boolean isValid = authService.validateToken(extractToken(jwt));
-        if (isValid) {
-            return new TokenValidationResponse(true, null);
-        }
-        return new TokenValidationResponse(false, "Invalid token");
+        return authService.validateTokenResult(jwt);
     }
 
     @PostMapping("/v1/validateTicket")
     public TicketValidationResponse validateTicket(@RequestParam String ticket) {
         return wsTicketService.validateAndConsumeTicket(ticket);
-    }
-
-    private String extractToken(String tokenHeader) {
-        if (tokenHeader == null) {
-            return "";
-        }
-        if (tokenHeader.startsWith("Bearer ")) {
-            return tokenHeader.substring(7);
-        }
-        return tokenHeader;
     }
 }

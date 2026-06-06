@@ -12,6 +12,7 @@ import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserDTO;
+import com.crm.mcsv_auth.dto.TokenValidationResponse;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.entity.RefreshToken;
@@ -256,6 +257,14 @@ public class AuthServiceImpl implements AuthService {
             log.error("Error validating session bound to token", e);
             return false;
         }
+    }
+
+    @Override
+    public TokenValidationResponse validateTokenResult(String jwt) {
+        String token = jwt == null ? "" : jwt.replaceFirst("^Bearer ", "");
+        return validateToken(token)
+                ? new TokenValidationResponse(true, null)
+                : new TokenValidationResponse(false, "Invalid token");
     }
 
     @Override

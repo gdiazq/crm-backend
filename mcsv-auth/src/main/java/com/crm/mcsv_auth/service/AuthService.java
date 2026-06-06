@@ -8,6 +8,7 @@ import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
+import com.crm.mcsv_auth.dto.TokenValidationResponse;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
@@ -30,6 +31,8 @@ public interface AuthService {
     void resetPassword(ResetPasswordRequest request);
 
     boolean validateToken(String token);
+
+    TokenValidationResponse validateTokenResult(String jwt);
 
     UserDTO getUserByUsername(String username);
 
