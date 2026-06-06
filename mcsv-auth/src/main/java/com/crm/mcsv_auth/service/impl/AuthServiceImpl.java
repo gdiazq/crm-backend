@@ -6,6 +6,7 @@ import com.crm.mcsv_auth.dto.CredentialsRequest;
 import com.crm.mcsv_auth.dto.CreateUserInternalRequest;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
+import com.crm.mcsv_auth.dto.MfaSetupResponse;
 import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
@@ -340,6 +341,24 @@ public class AuthServiceImpl implements AuthService {
     public MfaStatusResponse getMfaStatusByEmail(String email) {
         UserDTO user = authUserLookupService.getByUsernameOrEmail(email);
         return mfaService.getMfaStatus(user.getId());
+    }
+
+    @Override
+    public MfaSetupResponse setupMfa(String username) {
+        UserDTO user = getUserByUsername(username);
+        return mfaService.setupTotp(user.getId(), user.getUsername());
+    }
+
+    @Override
+    public boolean verifyMfa(String username, String code) {
+        UserDTO user = getUserByUsername(username);
+        return mfaService.verifyTotp(user.getId(), code);
+    }
+
+    @Override
+    public void disableMfa(String username) {
+        UserDTO user = getUserByUsername(username);
+        mfaService.disableTotp(user.getId());
     }
 
 }

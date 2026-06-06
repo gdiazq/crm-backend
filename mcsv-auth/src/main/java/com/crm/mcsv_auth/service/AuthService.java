@@ -3,6 +3,7 @@ package com.crm.mcsv_auth.service;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.ForgotPasswordRequest;
 import com.crm.mcsv_auth.dto.LoginRequest;
+import com.crm.mcsv_auth.dto.MfaSetupResponse;
 import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
 import com.crm.mcsv_auth.dto.RegisterRequest;
@@ -47,4 +48,10 @@ public interface AuthService {
     boolean checkMfaStatus(String email);
 
     MfaStatusResponse getMfaStatusByEmail(String email);
+
+    MfaSetupResponse setupMfa(String username);
+
+    boolean verifyMfa(String username, String code);
+
+    void disableMfa(String username);
 }

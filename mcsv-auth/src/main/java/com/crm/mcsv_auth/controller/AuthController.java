@@ -13,7 +13,6 @@ import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.dto.WsTicketResponse;
 import com.crm.mcsv_auth.service.AuthService;
-import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.RateLimiterService;
 import com.crm.mcsv_auth.service.WsTicketService;
 import com.crm.mcsv_auth.util.CookieUtil;
@@ -40,7 +39,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final RateLimiterService rateLimiterService;
-    private final MfaService mfaService;
     private final CookieUtil cookieUtil;
     private final WsTicketService wsTicketService;
 
@@ -112,10 +110,8 @@ public class AuthController {
             @Valid @RequestBody MfaSetupRequest request,
             HttpServletRequest httpRequest
     ) {
-        String deviceId = HttpRequestUtils.requiredDeviceId(httpRequest);
-        var user = authService.getUserByUsername(request.getUsername());
-        MfaSetupResponse response = mfaService.setupTotp(user.getId(), user.getUsername());
-        return ResponseEntity.ok(response);
+        HttpRequestUtils.requiredDeviceId(httpRequest);
+        return ResponseEntity.ok(authService.setupMfa(request.getUsername()));
     }
 
     @PostMapping("/mfa/verify")
@@ -123,12 +119,9 @@ public class AuthController {
             @Valid @RequestBody MfaVerifyRequest request,
             HttpServletRequest httpRequest
     ) {
-        String deviceId = HttpRequestUtils.requiredDeviceId(httpRequest);
-        var user = authService.getUserByUsername(request.getUsername());
-        boolean isValid = mfaService.verifyTotp(user.getId(), request.getCode());
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("valid", isValid);
-        return ResponseEntity.ok(response);
+        HttpRequestUtils.requiredDeviceId(httpRequest);
+        boolean isValid = authService.verifyMfa(request.getUsername(), request.getCode());
+        return ResponseEntity.ok(Map.of("valid", isValid));
     }
 
     @PostMapping("/mfa/disable")
@@ -136,12 +129,9 @@ public class AuthController {
             @Valid @RequestBody MfaSetupRequest request,
             HttpServletRequest httpRequest
     ) {
-        String deviceId = HttpRequestUtils.requiredDeviceId(httpRequest);
-        var user = authService.getUserByUsername(request.getUsername());
-        mfaService.disableTotp(user.getId());
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("disabled", true);
-        return ResponseEntity.ok(response);
+        HttpRequestUtils.requiredDeviceId(httpRequest);
+        authService.disableMfa(request.getUsername());
+        return ResponseEntity.ok(Map.of("disabled", true));
     }
 
     @GetMapping("/mfa/status/{email}")
