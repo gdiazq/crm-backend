@@ -219,6 +219,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public void updateStatus(Long id, Boolean enabled) {
+        log.info("Updating status for user id: {} -> enabled={}", id, enabled);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        user.setEnabled(enabled);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
     public void updateLastLogin(Long userId) {
         log.info("Updating last login for user id: {}", userId);
 

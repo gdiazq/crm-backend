@@ -118,10 +118,7 @@ public class UserController {
     @PutMapping("/{id}/status")
     @Operation(summary = "Toggle user status", description = "Enable or disable a user by their ID")
     public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
-        UpdateUserRequest request = UpdateUserRequest.builder()
-                .status(body.get("status"))
-                .build();
-        userService.updateUser(id, request);
+        userService.updateStatus(id, body.get("status"));
         return ResponseEntity.ok().build();
     }
 

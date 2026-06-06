@@ -32,6 +32,8 @@ public interface UserService {
 
     UserResponse updateUser(Long id, UpdateUserRequest request);
 
+    void updateStatus(Long id, Boolean enabled);
+
     void updateLastLogin(Long userId);
 
     void updateAvatarUrl(Long userId, String avatarUrl);
