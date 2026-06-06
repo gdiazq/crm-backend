@@ -403,7 +403,6 @@ public class UserServiceImpl implements UserService {
                     UserResponse created = userProvisioningService.createUser(request);
                     userProvisioningService.sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
                     success++;
-                    userNotificationService.sendWelcomeNotification(created.getId(), created.getUsername());
                 } catch (Exception e) {
                     errors.add(new BulkImportResult.RowError(row, e.getMessage()));
                 }
