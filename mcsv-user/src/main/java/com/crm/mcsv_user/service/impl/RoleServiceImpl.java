@@ -4,12 +4,10 @@ import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
-import com.crm.common.dto.SendNotificationRequest;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
 import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
-import com.crm.mcsv_user.event.NotificationBatchEvent;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_user.mapper.UserMapper;
@@ -18,10 +16,10 @@ import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.RoleService;
 import com.crm.mcsv_user.service.RoleProvisioningService;
+import com.crm.mcsv_user.service.RoleNotificationService;
 import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +42,8 @@ public class RoleServiceImpl implements RoleService {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
     private final UserMapper userMapper;
-    private final ApplicationEventPublisher eventPublisher;
     private final RoleProvisioningService roleProvisioningService;
+    private final RoleNotificationService roleNotificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -111,16 +108,7 @@ public class RoleServiceImpl implements RoleService {
         Role updatedRole = roleRepository.save(role);
         log.info("Role updated successfully with id: {}", updatedRole.getId());
 
-        List<User> users = userRepository.findAllByRolesId(updatedRole.getId());
-        List<SendNotificationRequest> notifications = users.stream()
-                .map(u -> SendNotificationRequest.builder()
-                        .userId(u.getId())
-                        .title("Rol actualizado")
-                        .message("Tu rol \"" + updatedRole.getName() + "\" ha sido actualizado por un administrador.")
-                        .type("INFO")
-                        .build())
-                .collect(Collectors.toList());
-        publishNotifications(notifications);
+        roleNotificationService.notifyRoleUpdated(updatedRole.getId(), updatedRole.getName());
 
         return userMapper.roleToDTO(updatedRole);
     }
@@ -163,32 +151,7 @@ public class RoleServiceImpl implements RoleService {
 
         log.info("Role status updated to {}. Affected {} users.", enabled, users.size());
 
-        String statusLabel = Boolean.TRUE.equals(enabled) ? "activado" : "desactivado";
-        String userTitle   = Boolean.TRUE.equals(enabled) ? "Cuenta reactivada" : "Cuenta desactivada";
-        String userMessage = Boolean.TRUE.equals(enabled)
-                ? "Tu cuenta ha sido reactivada porque el rol \"" + role.getName() + "\" fue activado."
-                : "Tu cuenta ha sido desactivada porque el rol \"" + role.getName() + "\" fue desactivado.";
-        String userType = Boolean.TRUE.equals(enabled) ? "SUCCESS" : "WARNING";
-
-        List<SendNotificationRequest> notifications = new ArrayList<>();
-
-        users.forEach(u -> notifications.add(SendNotificationRequest.builder()
-                .userId(u.getId())
-                .title(userTitle)
-                .message(userMessage)
-                .type(userType)
-                .build()));
-
-        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole ->
-                userRepository.findAllByRolesId(adminRole.getId()).forEach(admin ->
-                        notifications.add(SendNotificationRequest.builder()
-                                .userId(admin.getId())
-                                .title("Rol " + statusLabel)
-                                .message("El rol \"" + role.getName() + "\" ha sido " + statusLabel + ". " + users.size() + " usuario(s) afectado(s).")
-                                .type("INFO")
-                                .build())));
-
-        publishNotifications(notifications);
+        roleNotificationService.notifyRoleStatusChanged(id, role.getName(), Boolean.TRUE.equals(enabled));
     }
 
     @Override
@@ -214,7 +177,8 @@ public class RoleServiceImpl implements RoleService {
         List<Permission> permissions = permissionRepository.findAllByIdIn(permissionIds);
         role.setPermissions(new HashSet<>(permissions));
         RoleDTO result = userMapper.roleToDTO(roleRepository.save(role));
-        notifyPermissionChange(role, "Los permisos de tu rol \"" + role.getName() + "\" han sido reemplazados por un administrador.");
+        roleNotificationService.notifyPermissionsChanged(role.getId(), role.getName(),
+                "Los permisos de tu rol \"" + role.getName() + "\" han sido reemplazados por un administrador.");
         return result;
     }
 
@@ -227,7 +191,8 @@ public class RoleServiceImpl implements RoleService {
         List<Permission> permissions = permissionRepository.findAllByIdIn(permissionIds);
         role.getPermissions().addAll(permissions);
         RoleDTO result = userMapper.roleToDTO(roleRepository.save(role));
-        notifyPermissionChange(role, "Se han agregado permisos a tu rol \"" + role.getName() + "\".");
+        roleNotificationService.notifyPermissionsChanged(role.getId(), role.getName(),
+                "Se han agregado permisos a tu rol \"" + role.getName() + "\".");
         return result;
     }
 
@@ -239,38 +204,9 @@ public class RoleServiceImpl implements RoleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         role.getPermissions().removeIf(p -> permissionIds.contains(p.getId()));
         RoleDTO result = userMapper.roleToDTO(roleRepository.save(role));
-        notifyPermissionChange(role, "Se han eliminado permisos de tu rol \"" + role.getName() + "\".");
+        roleNotificationService.notifyPermissionsChanged(role.getId(), role.getName(),
+                "Se han eliminado permisos de tu rol \"" + role.getName() + "\".");
         return result;
-    }
-
-    private void notifyPermissionChange(Role role, String userMessage) {
-        List<User> users = userRepository.findAllByRolesId(role.getId());
-        List<SendNotificationRequest> notifications = new ArrayList<>();
-
-        users.forEach(u -> notifications.add(SendNotificationRequest.builder()
-                .userId(u.getId())
-                .title("Permisos actualizados")
-                .message(userMessage)
-                .type("INFO")
-                .build()));
-
-        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole ->
-                userRepository.findAllByRolesId(adminRole.getId()).forEach(admin ->
-                        notifications.add(SendNotificationRequest.builder()
-                                .userId(admin.getId())
-                                .title("Permisos de rol actualizados")
-                                .message("Los permisos del rol \"" + role.getName() + "\" han sido modificados. " + users.size() + " usuario(s) afectado(s).")
-                                .type("INFO")
-                                .build())));
-
-        publishNotifications(notifications);
-    }
-
-    private void publishNotifications(List<SendNotificationRequest> notifications) {
-        if (notifications == null || notifications.isEmpty()) {
-            return;
-        }
-        eventPublisher.publishEvent(new NotificationBatchEvent(notifications));
     }
 
     @Override
