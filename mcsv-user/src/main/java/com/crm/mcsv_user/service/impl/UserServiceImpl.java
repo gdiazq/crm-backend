@@ -18,7 +18,7 @@ import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
 import com.crm.mcsv_user.service.UserNotificationService;
-import com.crm.mcsv_user.service.VerificationEmailService;
+import com.crm.mcsv_user.service.UserProvisioningService;
 import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,14 +33,12 @@ import org.springframework.data.domain.Pageable;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,10 +53,7 @@ public class UserServiceImpl implements UserService {
     private final StorageService storageService;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final UserNotificationService userNotificationService;
-    private final VerificationEmailService verificationEmailService;
-
-    private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private final UserProvisioningService userProvisioningService;
 
     @Override
     @Transactional(readOnly = true)
@@ -129,44 +124,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public UserResponse createUser(CreateUserRequest request) {
-        return createUserInternal(request);
-    }
-
-    private UserResponse createUserInternal(CreateUserRequest request) {
-        log.info("Creating new user with username: {}", request.getUsername());
-
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new DuplicateResourceException("Username already exists: " + request.getUsername());
-        }
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email already exists: " + request.getEmail());
-        }
-
-        User user = userMapper.toEntity(request);
-        String rawPassword = (request.getPassword() != null && !request.getPassword().isBlank())
-                ? request.getPassword()
-                : "Tmp!" + UUID.randomUUID();
-        user.setPassword(passwordEncoder.encode(rawPassword));
-
-        if (request.getRoleId() != null) {
-            Role role = roleRepository.findById(request.getRoleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + request.getRoleId()));
-            user.setRoles(new HashSet<>(Set.of(role)));
-        } else {
-            Role defaultRole = roleRepository.findByName("ROLE_USER")
-                    .orElseThrow(() -> new ResourceNotFoundException("Default role ROLE_USER not found"));
-            user.addRole(defaultRole);
-        }
-
-        User savedUser = userRepository.save(user);
-        log.info("User created successfully with id: {}", savedUser.getId());
-
-        userNotificationService.sendWelcomeNotification(savedUser.getId(), savedUser.getUsername());
-
-        return userMapper.toResponse(savedUser);
+        return userProvisioningService.createUser(request);
     }
 
     @Override
@@ -352,29 +311,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public void sendVerificationCode(Long userId, String email, String username) {
-        sendVerificationCodeInternal(userId, email, username);
-    }
-
-    private void sendVerificationCodeInternal(Long userId, String email, String username) {
-        log.info("Sending verification code for admin-created user id: {}", userId);
-
-        // Invalidate any previous unused codes
-        emailVerificationCodeRepository.deleteByUserIdAndUsedFalse(userId);
-
-        // Generate 6-digit code
-        String code = String.valueOf(SECURE_RANDOM.nextInt(900000) + 100000);
-
-        EmailVerificationCode verificationCode = EmailVerificationCode.builder()
-                .code(code)
-                .userId(userId)
-                .expiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
-                .used(false)
-                .build();
-        emailVerificationCodeRepository.save(verificationCode);
-
-        verificationEmailService.sendVerificationEmail(email, username, code);
+        userProvisioningService.sendVerificationCode(userId, email, username);
     }
 
     @Override
@@ -462,8 +400,8 @@ public class UserServiceImpl implements UserService {
                             .roleId(roleId)
                             .build();
 
-                    UserResponse created = createUserInternal(request);
-                    sendVerificationCodeInternal(created.getId(), created.getEmail(), created.getUsername());
+                    UserResponse created = userProvisioningService.createUser(request);
+                    userProvisioningService.sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
                     success++;
                     userNotificationService.sendWelcomeNotification(created.getId(), created.getUsername());
                 } catch (Exception e) {
