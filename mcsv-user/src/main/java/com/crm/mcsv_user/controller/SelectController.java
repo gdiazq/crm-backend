@@ -2,8 +2,11 @@ package com.crm.mcsv_user.controller;
 
 import com.crm.mcsv_user.dto.select.PermissionSelectItem;
 import com.crm.mcsv_user.dto.select.RoleSelectItem;
+import com.crm.mcsv_user.dto.select.StatusSelectItem;
 import com.crm.mcsv_user.dto.select.UserEmailSelectItem;
 import com.crm.mcsv_user.dto.select.UserSelectItem;
+import com.crm.mcsv_user.enums.StatusOption;
+import com.crm.mcsv_user.mapper.SelectMapper;
 import com.crm.mcsv_user.service.RoleService;
 import com.crm.mcsv_user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -25,6 +29,7 @@ public class SelectController {
 
     private final RoleService roleService;
     private final UserService userService;
+    private final SelectMapper selectMapper;
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles for selector", description = "Retrieve id and name of all roles")
@@ -55,13 +60,11 @@ public class SelectController {
     @GetMapping("/status")
     @Operation(summary = "Get status options for selector", description = "Retrieve available status options")
     public ResponseEntity<List<StatusSelectItem>> getStatus() {
-        return ResponseEntity.ok(List.of(
-                new StatusSelectItem(true, "Activo"),
-                new StatusSelectItem(false, "Inactivo")
-        ));
+        return ResponseEntity.ok(
+                Arrays.stream(StatusOption.values())
+                        .map(selectMapper::toStatusSelectItem)
+                        .toList());
     }
-
-    public record StatusSelectItem(Boolean id, String name) {}
 
     @GetMapping("/permissions")
     @Operation(summary = "Get permissions for selector", description = "Retrieve id and name of all permissions")

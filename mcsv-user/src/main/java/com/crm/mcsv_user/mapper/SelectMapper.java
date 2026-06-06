@@ -3,11 +3,13 @@ package com.crm.mcsv_user.mapper;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.dto.select.PermissionSelectItem;
 import com.crm.mcsv_user.dto.select.RoleSelectItem;
+import com.crm.mcsv_user.dto.select.StatusSelectItem;
 import com.crm.mcsv_user.dto.select.UserEmailSelectItem;
 import com.crm.mcsv_user.dto.select.UserSelectItem;
 import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
+import com.crm.mcsv_user.enums.StatusOption;
 import com.crm.mcsv_user.util.NameUtil;
 import org.springframework.stereotype.Component;
 
@@ -33,5 +35,9 @@ public class SelectMapper {
 
     public UserEmailSelectItem toUserEmailSelectItem(UserResponse user) {
         return new UserEmailSelectItem(user.getId(), user.getEmail());
+    }
+
+    public StatusSelectItem toStatusSelectItem(StatusOption status) {
+        return new StatusSelectItem(status.getValue(), status.getDisplayName());
     }
 }
