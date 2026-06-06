@@ -1,10 +1,8 @@
 package com.crm.mcsv_user.service.impl;
 
-import com.crm.common.client.SqsEmailClient;
 import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
-import com.crm.common.dto.EmailRequest;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
@@ -20,10 +18,10 @@ import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
 import com.crm.mcsv_user.service.UserNotificationService;
+import com.crm.mcsv_user.service.VerificationEmailService;
 import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +32,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -57,11 +54,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
-    private final SqsEmailClient sqsEmailClient;
     private final UserNotificationService userNotificationService;
-
-    @Value("${app.frontend.url:http://localhost:5173}")
-    private String frontendUrl;
+    private final VerificationEmailService verificationEmailService;
 
     private static final int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -380,21 +374,7 @@ public class UserServiceImpl implements UserService {
                 .build();
         emailVerificationCodeRepository.save(verificationCode);
 
-        try {
-            String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
-            String link = frontendUrl + "/verify-email?email=" + encodedEmail + "&code=" + code;
-
-            EmailRequest emailRequest = EmailRequest.builder()
-                    .to(email)
-                    .subject("Verify your email address")
-                    .templateName("verification-code")
-                    .variables(Map.of("code", code, "username", username, "link", link))
-                    .build();
-            sqsEmailClient.sendEmail(emailRequest);
-            log.info("Verification email sent to: {}", email);
-        } catch (Exception e) {
-            log.error("Failed to send verification email to: {}", email, e);
-        }
+        verificationEmailService.sendVerificationEmail(email, username, code);
     }
 
     @Override
