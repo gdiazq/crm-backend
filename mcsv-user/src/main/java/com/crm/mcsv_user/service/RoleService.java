@@ -5,6 +5,8 @@ import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
+import com.crm.mcsv_user.dto.select.PermissionSelectItem;
+import com.crm.mcsv_user.dto.select.RoleSelectItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +18,10 @@ import java.util.Set;
 public interface RoleService {
 
     List<RoleDTO> getAllRoles();
+
+    List<RoleSelectItem> selectRoles();
+
+    List<PermissionSelectItem> selectPermissions();
 
     Page<RoleDTO> getAllRolesPaged(String search, Boolean status, Pageable pageable);
 

@@ -7,11 +7,14 @@ import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
+import com.crm.mcsv_user.dto.select.UserEmailSelectItem;
+import com.crm.mcsv_user.dto.select.UserSelectItem;
 import com.crm.mcsv_user.entity.EmailVerificationCode;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
+import com.crm.mcsv_user.mapper.SelectMapper;
 import com.crm.mcsv_user.mapper.UserMapper;
 import com.crm.mcsv_user.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
@@ -49,6 +52,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
+    private final SelectMapper selectMapper;
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
@@ -85,6 +89,38 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream()
                 .map(userMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSelectItem> selectUserNames() {
+        return getAllUsersForSelect().stream()
+                .map(selectMapper::toUserSelectItem)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserEmailSelectItem> selectUserEmails() {
+        return getAllUsersForSelect().stream()
+                .map(selectMapper::toUserEmailSelectItem)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSelectItem> selectAvailableForEmployee(String search, List<Long> excludeIds) {
+        return getAvailableUsersForEmployee(search, excludeIds).stream()
+                .map(selectMapper::toUserSelectItem)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSelectItem> selectUsersByRole(String roleKeyword) {
+        return userRepository.findByRolesNameContainingIgnoreCase(roleKeyword).stream()
+                .map(selectMapper::toUserSelectItem)
+                .toList();
     }
 
     @Override

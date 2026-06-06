@@ -1,7 +1,9 @@
 package com.crm.mcsv_user.controller;
 
-import com.crm.mcsv_user.repository.PermissionRepository;
-import com.crm.mcsv_user.repository.UserRepository;
+import com.crm.mcsv_user.dto.select.PermissionSelectItem;
+import com.crm.mcsv_user.dto.select.RoleSelectItem;
+import com.crm.mcsv_user.dto.select.UserEmailSelectItem;
+import com.crm.mcsv_user.dto.select.UserSelectItem;
 import com.crm.mcsv_user.service.RoleService;
 import com.crm.mcsv_user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,57 +25,32 @@ public class SelectController {
 
     private final RoleService roleService;
     private final UserService userService;
-    private final PermissionRepository permissionRepository;
-    private final UserRepository userRepository;
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles for selector", description = "Retrieve id and name of all roles")
     public ResponseEntity<List<RoleSelectItem>> getRoles() {
-        List<RoleSelectItem> roles = roleService.getAllRoles().stream()
-                .map(r -> new RoleSelectItem(r.getId(), r.getName()))
-                .toList();
-        return ResponseEntity.ok(roles);
+        return ResponseEntity.ok(roleService.selectRoles());
     }
-
-    public record RoleSelectItem(Long id, String name) {}
 
     @GetMapping("/users/name")
     @Operation(summary = "Get users name for selector", description = "Retrieve id and name of all users")
-    public ResponseEntity<List<UserNameSelectItem>> getUserNames() {
-        List<UserNameSelectItem> users = userService.getAllUsersForSelect().stream()
-                .map(u -> new UserNameSelectItem(
-                        u.getId(),
-                        (u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "").trim()
-                ))
-                .toList();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<UserSelectItem>> getUserNames() {
+        return ResponseEntity.ok(userService.selectUserNames());
     }
-
-    public record UserNameSelectItem(Long id, String name) {}
 
     @GetMapping("/users/email")
     @Operation(summary = "Get users email for selector", description = "Retrieve id and email of all users")
     public ResponseEntity<List<UserEmailSelectItem>> getUserEmails() {
-        List<UserEmailSelectItem> users = userService.getAllUsersForSelect().stream()
-                .map(u -> new UserEmailSelectItem(u.getId(), u.getEmail()))
-                .toList();
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userService.selectUserEmails());
     }
-
-    public record UserEmailSelectItem(Long id, String email) {}
 
     @GetMapping("/users/available")
     @Operation(summary = "Get available users for employee assignment", description = "Returns users excluding already linked ones")
-    public ResponseEntity<List<Item>> getAvailableForEmployee(
+    public ResponseEntity<List<UserSelectItem>> getAvailableForEmployee(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) List<Long> excludeIds) {
-        List<Item> result = userService.getAvailableUsersForEmployee(search, excludeIds).stream()
-                .map(u -> new Item(u.getId(), (u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "").trim()))
-                .toList();
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(userService.selectAvailableForEmployee(search, excludeIds));
     }
-
-    public record Item(Long id, String name) {}
 
     @GetMapping("/status")
     @Operation(summary = "Get status options for selector", description = "Retrieve available status options")
@@ -89,44 +66,24 @@ public class SelectController {
     @GetMapping("/permissions")
     @Operation(summary = "Get permissions for selector", description = "Retrieve id and name of all permissions")
     public ResponseEntity<List<PermissionSelectItem>> getPermissions() {
-        List<PermissionSelectItem> permissions = permissionRepository.findAll().stream()
-                .map(p -> new PermissionSelectItem(p.getId(), p.getName()))
-                .toList();
-        return ResponseEntity.ok(permissions);
+        return ResponseEntity.ok(roleService.selectPermissions());
     }
-
-    public record PermissionSelectItem(Long id, String name) {}
 
     @GetMapping("/users/supervisors")
     @Operation(summary = "Usuarios supervisores")
-    public ResponseEntity<List<UserNameSelectItem>> getSupervisors() {
-        List<UserNameSelectItem> users = userRepository.findByRolesNameContainingIgnoreCase("supervisor").stream()
-                .map(u -> new UserNameSelectItem(u.getId(),
-                        ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
-                         (u.getLastName()  != null ? u.getLastName()  : "")).trim()))
-                .toList();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<UserSelectItem>> getSupervisors() {
+        return ResponseEntity.ok(userService.selectUsersByRole("supervisor"));
     }
 
     @GetMapping("/users/visitors")
     @Operation(summary = "Usuarios visitadores")
-    public ResponseEntity<List<UserNameSelectItem>> getVisitors() {
-        List<UserNameSelectItem> users = userRepository.findByRolesNameContainingIgnoreCase("visitador").stream()
-                .map(u -> new UserNameSelectItem(u.getId(),
-                        ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
-                         (u.getLastName()  != null ? u.getLastName()  : "")).trim()))
-                .toList();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<UserSelectItem>> getVisitors() {
+        return ResponseEntity.ok(userService.selectUsersByRole("visitador"));
     }
 
     @GetMapping("/users/company-representatives")
     @Operation(summary = "Usuarios representantes de empresa")
-    public ResponseEntity<List<UserNameSelectItem>> getCompanyRepresentatives() {
-        List<UserNameSelectItem> users = userRepository.findByRolesNameContainingIgnoreCase("representante").stream()
-                .map(u -> new UserNameSelectItem(u.getId(),
-                        ((u.getFirstName() != null ? u.getFirstName() : "") + " " +
-                         (u.getLastName()  != null ? u.getLastName()  : "")).trim()))
-                .toList();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<UserSelectItem>> getCompanyRepresentatives() {
+        return ResponseEntity.ok(userService.selectUsersByRole("representante"));
     }
 }

@@ -5,11 +5,14 @@ import com.crm.mcsv_user.dto.CreateRoleRequest;
 import com.crm.mcsv_user.dto.PermissionDTO;
 import com.crm.mcsv_user.dto.RoleDTO;
 import com.crm.mcsv_user.dto.UpdateRoleRequest;
+import com.crm.mcsv_user.dto.select.PermissionSelectItem;
+import com.crm.mcsv_user.dto.select.RoleSelectItem;
 import com.crm.mcsv_user.entity.Permission;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
 import com.crm.common.exception.DuplicateResourceException;
 import com.crm.common.exception.ResourceNotFoundException;
+import com.crm.mcsv_user.mapper.SelectMapper;
 import com.crm.mcsv_user.mapper.UserMapper;
 import com.crm.mcsv_user.repository.PermissionRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
@@ -44,6 +47,7 @@ public class RoleServiceImpl implements RoleService {
     private final UserMapper userMapper;
     private final RoleProvisioningService roleProvisioningService;
     private final RoleNotificationService roleNotificationService;
+    private final SelectMapper selectMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -53,6 +57,22 @@ public class RoleServiceImpl implements RoleService {
                 .stream()
                 .map(userMapper::roleToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoleSelectItem> selectRoles() {
+        return roleRepository.findAll().stream()
+                .map(selectMapper::toRoleSelectItem)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PermissionSelectItem> selectPermissions() {
+        return permissionRepository.findAll().stream()
+                .map(selectMapper::toPermissionSelectItem)
+                .toList();
     }
 
     @Override
