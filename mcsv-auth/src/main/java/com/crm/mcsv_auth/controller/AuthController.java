@@ -279,8 +279,9 @@ public class AuthController {
 
     @GetMapping("/validate")
     @Operation(summary = "Validate token", description = "Validate JWT access token")
-    public ResponseEntity<Map<String, Boolean>> validateToken(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
+    public ResponseEntity<Map<String, Boolean>> validateToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String token = HttpRequestUtils.resolveToken(null, authHeader);
         boolean isValid = authService.validateToken(token);
 
         Map<String, Boolean> response = new HashMap<>();
