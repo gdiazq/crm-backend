@@ -1,11 +1,9 @@
 package com.crm.mcsv_user.service.impl;
 
-import com.crm.common.client.EventBridgeNotificationClient;
 import com.crm.common.client.SqsEmailClient;
 import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
-import com.crm.common.dto.SendNotificationRequest;
 import com.crm.common.dto.EmailRequest;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
@@ -21,6 +19,7 @@ import com.crm.mcsv_user.repository.EmailVerificationCodeRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.UserService;
+import com.crm.mcsv_user.service.UserNotificationService;
 import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +58,7 @@ public class UserServiceImpl implements UserService {
     private final StorageService storageService;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final SqsEmailClient sqsEmailClient;
-    private final EventBridgeNotificationClient eventBridgeNotificationClient;
+    private final UserNotificationService userNotificationService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -171,16 +170,7 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
         log.info("User created successfully with id: {}", savedUser.getId());
 
-        try {
-            eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                    .userId(savedUser.getId())
-                    .title("Bienvenido a CRM")
-                    .message("Hola " + savedUser.getUsername() + ", tu cuenta ha sido creada. Verifica tu correo para comenzar.")
-                    .type("SUCCESS")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send welcome notification to userId: {}", savedUser.getId(), e);
-        }
+        userNotificationService.sendWelcomeNotification(savedUser.getId(), savedUser.getUsername());
 
         return userMapper.toResponse(savedUser);
     }
@@ -221,6 +211,8 @@ public class UserServiceImpl implements UserService {
 
         User updatedUser = userRepository.save(user);
         log.info("User updated successfully with id: {}", updatedUser.getId());
+
+        userNotificationService.sendProfileUpdatedNotification(updatedUser.getId());
 
         return userMapper.toResponse(updatedUser);
     }
@@ -483,16 +475,7 @@ public class UserServiceImpl implements UserService {
                     UserResponse created = createUserInternal(request);
                     sendVerificationCodeInternal(created.getId(), created.getEmail(), created.getUsername());
                     success++;
-                    try {
-                        eventBridgeNotificationClient.send(SendNotificationRequest.builder()
-                                .userId(created.getId())
-                                .title("Bienvenido a CRM")
-                                .message("Hola " + created.getUsername() + ", tu cuenta ha sido creada. Verifica tu correo para comenzar.")
-                                .type("SUCCESS")
-                                .build());
-                    } catch (Exception e) {
-                        log.warn("Failed to send welcome notification to userId: {}", created.getId(), e);
-                    }
+                    userNotificationService.sendWelcomeNotification(created.getId(), created.getUsername());
                 } catch (Exception e) {
                     errors.add(new BulkImportResult.RowError(row, e.getMessage()));
                 }
