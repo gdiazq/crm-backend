@@ -325,24 +325,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public byte[] exportCsv() {
-        StringBuilder csv = new StringBuilder();
-        csv.append("ID,Username,Nombre,Apellido,Email,Teléfono,Rol,Habilitado,Fecha Creación\n");
-        userRepository.findAll().forEach(u -> {
-            String roleName = u.getRoles().stream()
-                    .findFirst()
-                    .map(Role::getName)
-                    .orElse("");
-            csv.append(u.getId()).append(",")
-               .append(CsvUtil.escape(u.getUsername())).append(",")
-               .append(CsvUtil.escape(u.getFirstName())).append(",")
-               .append(CsvUtil.escape(u.getLastName())).append(",")
-               .append(CsvUtil.escape(u.getEmail())).append(",")
-               .append(CsvUtil.escape(u.getPhoneNumber())).append(",")
-               .append(CsvUtil.escape(roleName)).append(",")
-               .append(u.getEnabled()).append(",")
-               .append(CsvUtil.formatDate(u.getCreatedAt())).append("\n");
-        });
-        return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return CsvUtil.build(
+                "ID,Username,Nombre,Apellido,Email,Teléfono,Rol,Habilitado,Fecha Creación",
+                userRepository.findAll(),
+                u -> {
+                    String roleName = u.getRoles().stream()
+                            .findFirst()
+                            .map(Role::getName)
+                            .orElse("");
+                    return u.getId() + "," +
+                            CsvUtil.escape(u.getUsername()) + "," +
+                            CsvUtil.escape(u.getFirstName()) + "," +
+                            CsvUtil.escape(u.getLastName()) + "," +
+                            CsvUtil.escape(u.getEmail()) + "," +
+                            CsvUtil.escape(u.getPhoneNumber()) + "," +
+                            CsvUtil.escape(roleName) + "," +
+                            u.getEnabled() + "," +
+                            CsvUtil.formatDate(u.getCreatedAt());
+                });
     }
 
     @Override

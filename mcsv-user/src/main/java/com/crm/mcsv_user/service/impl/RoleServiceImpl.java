@@ -314,17 +314,17 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public byte[] exportCsv() {
-        StringBuilder csv = new StringBuilder();
-        csv.append("ID,Nombre,Descripción,Habilitado,Permisos\n");
-        roleRepository.findAll().forEach(r -> {
-            String permissions = r.getPermissions().stream()
-                    .map(Permission::getName).reduce("", (a, b) -> a.isEmpty() ? b : a + "|" + b);
-            csv.append(r.getId()).append(",")
-               .append(CsvUtil.escape(r.getName())).append(",")
-               .append(CsvUtil.escape(r.getDescription())).append(",")
-               .append(r.getEnabled()).append(",")
-               .append(CsvUtil.escape(permissions)).append("\n");
-        });
-        return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return CsvUtil.build(
+                "ID,Nombre,Descripción,Habilitado,Permisos",
+                roleRepository.findAll(),
+                r -> {
+                    String permissions = r.getPermissions().stream()
+                            .map(Permission::getName).reduce("", (a, b) -> a.isEmpty() ? b : a + "|" + b);
+                    return r.getId() + "," +
+                            CsvUtil.escape(r.getName()) + "," +
+                            CsvUtil.escape(r.getDescription()) + "," +
+                            r.getEnabled() + "," +
+                            CsvUtil.escape(permissions);
+                });
     }
 }
