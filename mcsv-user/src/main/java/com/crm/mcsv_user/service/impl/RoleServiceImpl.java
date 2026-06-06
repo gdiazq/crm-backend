@@ -17,6 +17,7 @@ import com.crm.mcsv_user.repository.PermissionRepository;
 import com.crm.mcsv_user.repository.RoleRepository;
 import com.crm.mcsv_user.repository.UserRepository;
 import com.crm.mcsv_user.service.RoleService;
+import com.crm.mcsv_user.service.RoleProvisioningService;
 import com.crm.common.util.CsvUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class RoleServiceImpl implements RoleService {
     private final PermissionRepository permissionRepository;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final RoleProvisioningService roleProvisioningService;
 
     @Override
     @Transactional(readOnly = true)
@@ -83,38 +85,8 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    @Transactional
     public RoleDTO createRole(CreateRoleRequest request) {
-        return createRoleInternal(request);
-    }
-
-    private RoleDTO createRoleInternal(CreateRoleRequest request) {
-        log.info("Creating new role with name: {}", request.getName());
-
-        if (roleRepository.existsByName(request.getName())) {
-            throw new DuplicateResourceException("Role already exists with name: " + request.getName());
-        }
-
-        Role role = Role.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .build();
-
-        Role savedRole = roleRepository.save(role);
-        log.info("Role created successfully with id: {}", savedRole.getId());
-
-        List<SendNotificationRequest> notifications = new ArrayList<>();
-        roleRepository.findByName("ROLE_ADMIN").ifPresent(adminRole ->
-                userRepository.findAllByRolesId(adminRole.getId()).forEach(admin ->
-                        notifications.add(SendNotificationRequest.builder()
-                                .userId(admin.getId())
-                                .title("Nuevo rol creado")
-                                .message("Se ha creado el rol \"" + savedRole.getName() + "\" en el sistema.")
-                                .type("INFO")
-                                .build())));
-        publishNotifications(notifications);
-
-        return userMapper.roleToDTO(savedRole);
+        return roleProvisioningService.createRole(request);
     }
 
     @Override
@@ -308,7 +280,7 @@ public class RoleServiceImpl implements RoleService {
                     .name(name)
                     .description(description)
                     .build();
-            createRoleInternal(request);
+            roleProvisioningService.createRole(request);
         });
     }
 

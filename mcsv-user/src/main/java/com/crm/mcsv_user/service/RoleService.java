@@ -34,7 +34,9 @@ public interface RoleService {
     Map<String, Long> getRoleStats();
 
     List<PermissionDTO> getAllPermissions();
+
     byte[] exportCsv();
+
     BulkImportResult importRolesFromCsv(MultipartFile file);
 
     RoleDTO setPermissions(Long roleId, Set<Long> permissionIds);
