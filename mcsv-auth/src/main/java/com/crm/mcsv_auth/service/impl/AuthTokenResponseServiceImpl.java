@@ -1,10 +1,10 @@
 package com.crm.mcsv_auth.service.impl;
 
-import com.crm.mcsv_auth.config.JwtConfig;
 import com.crm.mcsv_auth.dto.AuthResponse;
 import com.crm.mcsv_auth.dto.UserDTO;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
+import com.crm.mcsv_auth.mapper.AuthResponseMapper;
 import com.crm.mcsv_auth.service.AuthTokenResponseService;
 import com.crm.mcsv_auth.service.TokenService;
 import com.crm.mcsv_auth.service.UserSessionManager;
@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +21,7 @@ public class AuthTokenResponseServiceImpl implements AuthTokenResponseService {
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final UserSessionManager userSessionManager;
-    private final JwtConfig jwtConfig;
+    private final AuthResponseMapper authResponseMapper;
 
     @Override
     public AuthResponse createSessionResponse(UserDTO user, String ipAddress, String userAgent, String deviceId) {
@@ -31,73 +30,18 @@ public class AuthTokenResponseServiceImpl implements AuthTokenResponseService {
 
     @Override
     public AuthResponse createSessionResponse(UserDTO user, String ipAddress, String userAgent, String deviceId, String avatarUrl) {
-        Set<String> roles = extractRoles(user);
-        Set<String> permissions = extractPermissions(user);
+        Set<String> roles = authResponseMapper.extractRoles(user);
+        Set<String> permissions = authResponseMapper.extractPermissions(user);
         UserSession session = userSessionManager.registerSession(user.getId(), ipAddress, userAgent, deviceId);
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), roles, permissions, session.getId());
         RefreshToken refreshToken = tokenService.createRefreshToken(user.getId(), session.getId());
 
-        return buildAuthResponse(accessToken, refreshToken.getPlainToken(), user, roles, avatarUrl);
-    }
-
-    @Override
-    public AuthResponse buildAuthResponse(String accessToken, String refreshToken, UserDTO user) {
-        return buildAuthResponse(accessToken, refreshToken, user, extractRoles(user), user.getAvatarUrl());
+        return authResponseMapper.toAuthResponse(accessToken, refreshToken.getPlainToken(), user, roles, avatarUrl);
     }
 
     @Override
     public String createAccessToken(UserDTO user, Long sessionId) {
-        return jwtUtil.generateAccessToken(user.getId(), user.getUsername(), extractRoles(user), extractPermissions(user), sessionId);
-    }
-
-    @Override
-    public AuthResponse.UserInfo buildCurrentUserInfo(UserDTO user) {
-        return AuthResponse.UserInfo.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .avatarUrl(user.getAvatarUrl())
-                .roles(extractRoles(user))
-                .phoneNumber(user.getPhoneNumber())
-                .permissions(extractPermissions(user))
-                .build();
-    }
-
-    private AuthResponse buildAuthResponse(String accessToken, String refreshToken, UserDTO user, Set<String> roles, String avatarUrl) {
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpireAt() * 60)
-                .user(buildUserInfo(user, roles, avatarUrl))
-                .build();
-    }
-
-    private AuthResponse.UserInfo buildUserInfo(UserDTO user, Set<String> roles, String avatarUrl) {
-        return AuthResponse.UserInfo.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .avatarUrl(avatarUrl)
-                .roles(roles)
-                .build();
-    }
-
-    private Set<String> extractRoles(UserDTO user) {
-        return user.getRoles().stream()
-                .map(UserDTO.RoleDTO::getName)
-                .collect(Collectors.toSet());
-    }
-
-    private Set<String> extractPermissions(UserDTO user) {
-        return user.getRoles().stream()
-                .filter(r -> r.getPermissions() != null)
-                .flatMap(r -> r.getPermissions().stream())
-                .map(UserDTO.PermissionDTO::getName)
-                .collect(Collectors.toSet());
+        return jwtUtil.generateAccessToken(user.getId(), user.getUsername(),
+                authResponseMapper.extractRoles(user), authResponseMapper.extractPermissions(user), sessionId);
     }
 }

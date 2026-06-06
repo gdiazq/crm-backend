@@ -9,9 +9,5 @@ public interface AuthTokenResponseService {
 
     AuthResponse createSessionResponse(UserDTO user, String ipAddress, String userAgent, String deviceId, String avatarUrl);
 
-    AuthResponse buildAuthResponse(String accessToken, String refreshToken, UserDTO user);
-
     String createAccessToken(UserDTO user, Long sessionId);
-
-    AuthResponse.UserInfo buildCurrentUserInfo(UserDTO user);
 }

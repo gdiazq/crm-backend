@@ -16,6 +16,7 @@ import com.crm.mcsv_auth.dto.VerifyEmailRequest;
 import com.crm.mcsv_auth.entity.RefreshToken;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
+import com.crm.mcsv_auth.mapper.AuthResponseMapper;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.AuthNotificationService;
 import com.crm.mcsv_auth.service.AuthService;
@@ -54,6 +55,7 @@ public class AuthServiceImpl implements AuthService {
     private final MfaService mfaService;
     private final UserSessionManager userSessionManager;
     private final AuthTokenResponseService authTokenResponseService;
+    private final AuthResponseMapper authResponseMapper;
     private final AuthUserLookupService authUserLookupService;
     private final EmailVerificationCodeService emailVerificationCodeService;
     private final EmailVerificationCompletionService emailVerificationCompletionService;
@@ -169,7 +171,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());
 
-        return authTokenResponseService.buildAuthResponse(newAccessToken, newRefreshToken.getPlainToken(), user);
+        return authResponseMapper.toAuthResponse(newAccessToken, newRefreshToken.getPlainToken(), user);
     }
 
     @Override
@@ -325,7 +327,7 @@ public class AuthServiceImpl implements AuthService {
         Long userId = jwtUtil.extractUserId(token);
         UserDTO user = authUserLookupService.getById(userId);
 
-        return authTokenResponseService.buildCurrentUserInfo(user);
+        return authResponseMapper.toCurrentUserInfo(user);
     }
 
     @Override
