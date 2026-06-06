@@ -7,7 +7,9 @@ import com.crm.mcsv_auth.dto.MfaSetupRequest;
 import com.crm.mcsv_auth.dto.MfaSetupResponse;
 import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.dto.MfaVerifyRequest;
+import com.crm.mcsv_auth.dto.PreLoginRequest;
 import com.crm.mcsv_auth.dto.RefreshTokenRequest;
+import com.crm.mcsv_auth.dto.ResendVerificationRequest;
 import com.crm.mcsv_auth.dto.ResetPasswordRequest;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.dto.VerifyEmailRequest;
@@ -71,10 +73,8 @@ public class AuthController {
 
     @PostMapping("/resend-verification")
     @Operation(summary = "Resend verification code", description = "Resend email verification code after validating phone number")
-    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String phoneNumber = request.get("phoneNumber");
-        authService.resendVerificationCode(email, phoneNumber);
+    public ResponseEntity<Map<String, String>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerificationCode(request.getEmail(), request.getPhoneNumber());
         Map<String, String> response = new HashMap<>();
         response.put("message", "If the account exists, a verification code has been sent");
         return ResponseEntity.ok(response);
@@ -82,9 +82,8 @@ public class AuthController {
 
     @PostMapping("/pre-login")
     @Operation(summary = "Pre-login check", description = "Check if user requires MFA before login")
-    public ResponseEntity<Map<String, Boolean>> preLogin(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        boolean mfaRequired = authService.checkMfaStatus(email);
+    public ResponseEntity<Map<String, Boolean>> preLogin(@Valid @RequestBody PreLoginRequest request) {
+        boolean mfaRequired = authService.checkMfaStatus(request.getEmail());
         Map<String, Boolean> response = new HashMap<>();
         response.put("mfaRequired", mfaRequired);
         return ResponseEntity.ok(response);
