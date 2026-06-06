@@ -5,6 +5,8 @@ import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
 import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
+import com.crm.mcsv_user.dto.select.UserEmailSelectItem;
+import com.crm.mcsv_user.dto.select.UserSelectItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,14 @@ public interface UserService {
     List<UserResponse> getAllUsersForSelect();
 
     List<UserResponse> getAvailableUsersForEmployee(String search, List<Long> excludeIds);
+
+    List<UserSelectItem> selectUserNames();
+
+    List<UserEmailSelectItem> selectUserEmails();
+
+    List<UserSelectItem> selectAvailableForEmployee(String search, List<Long> excludeIds);
+
+    List<UserSelectItem> selectUsersByRole(String roleKeyword);
 
     UserDTO getUserById(Long id);
 

@@ -1,0 +1,3 @@
+package com.crm.mcsv_user.dto.select;
+
+public record UserEmailSelectItem(Long id, String email) {}
