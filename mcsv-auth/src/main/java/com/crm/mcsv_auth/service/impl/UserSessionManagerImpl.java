@@ -3,6 +3,7 @@ package com.crm.mcsv_auth.service.impl;
 import com.crm.mcsv_auth.dto.UserSessionDto;
 import com.crm.mcsv_auth.entity.UserSession;
 import com.crm.mcsv_auth.exception.AuthenticationException;
+import com.crm.mcsv_auth.mapper.SessionMapper;
 import com.crm.mcsv_auth.repository.UserSessionRepository;
 import com.crm.mcsv_auth.service.UserSessionManager;
 import com.crm.mcsv_auth.util.SessionFingerprint;
@@ -28,6 +29,7 @@ public class UserSessionManagerImpl implements UserSessionManager {
 
     private final UserSessionRepository userSessionRepository;
     private final SessionFingerprint sessionFingerprint;
+    private final SessionMapper sessionMapper;
 
     @Override
     @Transactional
@@ -113,15 +115,7 @@ public class UserSessionManagerImpl implements UserSessionManager {
         }
 
         return latestByKey.values().stream()
-                .map(session -> UserSessionDto.builder()
-                        .id(session.getId())
-                        .ipAddress(session.getIpAddress())
-                        .userAgent(session.getUserAgent())
-                        .deviceId(session.getDeviceId())
-                        .createdAt(session.getCreatedAt())
-                        .lastSeenAt(session.getLastSeenAt())
-                        .expiresAt(session.getExpiresAt())
-                        .build())
+                .map(sessionMapper::toDto)
                 .toList();
     }
 

@@ -4,6 +4,7 @@ import com.crm.mcsv_auth.dto.MfaSetupResponse;
 import com.crm.mcsv_auth.dto.MfaStatusResponse;
 import com.crm.mcsv_auth.entity.UserMfa;
 import com.crm.mcsv_auth.exception.AuthenticationException;
+import com.crm.mcsv_auth.mapper.MfaMapper;
 import com.crm.mcsv_auth.repository.UserMfaRepository;
 import com.crm.mcsv_auth.service.MfaService;
 import com.crm.mcsv_auth.service.TotpService;
@@ -21,6 +22,7 @@ public class MfaServiceImpl implements MfaService {
 
     private final UserMfaRepository userMfaRepository;
     private final TotpService totpService;
+    private final MfaMapper mfaMapper;
 
     @Override
     @Transactional
@@ -35,10 +37,7 @@ public class MfaServiceImpl implements MfaService {
 
         String otpauth = totpService.buildOtpAuthUrl(ISSUER, username, secret);
 
-        return MfaSetupResponse.builder()
-                .secret(secret)
-                .otpauthUrl(otpauth)
-                .build();
+        return mfaMapper.toSetupResponse(secret, otpauth);
     }
 
     @Override
@@ -68,16 +67,8 @@ public class MfaServiceImpl implements MfaService {
     @Transactional(readOnly = true)
     public MfaStatusResponse getMfaStatus(Long userId) {
         return userMfaRepository.findByUserId(userId)
-                .map(mfa -> MfaStatusResponse.builder()
-                        .status(mfa.getEnabled())
-                        .verified(mfa.getVerifiedAt() != null)
-                        .lastVerification(mfa.getVerifiedAt())
-                        .build())
-                .orElse(MfaStatusResponse.builder()
-                        .status(false)
-                        .verified(false)
-                        .lastVerification(null)
-                        .build());
+                .map(mfaMapper::toStatusResponse)
+                .orElseGet(mfaMapper::emptyStatus);
     }
 
     @Override
