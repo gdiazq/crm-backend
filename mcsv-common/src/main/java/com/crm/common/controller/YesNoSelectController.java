@@ -1,5 +1,8 @@
 package com.crm.common.controller;
 
+import com.crm.common.dto.SelectItem;
+import com.crm.common.service.YesNoSelectService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,15 +12,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/select/yes-no")
+@RequiredArgsConstructor
 public class YesNoSelectController {
 
-    @GetMapping
-    public ResponseEntity<List<Item>> getAll() {
-        return ResponseEntity.ok(List.of(
-                new Item(1L, true,  "Sí"),
-                new Item(2L, false, "No")
-        ));
-    }
+    private final YesNoSelectService service;
 
-    public record Item(Long id, Boolean value, String name) {}
+    @GetMapping
+    public ResponseEntity<List<SelectItem>> getAll() {
+        return ResponseEntity.ok(service.getOptions());
+    }
 }
