@@ -451,51 +451,59 @@ public class HRRequestServiceImpl implements HRRequestService {
 
         String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
                 .map(HRRequestType::getName).orElse(null);
+        HRRequestTypeName type = HRRequestTypeName.fromDisplayName(requestTypeName);
 
-        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.CONTRACT.getDisplayName().equals(requestTypeName)) {
-            deletePendingFiles(hr.getId(), hr.getContractId());
+        // UPDATE rechazado → solo se limpian los archivos pendientes; la entidad no se toca.
+        if ("UPDATE".equals(hr.getAction()) && type != null) {
+            switch (type) {
+                case CONTRACT -> deletePendingFiles(hr.getId(), hr.getContractId());
+                case TRANSFER -> deletePendingTransferFiles(hr.getId(), hr.getTransferId());
+                case ANNEX    -> deletePendingAnnexFiles(hr.getId(), hr.getAnnexId());
+                case LEAVE    -> deletePendingLeaveFiles(hr.getId(), hr.getLeaveId());
+                default       -> { }
+            }
         }
-        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.TRANSFER.getDisplayName().equals(requestTypeName)) {
-            deletePendingTransferFiles(hr.getId(), hr.getTransferId());
-        }
-        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.ANNEX.getDisplayName().equals(requestTypeName)) {
-            deletePendingAnnexFiles(hr.getId(), hr.getAnnexId());
-        }
-        if ("UPDATE".equals(hr.getAction()) && HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName)) {
-            deletePendingLeaveFiles(hr.getId(), hr.getLeaveId());
-        }
-        if (HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName) && hr.getLeaveId() != null) {
+
+        // Un permiso rechazado (cualquier acción) revierte las marcas de asistencia generadas.
+        if (type == HRRequestTypeName.LEAVE && hr.getLeaveId() != null) {
             attendanceLeaveSyncService.revertGeneratedForLeave(hr.getLeaveId());
         }
 
+        // CREATE rechazado → deshacer la entidad recién creada.
         if ("CREATE".equals(hr.getAction())) {
-            if (HRRequestTypeName.CONTRACT.getDisplayName().equals(requestTypeName)) {
-                Contract contract = contractRepository.findById(hr.getContractId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
-                contract.setStatusId(rejectedStatusId);
-                contractRepository.save(contract);
-            } else if (HRRequestTypeName.SETTLEMENT.getDisplayName().equals(requestTypeName)) {
-                if (hr.getSettlementId() != null)
-                    settlementRepository.deleteById(hr.getSettlementId());
-            } else if (HRRequestTypeName.TRANSFER.getDisplayName().equals(requestTypeName)) {
-                if (hr.getTransferId() != null)
-                    transferRepository.deleteById(hr.getTransferId());
-            } else if (HRRequestTypeName.ANNEX.getDisplayName().equals(requestTypeName)) {
-                if (hr.getAnnexId() != null)
-                    contractAnnexRepository.deleteById(hr.getAnnexId());
-            } else if (HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName)) {
-                if (hr.getLeaveId() != null) {
-                    deleteLeaveFiles(hr.getLeaveId());
-                    employeeLeaveRepository.deleteById(hr.getLeaveId());
+            switch (type != null ? type : HRRequestTypeName.EMPLOYEE) {
+                case CONTRACT -> {
+                    Contract contract = contractRepository.findById(hr.getContractId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
+                    contract.setStatusId(rejectedStatusId);
+                    contractRepository.save(contract);
                 }
-            } else {
-                Employee employee = employeeRepository.findById(hr.getIdModule())
-                        .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
-                employee.setStatusId(rejectedStatusId);
-                employeeRepository.save(employee);
+                case SETTLEMENT -> {
+                    if (hr.getSettlementId() != null)
+                        settlementRepository.deleteById(hr.getSettlementId());
+                }
+                case TRANSFER -> {
+                    if (hr.getTransferId() != null)
+                        transferRepository.deleteById(hr.getTransferId());
+                }
+                case ANNEX -> {
+                    if (hr.getAnnexId() != null)
+                        contractAnnexRepository.deleteById(hr.getAnnexId());
+                }
+                case LEAVE -> {
+                    if (hr.getLeaveId() != null) {
+                        deleteLeaveFiles(hr.getLeaveId());
+                        employeeLeaveRepository.deleteById(hr.getLeaveId());
+                    }
+                }
+                default -> {  // EMPLOYEE / OVERTIME / desconocido
+                    Employee employee = employeeRepository.findById(hr.getIdModule())
+                            .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
+                    employee.setStatusId(rejectedStatusId);
+                    employeeRepository.save(employee);
+                }
             }
         }
-        // action="UPDATE" → no tocar la entidad
 
         return toResponse(hr);
     }
