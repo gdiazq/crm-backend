@@ -7,11 +7,6 @@ public class ValidationError {
     public ValidationError() {
     }
 
-    public ValidationError(boolean valid, String errorMessage) {
-        this.valid = valid;
-        this.errorMessage = errorMessage;
-    }
-
     public boolean isValid() {
         return valid;
     }
