@@ -42,13 +42,14 @@ import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
 import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestSpecification;
 import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestTypeRepository;
-import com.crm.mcsv_rrhh.repository.settlement.LegalTerminationCauseRepository;
-import com.crm.mcsv_rrhh.repository.settlement.NoReHiredCauseRepository;
-import com.crm.mcsv_rrhh.repository.settlement.QualityOfWorkRepository;
-import com.crm.mcsv_rrhh.repository.settlement.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.service.attendance.AttendanceLeaveSyncService;
 import com.crm.mcsv_rrhh.service.attendance.AttendanceOvertimeSyncService;
+import com.crm.mcsv_rrhh.mapper.contract.ContractMapper;
+import com.crm.mcsv_rrhh.mapper.contractannex.ContractAnnexMapper;
+import com.crm.mcsv_rrhh.mapper.employee.EmployeeMapper;
 import com.crm.mcsv_rrhh.mapper.hrrequest.HRRequestMapper;
+import com.crm.mcsv_rrhh.mapper.settlement.SettlementMapper;
+import com.crm.mcsv_rrhh.mapper.transfer.TransferMapper;
 import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import com.crm.mcsv_rrhh.service.projectassignment.ProjectAssignmentSyncService;
 import com.crm.mcsv_rrhh.util.leave.LeaveCalculator;
@@ -85,10 +86,6 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final ContractRepository contractRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final SettlementRepository settlementRepository;
-    private final LegalTerminationCauseRepository legalTerminationCauseRepository;
-    private final QualityOfWorkRepository qualityOfWorkRepository;
-    private final SafetyComplianceRepository safetyComplianceRepository;
-    private final NoReHiredCauseRepository noReHiredCauseRepository;
     private final TransferRepository transferRepository;
     private final ContractAnnexRepository contractAnnexRepository;
     private final EmployeeLeaveRepository employeeLeaveRepository;
@@ -102,6 +99,11 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final AttendanceLeaveSyncService attendanceLeaveSyncService;
     private final AttendanceOvertimeSyncService attendanceOvertimeSyncService;
     private final HRRequestMapper hrRequestMapper;
+    private final ContractMapper contractMapper;
+    private final SettlementMapper settlementMapper;
+    private final TransferMapper transferMapper;
+    private final ContractAnnexMapper contractAnnexMapper;
+    private final EmployeeMapper employeeMapper;
 
     @Override
     @Transactional
@@ -231,9 +233,6 @@ public class HRRequestServiceImpl implements HRRequestService {
             hr.setStatusId(resolveStatusId(RequestStatus.PENDING_APPROVAL.getDisplayName()));
             hrRequestRepository.save(hr);
 
-            String reqTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
-                    .map(HRRequestType::getName).orElse(null);
-
             return toResponse(hr);
 
         } else if (RequestStatus.PENDING_APPROVAL.getDisplayName().equals(currentStatus)) {
@@ -252,25 +251,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 if (isUpdate) {
                     try {
                         UpdateContractRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractRequest.class);
-                        contract.setName(proposed.getName());
-                        contract.setContractNumber(proposed.getContractNumber());
-                        contract.setContractTypeId(proposed.getContractTypeId());
-                        contract.setSafetyGroupId(proposed.getSafetyGroupId());
-                        contract.setContractDetail(proposed.getContractDetail());
-                        contract.setBaseSalary(proposed.getBaseSalary());
-                        contract.setAgreedSalary(proposed.getAgreedSalary());
-                        contract.setCompanyId(proposed.getCompanyId());
-                        contract.setZoneId(proposed.getZoneId());
-                        contract.setJobTitleId(proposed.getJobTitleId());
-                        contract.setSiteId(proposed.getSiteId());
-                        contract.setLaborUnionId(proposed.getLaborUnionId());
-                        contract.setCostCenter(proposed.getCostCenter());
-                        contract.setWeeklyWorkHours(proposed.getWeeklyWorkHours());
-                        contract.setWorkDays(proposed.getWorkDays());
-                        contract.setStartDate(proposed.getStartDate());
-                        contract.setEndDate(proposed.getEndDate());
-                        contract.setMealTypeId(proposed.getMealTypeId());
-                        contract.setTransportTypeId(proposed.getTransportTypeId());
+                        contractMapper.applyUpdate(contract, proposed);
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
@@ -304,27 +285,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                     try {
                         com.crm.mcsv_rrhh.dto.settlement.UpdateSettlementRequest proposed =
                                 objectMapper.readValue(hr.getProposedData(), com.crm.mcsv_rrhh.dto.settlement.UpdateSettlementRequest.class);
-                        if (proposed.getEndDate() != null)
-                            settlement.setEndDate(proposed.getEndDate());
-                        if (proposed.getLegalTerminationCauseId() != null)
-                            settlement.setLegalTerminationCause(
-                                    legalTerminationCauseRepository.findById(proposed.getLegalTerminationCauseId()).orElse(null));
-                        if (proposed.getQualityOfWorkId() != null)
-                            settlement.setQualityOfWork(
-                                    qualityOfWorkRepository.findById(proposed.getQualityOfWorkId()).orElse(null));
-                        if (proposed.getSafetyComplianceId() != null)
-                            settlement.setSafetyCompliance(
-                                    safetyComplianceRepository.findById(proposed.getSafetyComplianceId()).orElse(null));
-                        if (proposed.getRehireEligible() != null) {
-                            settlement.setRehireEligible(proposed.getRehireEligible());
-                            if (!proposed.getRehireEligible() && proposed.getNoReHiredCauseId() != null)
-                                settlement.setNoReHiredCause(
-                                        noReHiredCauseRepository.findById(proposed.getNoReHiredCauseId()).orElse(null));
-                            else if (proposed.getRehireEligible())
-                                settlement.setNoReHiredCause(null);
-                        }
-                        if (proposed.getObservations() != null)
-                            settlement.setObservations(proposed.getObservations());
+                        settlementMapper.applyUpdate(settlement, proposed);
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
@@ -344,9 +305,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
                     try {
                         UpdateTransferRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateTransferRequest.class);
-                        if (proposed.getToCostCenter() != null) transfer.setToCostCenter(proposed.getToCostCenter());
-                        if (proposed.getEffectiveDate() != null) transfer.setEffectiveDate(proposed.getEffectiveDate());
-                        if (proposed.getReason() != null) transfer.setReason(proposed.getReason());
+                        transferMapper.applyUpdate(transfer, proposed);
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
@@ -376,9 +335,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
                     try {
                         UpdateContractAnnexRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractAnnexRequest.class);
-                        if (proposed.getAnnexTypeId() != null) annex.setAnnexTypeId(proposed.getAnnexTypeId());
-                        if (proposed.getDate() != null) annex.setDate(proposed.getDate());
-                        if (proposed.getDescription() != null) annex.setDescription(proposed.getDescription());
+                        contractAnnexMapper.applyUpdate(annex, proposed);
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
@@ -449,53 +406,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
                     try {
                         UpdateEmployeeRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeRequest.class);
-                        employee.setIdentification(proposed.getIdentification());
-                        employee.setIdentificationTypeId(proposed.getIdentificationTypeId());
-                        employee.setFirstName(proposed.getFirstName());
-                        employee.setPaternalLastName(proposed.getPaternalLastName());
-                        employee.setMaternalLastName(proposed.getMaternalLastName());
-                        employee.setBirthDate(proposed.getBirthDate());
-                        employee.setGenderId(proposed.getGenderId());
-                        employee.setMaritalStatusId(proposed.getMaritalStatusId());
-                        employee.setEducationLevelId(proposed.getEducationLevelId());
-                        employee.setDriverLicenseId(proposed.getDriverLicenseId());
-                        employee.setProfessionId(proposed.getProfessionId());
-                        employee.setPersonalEmail(proposed.getPersonalEmail());
-                        employee.setCorporateEmail(proposed.getCorporateEmail());
-                        employee.setPhone(proposed.getPhone());
-                        employee.setPhone2(proposed.getPhone2());
-                        employee.setEmergencyContactName(proposed.getEmergencyContactName());
-                        employee.setEmergencyContactRelationshipId(proposed.getEmergencyContactRelationshipId());
-                        employee.setEmergencyContactPhone(proposed.getEmergencyContactPhone());
-                        employee.setEmergencyContactPhone2(proposed.getEmergencyContactPhone2());
-                        employee.setStreetName(proposed.getStreetName());
-                        employee.setStreetNumber(proposed.getStreetNumber());
-                        employee.setPostalCode(proposed.getPostalCode());
-                        employee.setDepartment(proposed.getDepartment());
-                        employee.setVillage(proposed.getVillage());
-                        employee.setBlock(proposed.getBlock());
-                        employee.setRegionId(proposed.getRegionId());
-                        employee.setCityId(proposed.getCityId());
-                        employee.setCommuneId(proposed.getCommuneId());
-                        employee.setExpatId(proposed.getExpatId());
-                        employee.setNationalityId(proposed.getNationalityId());
-                        employee.setFamilyAllowanceTierId(proposed.getFamilyAllowanceTierId());
-                        employee.setRetirementStatusId(proposed.getRetirementStatusId());
-                        employee.setIsapreFun(proposed.getIsapreFun());
-                        employee.setPensionStatusId(proposed.getPensionStatusId());
-                        employee.setAfpId(proposed.getAfpId());
-                        employee.setHealthInsuranceId(proposed.getHealthInsuranceId());
-                        employee.setHealthInsuranceTariffId(proposed.getHealthInsuranceTariffId());
-                        employee.setHealthInsuranceUF(proposed.getHealthInsuranceUF());
-                        employee.setHealthInsurancePesos(proposed.getHealthInsurancePesos());
-                        employee.setPaymentMethodId(proposed.getPaymentMethodId());
-                        employee.setBankId(proposed.getBankId());
-                        employee.setBankAccount(proposed.getBankAccount());
-                        employee.setClothingSize(proposed.getClothingSize());
-                        employee.setShoeSize(proposed.getShoeSize());
-                        employee.setPantSize(proposed.getPantSize());
-                        employee.setActive(proposed.getActive());
-                        employee.setRehireEligible(proposed.getRehireEligible());
+                        employeeMapper.applyUpdate(employee, proposed);
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }

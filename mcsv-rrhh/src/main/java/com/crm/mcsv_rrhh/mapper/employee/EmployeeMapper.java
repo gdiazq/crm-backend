@@ -5,6 +5,7 @@ import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeResponse;
+import com.crm.mcsv_rrhh.dto.employee.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
 import com.crm.mcsv_rrhh.repository.afp.AfpRepository;
 import com.crm.mcsv_rrhh.repository.bank.BankRepository;
@@ -114,6 +115,57 @@ public class EmployeeMapper {
                 .rehireEligible(request.getRehireEligible() != null ? request.getRehireEligible() : true)
                 .active(true)
                 .build();
+    }
+
+    /** Copia los campos de una solicitud de actualización aprobada sobre el empleado existente. */
+    public void applyUpdate(Employee employee, UpdateEmployeeRequest proposed) {
+        employee.setIdentification(proposed.getIdentification());
+        employee.setIdentificationTypeId(proposed.getIdentificationTypeId());
+        employee.setFirstName(proposed.getFirstName());
+        employee.setPaternalLastName(proposed.getPaternalLastName());
+        employee.setMaternalLastName(proposed.getMaternalLastName());
+        employee.setBirthDate(proposed.getBirthDate());
+        employee.setGenderId(proposed.getGenderId());
+        employee.setMaritalStatusId(proposed.getMaritalStatusId());
+        employee.setEducationLevelId(proposed.getEducationLevelId());
+        employee.setDriverLicenseId(proposed.getDriverLicenseId());
+        employee.setProfessionId(proposed.getProfessionId());
+        employee.setPersonalEmail(proposed.getPersonalEmail());
+        employee.setCorporateEmail(proposed.getCorporateEmail());
+        employee.setPhone(proposed.getPhone());
+        employee.setPhone2(proposed.getPhone2());
+        employee.setEmergencyContactName(proposed.getEmergencyContactName());
+        employee.setEmergencyContactRelationshipId(proposed.getEmergencyContactRelationshipId());
+        employee.setEmergencyContactPhone(proposed.getEmergencyContactPhone());
+        employee.setEmergencyContactPhone2(proposed.getEmergencyContactPhone2());
+        employee.setStreetName(proposed.getStreetName());
+        employee.setStreetNumber(proposed.getStreetNumber());
+        employee.setPostalCode(proposed.getPostalCode());
+        employee.setDepartment(proposed.getDepartment());
+        employee.setVillage(proposed.getVillage());
+        employee.setBlock(proposed.getBlock());
+        employee.setRegionId(proposed.getRegionId());
+        employee.setCityId(proposed.getCityId());
+        employee.setCommuneId(proposed.getCommuneId());
+        employee.setExpatId(proposed.getExpatId());
+        employee.setNationalityId(proposed.getNationalityId());
+        employee.setFamilyAllowanceTierId(proposed.getFamilyAllowanceTierId());
+        employee.setRetirementStatusId(proposed.getRetirementStatusId());
+        employee.setIsapreFun(proposed.getIsapreFun());
+        employee.setPensionStatusId(proposed.getPensionStatusId());
+        employee.setAfpId(proposed.getAfpId());
+        employee.setHealthInsuranceId(proposed.getHealthInsuranceId());
+        employee.setHealthInsuranceTariffId(proposed.getHealthInsuranceTariffId());
+        employee.setHealthInsuranceUF(proposed.getHealthInsuranceUF());
+        employee.setHealthInsurancePesos(proposed.getHealthInsurancePesos());
+        employee.setPaymentMethodId(proposed.getPaymentMethodId());
+        employee.setBankId(proposed.getBankId());
+        employee.setBankAccount(proposed.getBankAccount());
+        employee.setClothingSize(proposed.getClothingSize());
+        employee.setShoeSize(proposed.getShoeSize());
+        employee.setPantSize(proposed.getPantSize());
+        employee.setActive(proposed.getActive());
+        employee.setRehireEligible(proposed.getRehireEligible());
     }
 
     public EmployeeResponse toResponse(Employee e, Map<Long, String> statusMap) {
