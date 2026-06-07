@@ -1,5 +1,9 @@
 package com.crm.mcsv_rrhh.mapper.hrrequest;
 
+import com.crm.mcsv_rrhh.dto.CatalogItem;
+import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestDetailResponse;
+import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
 import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import com.crm.mcsv_rrhh.entity.hrrequest.HRRequestType;
 import org.springframework.stereotype.Component;
@@ -20,6 +24,42 @@ public class HRRequestMapper {
                 .action(action)
                 .proposedData(proposedData);
         if (link != null) link.accept(builder);
+        return builder.build();
+    }
+
+    /**
+     * Arma el detalle de una HRRequest. El service resuelve y pasa el tipo, el estado, el empleado
+     * y los nombres de los aprobadores; aquí solo se construye el DTO (incluidos los CatalogItem).
+     */
+    public HRRequestDetailResponse toDetailResponse(HRRequest hr, HRRequestType type, EmployeeStatus status,
+                                                    Employee employee, String approverName, String hhrrApproverName) {
+        HRRequestDetailResponse.HRRequestDetailResponseBuilder builder = HRRequestDetailResponse.builder()
+                .id(hr.getId())
+                .idModule(hr.getIdModule())
+                .requestType(type != null ? new CatalogItem(type.getId(), type.getName()) : null)
+                .status(status != null ? new CatalogItem(status.getId(), status.getName()) : null)
+                .requireApproval(hr.getRequireApproval())
+                .action(hr.getAction())
+                .approvalDate(hr.getApprovalDate())
+                .hhrrApprovalDate(hr.getHhrrApprovalDate())
+                .rejectionDetail(hr.getRejectionDetail())
+                .createdAt(hr.getCreatedAt())
+                .updatedAt(hr.getUpdatedAt());
+
+        if (employee != null) {
+            builder.identification(employee.getIdentification())
+                   .firstName(employee.getFirstName())
+                   .paternalLastName(employee.getPaternalLastName())
+                   .maternalLastName(employee.getMaternalLastName());
+        }
+
+        if (hr.getApproverId() != null) {
+            builder.approver(new CatalogItem(hr.getApproverId(), approverName));
+        }
+        if (hr.getHhrrApproverId() != null) {
+            builder.hhrrApprover(new CatalogItem(hr.getHhrrApproverId(), hhrrApproverName));
+        }
+
         return builder.build();
     }
 }

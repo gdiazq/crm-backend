@@ -4,7 +4,6 @@ import com.crm.common.service.StorageService;
 import com.crm.common.util.CsvUtil;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.FileMetadataResponse;
-import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.contract.UpdateContractRequest;
@@ -211,38 +210,13 @@ public class HRRequestServiceImpl implements HRRequestService {
     public HRRequestDetailResponse getById(Long id) {
         HRRequest hr = findOrThrow(id);
 
-        CatalogItem requestType = hrRequestTypeRepository.findById(hr.getRequestTypeId())
-                .map(t -> new CatalogItem(t.getId(), t.getName())).orElse(null);
-        CatalogItem status = employeeStatusRepository.findById(hr.getStatusId())
-                .map(s -> new CatalogItem(s.getId(), s.getName())).orElse(null);
+        HRRequestType type = hrRequestTypeRepository.findById(hr.getRequestTypeId()).orElse(null);
+        EmployeeStatus status = employeeStatusRepository.findById(hr.getStatusId()).orElse(null);
+        Employee employee = employeeRepository.findById(hr.getIdModule()).orElse(null);
+        String approverName = hr.getApproverId() != null ? fetchFullName(hr.getApproverId()) : null;
+        String hhrrApproverName = hr.getHhrrApproverId() != null ? fetchFullName(hr.getHhrrApproverId()) : null;
 
-        HRRequestDetailResponse.HRRequestDetailResponseBuilder builder = HRRequestDetailResponse.builder()
-                .id(hr.getId())
-                .idModule(hr.getIdModule())
-                .requestType(requestType)
-                .status(status)
-                .requireApproval(hr.getRequireApproval())
-                .action(hr.getAction())
-                .approvalDate(hr.getApprovalDate())
-                .hhrrApprovalDate(hr.getHhrrApprovalDate())
-                .rejectionDetail(hr.getRejectionDetail())
-                .createdAt(hr.getCreatedAt())
-                .updatedAt(hr.getUpdatedAt());
-
-        employeeRepository.findById(hr.getIdModule()).ifPresent(e -> builder
-                .identification(e.getIdentification())
-                .firstName(e.getFirstName())
-                .paternalLastName(e.getPaternalLastName())
-                .maternalLastName(e.getMaternalLastName()));
-
-        if (hr.getApproverId() != null) {
-            builder.approver(new CatalogItem(hr.getApproverId(), fetchFullName(hr.getApproverId())));
-        }
-        if (hr.getHhrrApproverId() != null) {
-            builder.hhrrApprover(new CatalogItem(hr.getHhrrApproverId(), fetchFullName(hr.getHhrrApproverId())));
-        }
-
-        return builder.build();
+        return hrRequestMapper.toDetailResponse(hr, type, status, employee, approverName, hhrrApproverName);
     }
 
     @Override
