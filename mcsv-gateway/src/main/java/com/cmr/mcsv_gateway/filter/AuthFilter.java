@@ -166,9 +166,14 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
 
-            exchange.getRequest().getHeaders().forEach(
-                    (key, value) -> logger.debug("Header: {} = {}", key, value)
-            );
+            exchange.getRequest().getHeaders().forEach((key, value) -> {
+                // Never log credential-bearing headers (JWT / session cookie).
+                if (HttpHeaders.AUTHORIZATION.equalsIgnoreCase(key) || HttpHeaders.COOKIE.equalsIgnoreCase(key)) {
+                    logger.debug("Header: {} = [REDACTED]", key);
+                } else {
+                    logger.debug("Header: {} = {}", key, value);
+                }
+            });
 
             if (exchange.getRequest().getPath().toString().startsWith("/upload/img")) {
                 return chain.filter(exchange);
@@ -213,22 +218,34 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
     private boolean checkPermission(ServerWebExchange exchange, String method, String urlPath) {
         Set<String> userPermissions = extractPermissions(exchange);
 
+        // Several routes share a prefix (e.g. /project/project and /project/project-type),
+        // so we must pick the most specific match (longest path) instead of relying on the
+        // map's iteration order, which is undefined.
+        Map.Entry<String, String> bestMatch = null;
+        int bestPathLength = -1;
         for (Map.Entry<String, String> entry : PERMISSION_MAP.entrySet()) {
             String[] parts = entry.getKey().split(":", 2);
             String mapMethod = parts[0];
             String mapPath   = parts[1];
 
-            if (method.equalsIgnoreCase(mapMethod) && urlPath.startsWith(mapPath)) {
-                String required = entry.getValue();
-                boolean hasPermission = userPermissions.contains(required);
-                if (!hasPermission) {
-                    logger.warn("Missing permission '{}' for {} {}", required, method, urlPath);
-                }
-                return hasPermission;
+            if (method.equalsIgnoreCase(mapMethod) && urlPath.startsWith(mapPath)
+                    && mapPath.length() > bestPathLength) {
+                bestMatch = entry;
+                bestPathLength = mapPath.length();
             }
         }
-        // Route not in map — any authenticated user can access
-        return true;
+
+        if (bestMatch == null) {
+            // Route not in map — any authenticated user can access
+            return true;
+        }
+
+        String required = bestMatch.getValue();
+        boolean hasPermission = userPermissions.contains(required);
+        if (!hasPermission) {
+            logger.warn("Missing permission '{}' for {} {}", required, method, urlPath);
+        }
+        return hasPermission;
     }
 
     private Set<String> extractPermissions(ServerWebExchange exchange) {

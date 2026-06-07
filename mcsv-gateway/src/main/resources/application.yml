@@ -190,11 +190,10 @@ eureka:
 
 logging:
   level:
-    org.springframework.cloud: trace
-    org.springframework.web: trace
-    org.springframework.gateway: trace
-    com.tresit.mmc: debug
-    com.tresit.gateway: debug
+    org.springframework.cloud: info
+    org.springframework.web: info
+    org.springframework.gateway: info
+    com.cmr.mcsv_gateway: ${GATEWAY_LOG_LEVEL:info}
 
 springdoc:
   swagger-ui:
