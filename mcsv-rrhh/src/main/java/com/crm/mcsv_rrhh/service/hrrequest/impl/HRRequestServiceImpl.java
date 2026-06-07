@@ -1,6 +1,7 @@
 package com.crm.mcsv_rrhh.service.hrrequest.impl;
 
 import com.crm.common.service.StorageService;
+import com.crm.common.util.CsvUtil;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
@@ -61,7 +62,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -640,48 +640,29 @@ public class HRRequestServiceImpl implements HRRequestService {
 
     @Override
     public byte[] exportCsv() {
-        StringBuilder csv = new StringBuilder();
-        csv.append("ID,RUT,Nombre,Apellido Paterno,Tipo Solicitud,Estado,Aprobador,Fecha Aprobación,Aprobador RRHH,Fecha Aprobación RRHH,Detalle Rechazo,Fecha Creación\n");
+        String header = "ID,RUT,Nombre,Apellido Paterno,Tipo Solicitud,Estado,Aprobador,Fecha Aprobación,Aprobador RRHH,Fecha Aprobación RRHH,Detalle Rechazo,Fecha Creación";
 
-        hrRequestRepository.findAll().forEach(hr -> {
+        return CsvUtil.build(header, hrRequestRepository.findAll(), hr -> {
             String typeName = hrRequestTypeRepository.findById(hr.getRequestTypeId()).map(HRRequestType::getName).orElse("");
             String statusName = resolveStatusName(hr.getStatusId());
             String approverName = hr.getApproverId() != null ? fetchFullName(hr.getApproverId()) : "";
             String hhrrApproverName = hr.getHhrrApproverId() != null ? fetchFullName(hr.getHhrrApproverId()) : "";
-            String identification = "", firstName = "", paternalLastName = "";
-            var empOpt = employeeRepository.findById(hr.getIdModule());
-            if (empOpt.isPresent()) {
-                identification = empOpt.get().getIdentification();
-                firstName = empOpt.get().getFirstName();
-                paternalLastName = empOpt.get().getPaternalLastName();
-            }
-            csv.append(hr.getId()).append(",")
-               .append(escape(identification)).append(",")
-               .append(escape(firstName)).append(",")
-               .append(escape(paternalLastName)).append(",")
-               .append(escape(typeName)).append(",")
-               .append(escape(statusName)).append(",")
-               .append(escape(approverName)).append(",")
-               .append(formatDate(hr.getApprovalDate())).append(",")
-               .append(escape(hhrrApproverName)).append(",")
-               .append(formatDate(hr.getHhrrApprovalDate())).append(",")
-               .append(escape(hr.getRejectionDetail())).append(",")
-               .append(formatDate(hr.getCreatedAt())).append("\n");
+            Employee emp = employeeRepository.findById(hr.getIdModule()).orElse(null);
+
+            return String.join(",",
+                    String.valueOf(hr.getId()),
+                    CsvUtil.escape(emp != null ? emp.getIdentification() : ""),
+                    CsvUtil.escape(emp != null ? emp.getFirstName() : ""),
+                    CsvUtil.escape(emp != null ? emp.getPaternalLastName() : ""),
+                    CsvUtil.escape(typeName),
+                    CsvUtil.escape(statusName),
+                    CsvUtil.escape(approverName),
+                    CsvUtil.formatDate(hr.getApprovalDate()),
+                    CsvUtil.escape(hhrrApproverName),
+                    CsvUtil.formatDate(hr.getHhrrApprovalDate()),
+                    CsvUtil.escape(hr.getRejectionDetail()),
+                    CsvUtil.formatDate(hr.getCreatedAt()));
         });
-
-        return csv.toString().getBytes(StandardCharsets.UTF_8);
-    }
-
-    private String formatDate(java.time.LocalDateTime dt) {
-        if (dt == null) return "";
-        return dt.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-    }
-
-    private String escape(String value) {
-        if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        return value;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
