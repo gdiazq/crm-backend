@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.mapper.employee;
 
 import com.crm.mcsv_rrhh.client.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
+import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeResponse;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
@@ -61,6 +62,59 @@ public class EmployeeMapper {
     private final PaymentMethodRepository paymentMethodRepository;
     private final BankRepository bankRepository;
     private final EmployeeStatusRepository employeeStatusRepository;
+
+    public Employee toEntity(CreateEmployeeRequest request, Long pendingStatusId) {
+        return Employee.builder()
+                .identification(request.getIdentification())
+                .identificationTypeId(request.getIdentificationTypeId())
+                .firstName(request.getFirstName())
+                .paternalLastName(request.getPaternalLastName())
+                .maternalLastName(request.getMaternalLastName())
+                .birthDate(request.getBirthDate())
+                .genderId(request.getGenderId())
+                .maritalStatusId(request.getMaritalStatusId())
+                .educationLevelId(request.getEducationLevelId())
+                .driverLicenseId(request.getDriverLicenseId())
+                .professionId(request.getProfessionId())
+                .personalEmail(request.getPersonalEmail())
+                .corporateEmail(request.getCorporateEmail())
+                .phone(request.getPhone())
+                .phone2(request.getPhone2())
+                .emergencyContactName(request.getEmergencyContactName())
+                .emergencyContactRelationshipId(request.getEmergencyContactRelationshipId())
+                .emergencyContactPhone(request.getEmergencyContactPhone())
+                .emergencyContactPhone2(request.getEmergencyContactPhone2())
+                .streetName(request.getStreetName())
+                .streetNumber(request.getStreetNumber())
+                .postalCode(request.getPostalCode())
+                .department(request.getDepartment())
+                .village(request.getVillage())
+                .block(request.getBlock())
+                .regionId(request.getRegionId())
+                .cityId(request.getCityId())
+                .communeId(request.getCommuneId())
+                .expatId(request.getExpatId())
+                .nationalityId(request.getNationalityId())
+                .familyAllowanceTierId(request.getFamilyAllowanceTierId())
+                .retirementStatusId(request.getRetirementStatusId())
+                .isapreFun(request.getIsapreFun())
+                .pensionStatusId(request.getPensionStatusId())
+                .afpId(request.getAfpId())
+                .healthInsuranceId(request.getHealthInsuranceId())
+                .healthInsuranceTariffId(request.getHealthInsuranceTariffId())
+                .healthInsuranceUF(request.getHealthInsuranceUF())
+                .healthInsurancePesos(request.getHealthInsurancePesos())
+                .paymentMethodId(request.getPaymentMethodId())
+                .bankId(request.getBankId())
+                .bankAccount(request.getBankAccount())
+                .clothingSize(request.getClothingSize())
+                .shoeSize(request.getShoeSize())
+                .pantSize(request.getPantSize())
+                .statusId(pendingStatusId)
+                .rehireEligible(request.getRehireEligible() != null ? request.getRehireEligible() : true)
+                .active(true)
+                .build();
+    }
 
     public EmployeeResponse toResponse(Employee e, Map<Long, String> statusMap) {
         return EmployeeResponse.builder()
