@@ -17,6 +17,10 @@ public class HRRequestSpecification {
 
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
+    public static boolean isEmployeeSortField(String sortBy) {
+        return sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy);
+    }
+
     public static Specification<HRRequest> withFilters(Long idModule, Long statusId,
                                                         LocalDate createdFrom, LocalDate createdTo,
                                                         LocalDate approvalFrom, LocalDate approvalTo,
@@ -49,7 +53,7 @@ public class HRRequestSpecification {
             }
 
             // Sort por campo de empleado via JOIN
-            if (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy)
+            if (isEmployeeSortField(sortBy)
                     && !Long.class.equals(query.getResultType()) && !long.class.equals(query.getResultType())) {
                 Join<Object, Object> empJoin = root.join("employee", JoinType.LEFT);
                 query.orderBy(sortDir != null && sortDir.equalsIgnoreCase("asc")

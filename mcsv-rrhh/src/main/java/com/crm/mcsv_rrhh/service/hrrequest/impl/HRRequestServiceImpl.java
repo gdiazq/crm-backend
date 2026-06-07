@@ -144,11 +144,6 @@ public class HRRequestServiceImpl implements HRRequestService {
                 b -> b.overtimeId(overtimeId));
     }
 
-    /**
-     * Resuelve el tipo y el estado inicial (regla de negocio según requireApproval), delega el
-     * armado de la entidad al {@link HRRequestMapper} y persiste. El callback {@code link} enlaza
-     * el FK propio de cada módulo.
-     */
     private HRRequest createRequest(String requestTypeName, Long employeeId, String action, String proposedData,
                                     Consumer<HRRequest.HRRequestBuilder> link) {
         HRRequestType type = hrRequestTypeRepository.findByName(requestTypeName)
@@ -169,14 +164,14 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
     }
 
-    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
-
     @Override
     public Page<HRRequestResponse> list(Long idModule, Long statusId,
                                          LocalDate createdFrom, LocalDate createdTo,
                                          LocalDate approvalFrom, LocalDate approvalTo,
                                          Pageable pageable, String sortBy, String sortDir) {
-        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
+        // Si el sort es por un campo del empleado, lo quitamos del Pageable: el orden lo aplica
+        // la Specification vía JOIN (fuente única: HRRequestSpecification.isEmployeeSortField).
+        Pageable effectivePageable = HRRequestSpecification.isEmployeeSortField(sortBy)
                 ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
                 : pageable;
 

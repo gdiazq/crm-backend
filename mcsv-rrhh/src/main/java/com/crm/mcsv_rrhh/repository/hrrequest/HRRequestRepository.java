@@ -14,16 +14,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, JpaSpecificationExecutor<HRRequest> {
-    List<HRRequest> findByIdModule(Long idModule);
-    Page<HRRequest> findByIdModule(Long idModule, Pageable pageable);
-    Page<HRRequest> findByStatusId(Long statusId, Pageable pageable);
-    Page<HRRequest> findByIdModuleAndStatusId(Long idModule, Long statusId, Pageable pageable);
     Optional<HRRequest> findTopByIdModuleOrderByCreatedAtDesc(Long idModule);
+
     Optional<HRRequest> findTopByContractIdOrderByCreatedAtDesc(Long contractId);
+
     Optional<HRRequest> findTopBySettlementIdOrderByCreatedAtDesc(Long settlementId);
+
     Optional<HRRequest> findTopByTransferIdOrderByCreatedAtDesc(Long transferId);
+
     Optional<HRRequest> findTopByAnnexIdOrderByCreatedAtDesc(Long annexId);
+
     Optional<HRRequest> findTopByLeaveIdOrderByCreatedAtDesc(Long leaveId);
+
     Optional<HRRequest> findTopByOvertimeIdOrderByCreatedAtDesc(Long overtimeId);
 
     @Query("SELECT COUNT(DISTINCT h.settlementId) FROM HRRequest h " +
@@ -47,8 +49,12 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
     long countOvertimesWithLatestStatusIdIn(@Param("statusIds") Collection<Long> statusIds);
 
     long countByIdModule(Long idModule);
+
     long countByStatusId(Long statusId);
+
     long countByIdModuleAndStatusId(Long idModule, Long statusId);
+
     long countByStatusIdIn(Collection<Long> statusIds);
+
     long countByIdModuleAndStatusIdIn(Long idModule, Collection<Long> statusIds);
 }
