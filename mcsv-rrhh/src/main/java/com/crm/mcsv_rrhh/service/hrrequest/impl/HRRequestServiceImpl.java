@@ -58,18 +58,21 @@ import com.crm.mcsv_rrhh.util.overtime.OvertimeValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -169,10 +172,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                                          LocalDate createdFrom, LocalDate createdTo,
                                          LocalDate approvalFrom, LocalDate approvalTo,
                                          Pageable pageable, String sortBy, String sortDir) {
-        // Si el sort es por un campo del empleado, lo quitamos del Pageable: el orden lo aplica
-        // la Specification vía JOIN (fuente única: HRRequestSpecification.isEmployeeSortField).
         Pageable effectivePageable = HRRequestSpecification.isEmployeeSortField(sortBy)
-                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
                 : pageable;
 
         Page<HRRequest> page = hrRequestRepository.findAll(
@@ -181,18 +182,14 @@ public class HRRequestServiceImpl implements HRRequestService {
 
         if (page.isEmpty()) return page.map(this::toResponse);
 
-        // Batch-load catálogos, empleados y aprobadores en vez de N queries + N HTTP calls
         Set<Long> typeIds     = page.map(HRRequest::getRequestTypeId).toSet();
         Set<Long> statusIds   = page.map(HRRequest::getStatusId).toSet();
         Set<Long> employeeIds = page.map(HRRequest::getIdModule).toSet();
 
         Set<Long> approverIds = page.stream()
-                .flatMap(hr -> {
-                    java.util.stream.Stream.Builder<Long> b = java.util.stream.Stream.builder();
-                    if (hr.getApproverId() != null) b.add(hr.getApproverId());
-                    if (hr.getHhrrApproverId() != null) b.add(hr.getHhrrApproverId());
-                    return b.build();
-                }).collect(Collectors.toSet());
+                .flatMap(hr -> Stream.of(hr.getApproverId(), hr.getHhrrApproverId()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
         Map<Long, String> typeNames = hrRequestTypeRepository.findAllById(typeIds)
                 .stream().collect(Collectors.toMap(HRRequestType::getId, HRRequestType::getName));
@@ -202,7 +199,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .stream().collect(Collectors.toMap(Employee::getId, e -> e));
 
         Map<Long, String> approverNames = approverIds.isEmpty() ? Map.of() :
-                userClient.getUsersByIds(new java.util.ArrayList<>(approverIds))
+                userClient.getUsersByIds(new ArrayList<>(approverIds))
                         .stream().collect(Collectors.toMap(
                                 UserDTO::getId,
                                 u -> u.getFirstName() + " " + u.getLastName()));
