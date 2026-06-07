@@ -234,14 +234,21 @@ public class HRRequestServiceImpl implements HRRequestService {
             hrRequestRepository.save(hr);
 
             return toResponse(hr);
+        }
 
-        } else if (RequestStatus.PENDING_APPROVAL.getDisplayName().equals(currentStatus)) {
-            Long approvedStatusId = resolveStatusId(RequestStatus.APPROVED.getDisplayName());
+        if (!RequestStatus.PENDING_APPROVAL.getDisplayName().equals(currentStatus)) {
+            throw new IllegalStateException("La solicitud no está en un estado aprobable");
+        }
 
-            String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
-                    .map(HRRequestType::getName).orElse(null);
+        Long approvedStatusId = resolveStatusId(RequestStatus.APPROVED.getDisplayName());
 
-            if (HRRequestTypeName.CONTRACT.getDisplayName().equals(requestTypeName)) {
+        String requestTypeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
+                .map(HRRequestType::getName).orElse(null);
+
+        HRRequestTypeName type = HRRequestTypeName.fromDisplayName(requestTypeName);
+        // Un tipo desconocido/null se trata como EMPLOYEE (comportamiento del else final original).
+        switch (type != null ? type : HRRequestTypeName.EMPLOYEE) {
+            case CONTRACT -> {
                 Contract contract = contractRepository.findById(hr.getContractId())
                         .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + hr.getContractId()));
 
@@ -276,8 +283,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 } else {
                     projectAssignmentSyncService.openInitialAssignment(contract);
                 }
-
-            } else if (HRRequestTypeName.SETTLEMENT.getDisplayName().equals(requestTypeName)) {
+            }
+            case SETTLEMENT -> {
                 Settlement settlement = settlementRepository.findById(hr.getSettlementId())
                         .orElseThrow(() -> new ResourceNotFoundException("Finiquito no encontrado: " + hr.getSettlementId()));
 
@@ -297,8 +304,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                     contractRepository.save(contract);
                 }
                 settlementRepository.save(settlement);
-
-            } else if (HRRequestTypeName.TRANSFER.getDisplayName().equals(requestTypeName)) {
+            }
+            case TRANSFER -> {
                 Transfer transfer = transferRepository.findById(hr.getTransferId())
                         .orElseThrow(() -> new ResourceNotFoundException("Traspaso no encontrado: " + hr.getTransferId()));
 
@@ -327,8 +334,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                             transfer.getEffectiveDate() != null ? transfer.getEffectiveDate() : LocalDate.now());
                 }
                 transferRepository.save(transfer);
-
-            } else if (HRRequestTypeName.ANNEX.getDisplayName().equals(requestTypeName)) {
+            }
+            case ANNEX -> {
                 ContractAnnex annex = contractAnnexRepository.findById(hr.getAnnexId())
                         .orElseThrow(() -> new ResourceNotFoundException("Anexo no encontrado: " + hr.getAnnexId()));
 
@@ -342,8 +349,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                     retagPendingAnnexFiles(hr.getId(), annex.getId());
                 }
                 contractAnnexRepository.save(annex);
-
-            } else if (HRRequestTypeName.LEAVE.getDisplayName().equals(requestTypeName)) {
+            }
+            case LEAVE -> {
                 EmployeeLeave leave = employeeLeaveRepository.findById(hr.getLeaveId())
                         .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado: " + hr.getLeaveId()));
 
@@ -372,8 +379,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 employeeLeaveRepository.save(leave);
                 attendanceLeaveSyncService.revertGeneratedForLeave(leave.getId());
                 attendanceLeaveSyncService.generateForApprovedLeave(leave);
-
-            } else if (HRRequestTypeName.OVERTIME.getDisplayName().equals(requestTypeName)) {
+            }
+            case OVERTIME -> {
                 Overtime overtime = overtimeRepository.findById(hr.getOvertimeId())
                         .orElseThrow(() -> new ResourceNotFoundException(
                                 "Hora extra no encontrada: " + hr.getOvertimeId()));
@@ -398,8 +405,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 overtimeRepository.save(overtime);
                 attendanceOvertimeSyncService.recalculateAttendanceOvertime(overtime.getAttendanceId());
-
-            } else {
+            }
+            case EMPLOYEE -> {
                 Employee employee = employeeRepository.findById(hr.getIdModule())
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
 
@@ -415,17 +422,13 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 employeeRepository.save(employee);
             }
-
-            hr.setHhrrApproverId(approverId);
-            hr.setHhrrApprovalDate(LocalDateTime.now());
-            hr.setStatusId(approvedStatusId);
-            hrRequestRepository.save(hr);
-
-            return toResponse(hr);
-
-        } else {
-            throw new IllegalStateException("La solicitud no está en un estado aprobable");
         }
+
+        hr.setHhrrApproverId(approverId);
+        hr.setHhrrApprovalDate(LocalDateTime.now());
+        hr.setStatusId(approvedStatusId);
+        hrRequestRepository.save(hr);
+        return toResponse(hr);
     }
 
     @Override

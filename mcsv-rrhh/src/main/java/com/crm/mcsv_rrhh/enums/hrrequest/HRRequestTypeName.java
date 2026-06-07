@@ -18,4 +18,14 @@ public enum HRRequestTypeName {
     public String getDisplayName() {
         return displayName;
     }
+
+    /** Devuelve el tipo cuyo displayName coincide, o {@code null} si no hay coincidencia. */
+    public static HRRequestTypeName fromDisplayName(String displayName) {
+        for (HRRequestTypeName type : values()) {
+            if (type.displayName.equals(displayName)) {
+                return type;
+            }
+        }
+        return null;
+    }
 }
