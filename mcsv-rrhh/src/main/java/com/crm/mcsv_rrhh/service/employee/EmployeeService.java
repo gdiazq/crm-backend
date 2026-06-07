@@ -1,12 +1,11 @@
 package com.crm.mcsv_rrhh.service.employee;
 
 import com.crm.common.dto.BulkImportResult;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.crm.common.dto.PagedResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
@@ -23,11 +22,9 @@ public interface EmployeeService {
 
     EmployeeDetailResponse getEmployeeByUserId(Long userId);
 
-    Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
-                                           java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
-                                           Pageable pageable);
-
-    Map<String, Long> getEmployeeStats();
+    PagedResponse<EmployeeResponse> listEmployees(String search, Boolean active, Long statusId,
+                                                  LocalDate createdFrom, LocalDate createdTo,
+                                                  int page, int size, String sortBy, String sortDir);
 
     byte[] exportCsv();
 

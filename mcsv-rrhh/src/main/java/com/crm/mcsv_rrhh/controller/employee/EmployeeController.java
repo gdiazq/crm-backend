@@ -8,10 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
@@ -36,11 +31,6 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
-            "firstName", "paternalLastName", "maternalLastName",
-            "identification", "corporateEmail", "active", "createdAt"
-    );
-
     @GetMapping("/paged")
     @Operation(summary = "Listar empleados (paginado)", description = "Retorna una lista paginada de empleados con filtros opcionales")
     public ResponseEntity<PagedResponse<EmployeeResponse>> getAllEmployees(
@@ -54,14 +44,8 @@ public class EmployeeController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<EmployeeResponse> result = employeeService.filterEmployees(search, active, statusId, createdFrom, createdTo, pageable);
-        Map<String, Long> stats = employeeService.getEmployeeStats();
-
-        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active")));
+        return ResponseEntity.ok(employeeService.listEmployees(
+                search, active, statusId, createdFrom, createdTo, page, size, sortBy, sortDir));
     }
 
     @GetMapping("/detail/{id}")

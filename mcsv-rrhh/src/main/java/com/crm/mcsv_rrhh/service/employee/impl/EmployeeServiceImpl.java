@@ -26,7 +26,9 @@ import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import com.crm.mcsv_rrhh.repository.contract.ContractRepository;
 import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
@@ -60,6 +63,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final ObjectMapper objectMapper;
     private final ContractRepository contractRepository;
     private final EmployeeMapper mapper;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "firstName", "paternalLastName", "maternalLastName",
+            "identification", "corporateEmail", "active", "createdAt"
+    );
 
     @Override
     public EmployeeDetailResponse createEmployee(CreateEmployeeRequest request) {
@@ -123,7 +131,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
+    public PagedResponse<EmployeeResponse> listEmployees(String search, Boolean active, Long statusId,
+                                                         java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
+                                                         int page, int size, String sortBy, String sortDir) {
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(safeSortBy).ascending()
+                : Sort.by(safeSortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<EmployeeResponse> result = filterEmployees(search, active, statusId, createdFrom, createdTo, pageable);
+        Map<String, Long> stats = getEmployeeStats();
+        return PagedResponse.of(result, stats.get("total"), stats.get("active"));
+    }
+
+    private Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
                                                    java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
                                                    Pageable pageable) {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
@@ -137,8 +159,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findAll(spec, pageable).map(e -> mapper.toResponse(e, statusMap));
     }
 
-    @Override
-    public Map<String, Long> getEmployeeStats() {
+    private Map<String, Long> getEmployeeStats() {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
         Specification<Employee> baseSpec = EmployeeSpecification.withFilters(
