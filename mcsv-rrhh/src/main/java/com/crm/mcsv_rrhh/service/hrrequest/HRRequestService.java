@@ -11,20 +11,34 @@ import java.time.LocalDate;
 import java.util.Map;
 
 public interface HRRequestService {
+
     HRRequest createForEmployee(Long employeeId, String requestTypeName, String action, String proposedData);
+
     HRRequest createForContract(Long contractId, Long employeeId, String action, String proposedData);
+
     HRRequest createForSettlement(Long settlementId, Long employeeId, String action, String proposedData);
+
     HRRequest createForTransfer(Long transferId, Long employeeId, String action, String proposedData);
+
     HRRequest createForAnnex(Long annexId, Long employeeId, String action, String proposedData);
+
     HRRequest createForLeave(Long leaveId, Long employeeId, String action, String proposedData);
+
     HRRequest createForOvertime(Long overtimeId, Long employeeId, String action, String proposedData);
+
     Page<HRRequestResponse> list(Long idModule, Long statusId,
                                   LocalDate createdFrom, LocalDate createdTo,
                                   LocalDate approvalFrom, LocalDate approvalTo,
                                   Pageable pageable, String sortBy, String sortDir);
+
     HRRequestDetailResponse getById(Long id);
+
     HRRequestResponse approve(Long id, Long approverId);
+
     byte[] exportCsv();
+
     HRRequestResponse reject(Long id, RejectHRRequestRequest req);
+
     Map<String, Long> getStats(Long idModule);
+
 }

@@ -13,6 +13,7 @@ import com.crm.mcsv_rrhh.dto.transfer.UpdateTransferRequest;
 import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;
 import com.crm.mcsv_rrhh.dto.overtime.OvertimeUpdateRequest;
 import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnex;
+import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
 import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
 import com.crm.mcsv_rrhh.entity.overtime.Overtime;
 import com.crm.mcsv_rrhh.entity.transfer.Transfer;
@@ -47,6 +48,7 @@ import com.crm.mcsv_rrhh.repository.settlement.QualityOfWorkRepository;
 import com.crm.mcsv_rrhh.repository.settlement.SafetyComplianceRepository;
 import com.crm.mcsv_rrhh.service.attendance.AttendanceLeaveSyncService;
 import com.crm.mcsv_rrhh.service.attendance.AttendanceOvertimeSyncService;
+import com.crm.mcsv_rrhh.mapper.hrrequest.HRRequestMapper;
 import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import com.crm.mcsv_rrhh.service.projectassignment.ProjectAssignmentSyncService;
 import com.crm.mcsv_rrhh.util.leave.LeaveCalculator;
@@ -66,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,189 +99,74 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final ProjectAssignmentSyncService projectAssignmentSyncService;
     private final AttendanceLeaveSyncService attendanceLeaveSyncService;
     private final AttendanceOvertimeSyncService attendanceOvertimeSyncService;
+    private final HRRequestMapper hrRequestMapper;
 
     @Override
     @Transactional
     public HRRequest createForEmployee(Long employeeId, String requestTypeName, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(requestTypeName)
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: " + requestTypeName));
-
-        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? RequestStatus.PENDING_REVIEW.getDisplayName()
-                : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
+        return createRequest(requestTypeName, employeeId, action, proposedData, null);
     }
 
     @Override
     @Transactional
     public HRRequest createForContract(Long contractId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.CONTRACT.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Contrato"));
-
-        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? RequestStatus.PENDING_REVIEW.getDisplayName()
-                : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .contractId(contractId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
+        return createRequest(HRRequestTypeName.CONTRACT.getDisplayName(), employeeId, action, proposedData,
+                b -> b.contractId(contractId));
     }
 
     @Override
     public HRRequest createForSettlement(Long settlementId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.SETTLEMENT.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Finiquito"));
-
-        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? RequestStatus.PENDING_REVIEW.getDisplayName()
-                : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .settlementId(settlementId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
+        return createRequest(HRRequestTypeName.SETTLEMENT.getDisplayName(), employeeId, action, proposedData,
+                b -> b.settlementId(settlementId));
     }
 
     @Override
     public HRRequest createForTransfer(Long transferId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.TRANSFER.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Traspaso"));
-
-        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? RequestStatus.PENDING_REVIEW.getDisplayName()
-                : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .transferId(transferId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
+        return createRequest(HRRequestTypeName.TRANSFER.getDisplayName(), employeeId, action, proposedData,
+                b -> b.transferId(transferId));
     }
 
     @Override
     public HRRequest createForAnnex(Long annexId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.ANNEX.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Anexo"));
-
-        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? RequestStatus.PENDING_REVIEW.getDisplayName()
-                : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .annexId(annexId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
+        return createRequest(HRRequestTypeName.ANNEX.getDisplayName(), employeeId, action, proposedData,
+                b -> b.annexId(annexId));
     }
 
     @Override
     public HRRequest createForLeave(Long leaveId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.LEAVE.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: Permiso"));
-
-        String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
-                ? RequestStatus.PENDING_REVIEW.getDisplayName()
-                : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .leaveId(leaveId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
+        return createRequest(HRRequestTypeName.LEAVE.getDisplayName(), employeeId, action, proposedData,
+                b -> b.leaveId(leaveId));
     }
 
     @Override
     public HRRequest createForOvertime(Long overtimeId, Long employeeId, String action, String proposedData) {
-        HRRequestType type = hrRequestTypeRepository.findByName(HRRequestTypeName.OVERTIME.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tipo de solicitud no encontrado: " + HRRequestTypeName.OVERTIME.getDisplayName()));
+        return createRequest(HRRequestTypeName.OVERTIME.getDisplayName(), employeeId, action, proposedData,
+                b -> b.overtimeId(overtimeId));
+    }
 
+    /**
+     * Resuelve el tipo y el estado inicial (regla de negocio según requireApproval), delega el
+     * armado de la entidad al {@link HRRequestMapper} y persiste. El callback {@code link} enlaza
+     * el FK propio de cada módulo.
+     */
+    private HRRequest createRequest(String requestTypeName, Long employeeId, String action, String proposedData,
+                                    Consumer<HRRequest.HRRequestBuilder> link) {
+        HRRequestType type = hrRequestTypeRepository.findByName(requestTypeName)
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de solicitud no encontrado: " + requestTypeName));
+
+        HRRequest request = hrRequestMapper.toEntity(
+                type, resolveInitialStatusId(type), employeeId, action, proposedData, link);
+
+        return hrRequestRepository.save(request);
+    }
+
+    private Long resolveInitialStatusId(HRRequestType type) {
         String initialStatusName = Boolean.TRUE.equals(type.getRequireApproval())
                 ? RequestStatus.PENDING_REVIEW.getDisplayName()
                 : RequestStatus.PENDING_APPROVAL.getDisplayName();
-
-        Long statusId = employeeStatusRepository.findByName(initialStatusName)
-                .map(s -> s.getId())
+        return employeeStatusRepository.findByName(initialStatusName)
+                .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
-
-        HRRequest request = HRRequest.builder()
-                .requestTypeId(type.getId())
-                .statusId(statusId)
-                .requireApproval(type.getRequireApproval())
-                .idModule(employeeId)
-                .overtimeId(overtimeId)
-                .action(action)
-                .proposedData(proposedData)
-                .build();
-
-        return hrRequestRepository.save(request);
     }
 
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
@@ -296,7 +184,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 HRRequestSpecification.withFilters(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, sortBy, sortDir),
                 effectivePageable);
 
-        if (page.isEmpty()) return page.map(hr -> toResponse(hr));
+        if (page.isEmpty()) return page.map(this::toResponse);
 
         // Batch-load catálogos, empleados y aprobadores en vez de N queries + N HTTP calls
         Set<Long> typeIds     = page.map(HRRequest::getRequestTypeId).toSet();
@@ -312,16 +200,16 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }).collect(Collectors.toSet());
 
         Map<Long, String> typeNames = hrRequestTypeRepository.findAllById(typeIds)
-                .stream().collect(Collectors.toMap(t -> t.getId(), t -> t.getName()));
+                .stream().collect(Collectors.toMap(HRRequestType::getId, HRRequestType::getName));
         Map<Long, String> statusNames = employeeStatusRepository.findAllById(statusIds)
-                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s.getName()));
+                .stream().collect(Collectors.toMap(EmployeeStatus::getId, EmployeeStatus::getName));
         Map<Long, Employee> employees = employeeRepository.findAllById(employeeIds)
-                .stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
+                .stream().collect(Collectors.toMap(Employee::getId, e -> e));
 
         Map<Long, String> approverNames = approverIds.isEmpty() ? Map.of() :
                 userClient.getUsersByIds(new java.util.ArrayList<>(approverIds))
                         .stream().collect(Collectors.toMap(
-                                u -> u.getId(),
+                                UserDTO::getId,
                                 u -> u.getFirstName() + " " + u.getLastName()));
 
         return page.map(hr -> toResponseBatch(hr, typeNames, statusNames, employees, approverNames));
@@ -736,7 +624,7 @@ public class HRRequestServiceImpl implements HRRequestService {
     public Map<String, Long> getStats(Long idModule) {
         Map<String, Long> statusIdsByName = employeeStatusRepository
                 .findAllByNameIn(RequestStatus.ACTIVE_DISPLAY_NAMES)
-                .stream().collect(Collectors.toMap(s -> s.getName(), s -> s.getId()));
+                .stream().collect(Collectors.toMap(EmployeeStatus::getName, EmployeeStatus::getId));
 
         List<Long> pendingIds = List.of(
                 statusIdsByName.get(RequestStatus.PENDING_REVIEW.getDisplayName()),
@@ -756,7 +644,7 @@ public class HRRequestServiceImpl implements HRRequestService {
         csv.append("ID,RUT,Nombre,Apellido Paterno,Tipo Solicitud,Estado,Aprobador,Fecha Aprobación,Aprobador RRHH,Fecha Aprobación RRHH,Detalle Rechazo,Fecha Creación\n");
 
         hrRequestRepository.findAll().forEach(hr -> {
-            String typeName = hrRequestTypeRepository.findById(hr.getRequestTypeId()).map(t -> t.getName()).orElse("");
+            String typeName = hrRequestTypeRepository.findById(hr.getRequestTypeId()).map(HRRequestType::getName).orElse("");
             String statusName = resolveStatusName(hr.getStatusId());
             String approverName = hr.getApproverId() != null ? fetchFullName(hr.getApproverId()) : "";
             String hhrrApproverName = hr.getHhrrApproverId() != null ? fetchFullName(hr.getHhrrApproverId()) : "";
@@ -840,19 +728,19 @@ public class HRRequestServiceImpl implements HRRequestService {
     private String resolveStatusName(Long statusId) {
         if (statusId == null) return null;
         return employeeStatusRepository.findById(statusId)
-                .map(s -> s.getName())
+                .map(EmployeeStatus::getName)
                 .orElse(null);
     }
 
     private Long resolveStatusId(String name) {
         return employeeStatusRepository.findByName(name)
-                .map(s -> s.getId())
+                .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + name));
     }
 
     private HRRequestResponse toResponse(HRRequest hr) {
         String typeName = hrRequestTypeRepository.findById(hr.getRequestTypeId())
-                .map(t -> t.getName())
+                .map(HRRequestType::getName)
                 .orElse(null);
         String statusName = resolveStatusName(hr.getStatusId());
 
