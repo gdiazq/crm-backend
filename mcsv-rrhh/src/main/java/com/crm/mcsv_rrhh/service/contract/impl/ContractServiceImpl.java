@@ -13,6 +13,7 @@ import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_rrhh.dto.contract.UpdateContractRequest;
 import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
+import com.crm.mcsv_rrhh.mapper.contract.ContractMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.crm.common.exception.ResourceNotFoundException;
 import com.crm.mcsv_rrhh.repository.contract.ContractSpecification;
@@ -90,6 +91,7 @@ public class ContractServiceImpl implements ContractService {
     private final TransportTypeRepository transportTypeRepository;
     private final ProjectClient projectClient;
     private final UserClient userClient;
+    private final ContractMapper contractMapper;
 
     @Override
     @Transactional
@@ -99,41 +101,13 @@ public class ContractServiceImpl implements ContractService {
         Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: Pendiente de revisión"));
-
         Long suspendedContractStatusId = contractStatusRepository.findByName(ContractStatusName.SUSPENDED.getDisplayName())
                 .map(ContractStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado de contrato no encontrado: Suspendido"));
 
-        Long contractTypeId = request.getEndDate() == null
-                ? contractTypeRepository.findByName("Indefinido")
-                        .map(ContractType::getId)
-                        .orElse(request.getContractTypeId())
-                : request.getContractTypeId();
+        Long contractTypeId = resolveContractTypeId(request.getContractTypeId(), request.getEndDate());
 
-        Contract contract = Contract.builder()
-                .employeeId(request.getEmployeeId())
-                .name(request.getName())
-                .contractNumber(request.getContractNumber())
-                .contractTypeId(contractTypeId)
-                .contractStatusId(suspendedContractStatusId)
-                .safetyGroupId(request.getSafetyGroupId())
-                .contractDetail(request.getContractDetail())
-                .baseSalary(request.getBaseSalary())
-                .agreedSalary(request.getAgreedSalary())
-                .companyId(request.getCompanyId())
-                .zoneId(request.getZoneId())
-                .jobTitleId(request.getJobTitleId())
-                .siteId(request.getSiteId())
-                .laborUnionId(request.getLaborUnionId())
-                .costCenter(request.getCostCenter())
-                .weeklyWorkHours(request.getWeeklyWorkHours())
-                .workDays(request.getWorkDays())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .mealTypeId(request.getMealTypeId())
-                .transportTypeId(request.getTransportTypeId())
-                .statusId(pendingStatusId)
-                .build();
+        Contract contract = contractMapper.toEntity(request, contractTypeId, suspendedContractStatusId, pendingStatusId);
 
         Contract saved = contractRepository.save(contract);
         HRRequest req = hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
@@ -411,6 +385,14 @@ public class ContractServiceImpl implements ContractService {
             try { return (String) e.getClass().getMethod("getName").invoke(e); }
             catch (Exception ex) { return null; }
         }).orElse(null);
+    }
+
+    /** Sin fecha de término, el contrato se considera "Indefinido"; si no, respeta el tipo pedido. */
+    private Long resolveContractTypeId(Long requestedTypeId, LocalDate endDate) {
+        if (endDate != null) return requestedTypeId;
+        return contractTypeRepository.findByName("Indefinido")
+                .map(ContractType::getId)
+                .orElse(requestedTypeId);
     }
 
     private void validateCostCenter(Integer costCenter) {
