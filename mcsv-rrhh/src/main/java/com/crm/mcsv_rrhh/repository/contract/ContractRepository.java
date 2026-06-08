@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSpecificationExecutor<Contract> {
+
     List<Contract> findByEmployeeId(Long employeeId);
 
     Optional<Contract> findFirstByEmployeeIdAndContractStatusId(Long employeeId, Long contractStatusId);
@@ -34,10 +35,14 @@ public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSp
             """)
     List<Contract> findCalendarEvents(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
-    boolean existsByEmployeeIdAndStatusId(Long employeeId, Long statusId);
     long countByStatusId(Long statusId);
+
     long countByEmployeeIdAndStatusId(Long employeeId, Long statusId);
+
     long countByEmployeeId(Long employeeId);
+
     long countByContractStatusId(Long contractStatusId);
+
     long countByEmployeeIdAndContractStatusId(Long employeeId, Long contractStatusId);
+
 }
