@@ -1,4 +1,4 @@
-package com.crm.mcsv_rrhh.controller;
+package com.crm.mcsv_rrhh.controller.storage;
 
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.service.StorageService;
