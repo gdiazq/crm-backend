@@ -12,6 +12,7 @@ import com.crm.mcsv_rrhh.dto.leave.UpdateEmployeeLeaveRequest;
 import com.crm.mcsv_rrhh.dto.transfer.UpdateTransferRequest;
 import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;
 import com.crm.mcsv_rrhh.dto.overtime.OvertimeUpdateRequest;
+import com.crm.mcsv_rrhh.dto.settlement.UpdateSettlementRequest;
 import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnex;
 import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
 import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
@@ -123,30 +124,35 @@ public class HRRequestServiceImpl implements HRRequestService {
     }
 
     @Override
+    @Transactional
     public HRRequest createForSettlement(Long settlementId, Long employeeId, String action, String proposedData) {
         return createRequest(HRRequestTypeName.SETTLEMENT.getDisplayName(), employeeId, action, proposedData,
                 b -> b.settlementId(settlementId));
     }
 
     @Override
+    @Transactional
     public HRRequest createForTransfer(Long transferId, Long employeeId, String action, String proposedData) {
         return createRequest(HRRequestTypeName.TRANSFER.getDisplayName(), employeeId, action, proposedData,
                 b -> b.transferId(transferId));
     }
 
     @Override
+    @Transactional
     public HRRequest createForAnnex(Long annexId, Long employeeId, String action, String proposedData) {
         return createRequest(HRRequestTypeName.ANNEX.getDisplayName(), employeeId, action, proposedData,
                 b -> b.annexId(annexId));
     }
 
     @Override
+    @Transactional
     public HRRequest createForLeave(Long leaveId, Long employeeId, String action, String proposedData) {
         return createRequest(HRRequestTypeName.LEAVE.getDisplayName(), employeeId, action, proposedData,
                 b -> b.leaveId(leaveId));
     }
 
     @Override
+    @Transactional
     public HRRequest createForOvertime(Long overtimeId, Long employeeId, String action, String proposedData) {
         return createRequest(HRRequestTypeName.OVERTIME.getDisplayName(), employeeId, action, proposedData,
                 b -> b.overtimeId(overtimeId));
@@ -260,12 +266,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                 boolean isUpdate = "UPDATE".equals(hr.getAction()) && hr.getProposedData() != null;
 
                 if (isUpdate) {
-                    try {
-                        UpdateContractRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractRequest.class);
-                        contractMapper.applyUpdate(contract, proposed);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                    }
+                    contractMapper.applyUpdate(contract, parseProposed(hr, UpdateContractRequest.class));
                     // Retag archivos pendientes a CONTRACT
                     retagPendingFiles("CONTRACT_PENDING", "CONTRACT", hr.getId(), contract.getId());
                 } else {
@@ -293,13 +294,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Finiquito no encontrado: " + hr.getSettlementId()));
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                    try {
-                        com.crm.mcsv_rrhh.dto.settlement.UpdateSettlementRequest proposed =
-                                objectMapper.readValue(hr.getProposedData(), com.crm.mcsv_rrhh.dto.settlement.UpdateSettlementRequest.class);
-                        settlementMapper.applyUpdate(settlement, proposed);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                    }
+                    settlementMapper.applyUpdate(settlement, parseProposed(hr, UpdateSettlementRequest.class));
                 } else {
                     Contract contract = contractRepository.findById(settlement.getContractId())
                             .orElseThrow(() -> new ResourceNotFoundException("Contrato no encontrado: " + settlement.getContractId()));
@@ -314,12 +309,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Traspaso no encontrado: " + hr.getTransferId()));
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                    try {
-                        UpdateTransferRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateTransferRequest.class);
-                        transferMapper.applyUpdate(transfer, proposed);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                    }
+                    transferMapper.applyUpdate(transfer, parseProposed(hr, UpdateTransferRequest.class));
                     retagPendingFiles("TRANSFER_PENDING", "TRANSFER", hr.getId(), transfer.getId());
                 } else {
                     Employee employee = employeeRepository.findById(transfer.getEmployeeId())
@@ -344,12 +334,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Anexo no encontrado: " + hr.getAnnexId()));
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                    try {
-                        UpdateContractAnnexRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateContractAnnexRequest.class);
-                        contractAnnexMapper.applyUpdate(annex, proposed);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                    }
+                    contractAnnexMapper.applyUpdate(annex, parseProposed(hr, UpdateContractAnnexRequest.class));
                     retagPendingFiles("ANNEX_PENDING", "ANNEX", hr.getId(), annex.getId());
                 }
                 contractAnnexRepository.save(annex);
@@ -359,13 +344,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado: " + hr.getLeaveId()));
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                    UpdateEmployeeLeaveRequest proposed;
-                    try {
-                        proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeLeaveRequest.class);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                        throw new RuntimeException("Error deserializando la actualización del permiso", e);
-                    }
+                    UpdateEmployeeLeaveRequest proposed = parseProposed(hr, UpdateEmployeeLeaveRequest.class);
                     EmployeeLeave candidate = employeeLeaveMapper.mergeCandidate(leave, proposed);
                     leaveValidator.validate(candidate, null, leave.getId(), hr.getId());
                     employeeLeaveMapper.applyChanges(leave, candidate);
@@ -390,13 +369,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                                 "Hora extra no encontrada: " + hr.getOvertimeId()));
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                    OvertimeUpdateRequest proposed;
-                    try {
-                        proposed = objectMapper.readValue(hr.getProposedData(), OvertimeUpdateRequest.class);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                        throw new RuntimeException("Error deserializando la actualización de la hora extra", e);
-                    }
+                    OvertimeUpdateRequest proposed = parseProposed(hr, OvertimeUpdateRequest.class);
                     Overtime candidate = overtimeMapper.mergeCandidate(overtime, proposed);
                     OvertimeValidator.Result result = overtimeValidator.validate(candidate, overtime.getId());
                     overtime.setOvertimeTypeId(candidate.getOvertimeTypeId());
@@ -415,12 +388,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + hr.getIdModule()));
 
                 if ("UPDATE".equals(hr.getAction()) && hr.getProposedData() != null) {
-                    try {
-                        UpdateEmployeeRequest proposed = objectMapper.readValue(hr.getProposedData(), UpdateEmployeeRequest.class);
-                        employeeMapper.applyUpdate(employee, proposed);
-                    } catch (Exception e) {
-                        log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
-                    }
+                    employeeMapper.applyUpdate(employee, parseProposed(hr, UpdateEmployeeRequest.class));
                 } else {
                     employee.setStatusId(approvedStatusId);
                 }
@@ -523,18 +491,21 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .findAllByNameIn(RequestStatus.ACTIVE_DISPLAY_NAMES)
                 .stream().collect(Collectors.toMap(EmployeeStatus::getName, EmployeeStatus::getId));
 
-        List<Long> pendingIds = List.of(
-                statusIdsByName.get(RequestStatus.PENDING_REVIEW.getDisplayName()),
-                statusIdsByName.get(RequestStatus.PENDING_APPROVAL.getDisplayName())
-        );
+        List<Long> pendingIds = Stream.of(
+                        statusIdsByName.get(RequestStatus.PENDING_REVIEW.getDisplayName()),
+                        statusIdsByName.get(RequestStatus.PENDING_APPROVAL.getDisplayName()))
+                .filter(Objects::nonNull)
+                .toList();
         Long approvedId = statusIdsByName.get(RequestStatus.APPROVED.getDisplayName());
 
         long total = idModule != null ? hrRequestRepository.countByIdModule(idModule)
                 : hrRequestRepository.count();
-        long pending = idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)
-                : hrRequestRepository.countByStatusIdIn(pendingIds);
-        long active = idModule != null ? hrRequestRepository.countByIdModuleAndStatusId(idModule, approvedId)
-                : hrRequestRepository.countByStatusId(approvedId);
+        long pending = pendingIds.isEmpty() ? 0
+                : (idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)
+                                    : hrRequestRepository.countByStatusIdIn(pendingIds));
+        long active = approvedId == null ? 0
+                : (idModule != null ? hrRequestRepository.countByIdModuleAndStatusId(idModule, approvedId)
+                                    : hrRequestRepository.countByStatusId(approvedId));
         return Map.of("total", total, "active", active, "pending", pending);
     }
 
@@ -583,6 +554,15 @@ public class HRRequestServiceImpl implements HRRequestService {
         return employeeStatusRepository.findByName(name)
                 .map(EmployeeStatus::getId)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + name));
+    }
+    
+    private <T> T parseProposed(HRRequest hr, Class<T> type) {
+        try {
+            return objectMapper.readValue(hr.getProposedData(), type);
+        } catch (Exception e) {
+            log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
+            throw new IllegalStateException("proposedData inválido para la solicitud " + hr.getId(), e);
+        }
     }
 
     private HRRequestResponse toResponse(HRRequest hr) {
