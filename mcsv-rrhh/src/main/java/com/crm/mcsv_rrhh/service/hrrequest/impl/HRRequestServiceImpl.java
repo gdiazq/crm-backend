@@ -48,11 +48,12 @@ import com.crm.mcsv_rrhh.mapper.contract.ContractMapper;
 import com.crm.mcsv_rrhh.mapper.contractannex.ContractAnnexMapper;
 import com.crm.mcsv_rrhh.mapper.employee.EmployeeMapper;
 import com.crm.mcsv_rrhh.mapper.hrrequest.HRRequestMapper;
+import com.crm.mcsv_rrhh.mapper.leave.EmployeeLeaveMapper;
+import com.crm.mcsv_rrhh.mapper.overtime.OvertimeMapper;
 import com.crm.mcsv_rrhh.mapper.settlement.SettlementMapper;
 import com.crm.mcsv_rrhh.mapper.transfer.TransferMapper;
 import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
 import com.crm.mcsv_rrhh.service.projectassignment.ProjectAssignmentSyncService;
-import com.crm.mcsv_rrhh.util.leave.LeaveCalculator;
 import com.crm.mcsv_rrhh.util.leave.LeaveValidator;
 import com.crm.mcsv_rrhh.util.overtime.OvertimeValidator;
 import lombok.RequiredArgsConstructor;
@@ -105,6 +106,8 @@ public class HRRequestServiceImpl implements HRRequestService {
     private final TransferMapper transferMapper;
     private final ContractAnnexMapper contractAnnexMapper;
     private final EmployeeMapper employeeMapper;
+    private final EmployeeLeaveMapper employeeLeaveMapper;
+    private final OvertimeMapper overtimeMapper;
 
     @Override
     @Transactional
@@ -363,9 +366,9 @@ public class HRRequestServiceImpl implements HRRequestService {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                         throw new RuntimeException("Error deserializando la actualización del permiso", e);
                     }
-                    EmployeeLeave candidate = mergeLeaveCandidate(leave, proposed);
+                    EmployeeLeave candidate = employeeLeaveMapper.mergeCandidate(leave, proposed);
                     leaveValidator.validate(candidate, null, leave.getId(), hr.getId());
-                    applyLeaveChanges(leave, candidate);
+                    employeeLeaveMapper.applyChanges(leave, candidate);
                     retagPendingFiles("LEAVE_PENDING", "LEAVE", hr.getId(), leave.getId());
                 } else {
                     leaveValidator.validate(leave, null, leave.getId(), null);
@@ -394,7 +397,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                         throw new RuntimeException("Error deserializando la actualización de la hora extra", e);
                     }
-                    Overtime candidate = mergeOvertimeCandidate(overtime, proposed);
+                    Overtime candidate = overtimeMapper.mergeCandidate(overtime, proposed);
                     OvertimeValidator.Result result = overtimeValidator.validate(candidate, overtime.getId());
                     overtime.setOvertimeTypeId(candidate.getOvertimeTypeId());
                     overtime.setStartTime(candidate.getStartTime());
@@ -623,56 +626,6 @@ public class HRRequestServiceImpl implements HRRequestService {
         } catch (Exception e) {
             log.warn("Error deleting {} files for entity {}: {}", tag, entityId, e.getMessage());
         }
-    }
-
-    private EmployeeLeave mergeLeaveCandidate(EmployeeLeave current, UpdateEmployeeLeaveRequest proposed) {
-        var startDate = proposed.getStartDate() != null ? proposed.getStartDate() : current.getStartDate();
-        var endDate = proposed.getEndDate() != null ? proposed.getEndDate() : current.getEndDate();
-        var halfDay = proposed.getHalfDay() != null ? proposed.getHalfDay() : current.getHalfDay();
-
-        return EmployeeLeave.builder()
-                .id(current.getId())
-                .employeeId(current.getEmployeeId())
-                .contractId(current.getContractId())
-                .leaveTypeId(proposed.getLeaveTypeId() != null ? proposed.getLeaveTypeId() : current.getLeaveTypeId())
-                .startDate(startDate)
-                .endDate(endDate)
-                .halfDay(Boolean.TRUE.equals(halfDay))
-                .totalDays(LeaveCalculator.computeTotalDays(startDate, endDate, halfDay))
-                .reason(proposed.getReason() != null ? proposed.getReason() : current.getReason())
-                .createdAt(current.getCreatedAt())
-                .updatedAt(current.getUpdatedAt())
-                .build();
-    }
-
-    private Overtime mergeOvertimeCandidate(Overtime current, OvertimeUpdateRequest proposed) {
-        return Overtime.builder()
-                .id(current.getId())
-                .employeeId(current.getEmployeeId())
-                .contractId(current.getContractId())
-                .costCenter(current.getCostCenter())
-                .overtimeTypeId(proposed.getOvertimeTypeId() != null
-                        ? proposed.getOvertimeTypeId() : current.getOvertimeTypeId())
-                .attendanceId(current.getAttendanceId())
-                .date(current.getDate())
-                .startTime(proposed.getStartTime() != null
-                        ? proposed.getStartTime() : current.getStartTime())
-                .endTime(proposed.getEndTime() != null
-                        ? proposed.getEndTime() : current.getEndTime())
-                .hours(current.getHours())
-                .reason(proposed.getReason() != null ? proposed.getReason() : current.getReason())
-                .createdAt(current.getCreatedAt())
-                .updatedAt(current.getUpdatedAt())
-                .build();
-    }
-
-    private void applyLeaveChanges(EmployeeLeave target, EmployeeLeave source) {
-        target.setLeaveTypeId(source.getLeaveTypeId());
-        target.setStartDate(source.getStartDate());
-        target.setEndDate(source.getEndDate());
-        target.setHalfDay(source.getHalfDay());
-        target.setTotalDays(source.getTotalDays());
-        target.setReason(source.getReason());
     }
 
     private String fetchFullName(Long userId) {
