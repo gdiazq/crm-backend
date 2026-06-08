@@ -205,7 +205,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                                 UserDTO::getId,
                                 u -> u.getFirstName() + " " + u.getLastName()));
 
-        return page.map(hr -> toResponseBatch(hr, typeNames, statusNames, employees, approverNames));
+        return page.map(hr -> hrRequestMapper.toResponse(hr, typeNames, statusNames, employees, approverNames));
     }
 
     @Override
@@ -520,9 +520,12 @@ public class HRRequestServiceImpl implements HRRequestService {
         );
         Long approvedId = statusIdsByName.get(RequestStatus.APPROVED.getDisplayName());
 
-        long total   = idModule != null ? hrRequestRepository.countByIdModule(idModule)                              : hrRequestRepository.count();
-        long pending = idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)     : hrRequestRepository.countByStatusIdIn(pendingIds);
-        long active  = idModule != null ? hrRequestRepository.countByIdModuleAndStatusId(idModule, approvedId)       : hrRequestRepository.countByStatusId(approvedId);
+        long total = idModule != null ? hrRequestRepository.countByIdModule(idModule)
+                : hrRequestRepository.count();
+        long pending = idModule != null ? hrRequestRepository.countByIdModuleAndStatusIdIn(idModule, pendingIds)
+                : hrRequestRepository.countByStatusIdIn(pendingIds);
+        long active = idModule != null ? hrRequestRepository.countByIdModuleAndStatusId(idModule, approvedId)
+                : hrRequestRepository.countByStatusId(approvedId);
         return Map.of("total", total, "active", active, "pending", pending);
     }
 
@@ -553,41 +556,7 @@ public class HRRequestServiceImpl implements HRRequestService {
         });
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
-    private HRRequestResponse toResponseBatch(HRRequest hr,
-                                               Map<Long, String> typeNames,
-                                               Map<Long, String> statusNames,
-                                               Map<Long, Employee> employees,
-                                               Map<Long, String> approverNames) {
-        HRRequestResponse.HRRequestResponseBuilder builder = HRRequestResponse.builder()
-                .id(hr.getId())
-                .idModule(hr.getIdModule())
-                .requestTypeId(hr.getRequestTypeId())
-                .requestTypeName(typeNames.get(hr.getRequestTypeId()))
-                .statusId(hr.getStatusId())
-                .statusName(statusNames.get(hr.getStatusId()))
-                .action(hr.getAction())
-                .approverId(hr.getApproverId())
-                .approverFullName(hr.getApproverId() != null ? approverNames.get(hr.getApproverId()) : null)
-                .approvalDate(hr.getApprovalDate())
-                .hhrrApproverId(hr.getHhrrApproverId())
-                .hhrrApproverFullName(hr.getHhrrApproverId() != null ? approverNames.get(hr.getHhrrApproverId()) : null)
-                .hhrrApprovalDate(hr.getHhrrApprovalDate())
-                .rejectionDetail(hr.getRejectionDetail())
-                .createdAt(hr.getCreatedAt())
-                .updatedAt(hr.getUpdatedAt());
-
-        Employee emp = employees.get(hr.getIdModule());
-        if (emp != null) {
-            builder.identification(emp.getIdentification())
-                   .firstName(emp.getFirstName())
-                   .paternalLastName(emp.getPaternalLastName())
-                   .maternalLastName(emp.getMaternalLastName());
-        }
-
-        return builder.build();
-    }
+    // ─── Helpers service ──────────────────────────────────────────────────────────────
 
     private HRRequest findOrThrow(Long id) {
         return hrRequestRepository.findById(id)
@@ -612,37 +581,11 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .map(HRRequestType::getName)
                 .orElse(null);
         String statusName = resolveStatusName(hr.getStatusId());
+        Employee employee = employeeRepository.findById(hr.getIdModule()).orElse(null);
+        String approverName = hr.getApproverId() != null ? fetchFullName(hr.getApproverId()) : null;
+        String hhrrApproverName = hr.getHhrrApproverId() != null ? fetchFullName(hr.getHhrrApproverId()) : null;
 
-        HRRequestResponse.HRRequestResponseBuilder builder = HRRequestResponse.builder()
-                .id(hr.getId())
-                .idModule(hr.getIdModule())
-                .requestTypeId(hr.getRequestTypeId())
-                .requestTypeName(typeName)
-                .statusId(hr.getStatusId())
-                .statusName(statusName)
-                .action(hr.getAction())
-                .approverId(hr.getApproverId())
-                .approvalDate(hr.getApprovalDate())
-                .hhrrApproverId(hr.getHhrrApproverId())
-                .hhrrApprovalDate(hr.getHhrrApprovalDate())
-                .rejectionDetail(hr.getRejectionDetail())
-                .createdAt(hr.getCreatedAt())
-                .updatedAt(hr.getUpdatedAt());
-
-        employeeRepository.findById(hr.getIdModule()).ifPresent(e -> builder
-                .identification(e.getIdentification())
-                .firstName(e.getFirstName())
-                .paternalLastName(e.getPaternalLastName())
-                .maternalLastName(e.getMaternalLastName()));
-
-        if (hr.getApproverId() != null) {
-            builder.approverFullName(fetchFullName(hr.getApproverId()));
-        }
-        if (hr.getHhrrApproverId() != null) {
-            builder.hhrrApproverFullName(fetchFullName(hr.getHhrrApproverId()));
-        }
-
-        return builder.build();
+        return hrRequestMapper.toResponse(hr, typeName, statusName, employee, approverName, hhrrApproverName);
     }
 
     private void retagPendingFiles(Long hrRequestId, Long contractId) {
