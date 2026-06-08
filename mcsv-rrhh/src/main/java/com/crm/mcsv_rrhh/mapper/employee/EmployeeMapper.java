@@ -1,12 +1,12 @@
 package com.crm.mcsv_rrhh.mapper.employee;
 
 import com.crm.mcsv_rrhh.client.dto.UserDTO;
-import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.dto.employee.CreateEmployeeRequest;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeDetailResponse;
 import com.crm.mcsv_rrhh.dto.employee.EmployeeResponse;
 import com.crm.mcsv_rrhh.dto.employee.UpdateEmployeeRequest;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.mapper.shared.CatalogResolver;
 import com.crm.mcsv_rrhh.repository.afp.AfpRepository;
 import com.crm.mcsv_rrhh.repository.bank.BankRepository;
 import com.crm.mcsv_rrhh.repository.city.CityRepository;
@@ -29,7 +29,6 @@ import com.crm.mcsv_rrhh.repository.profession.ProfessionRepository;
 import com.crm.mcsv_rrhh.repository.region.RegionRepository;
 import com.crm.mcsv_rrhh.repository.retirementstatus.RetirementStatusRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -192,22 +191,22 @@ public class EmployeeMapper {
                 .id(e.getId())
                 .userId(e.getUserId())
                 .identification(e.getIdentification())
-                .identificationType(resolve(e.getIdentificationTypeId(), identificationTypeRepository))
+                .identificationType(CatalogResolver.item(e.getIdentificationTypeId(), identificationTypeRepository))
                 .firstName(e.getFirstName())
                 .paternalLastName(e.getPaternalLastName())
                 .maternalLastName(e.getMaternalLastName())
                 .birthDate(e.getBirthDate())
-                .gender(resolve(e.getGenderId(), genderRepository))
-                .maritalStatus(resolve(e.getMaritalStatusId(), maritalStatusRepository))
-                .educationLevel(resolve(e.getEducationLevelId(), educationLevelRepository))
-                .driverLicense(resolve(e.getDriverLicenseId(), driverLicenseRepository))
-                .profession(resolve(e.getProfessionId(), professionRepository))
+                .gender(CatalogResolver.item(e.getGenderId(), genderRepository))
+                .maritalStatus(CatalogResolver.item(e.getMaritalStatusId(), maritalStatusRepository))
+                .educationLevel(CatalogResolver.item(e.getEducationLevelId(), educationLevelRepository))
+                .driverLicense(CatalogResolver.item(e.getDriverLicenseId(), driverLicenseRepository))
+                .profession(CatalogResolver.item(e.getProfessionId(), professionRepository))
                 .personalEmail(e.getPersonalEmail())
                 .corporateEmail(e.getCorporateEmail())
                 .phone(e.getPhone())
                 .phone2(e.getPhone2())
                 .emergencyContactName(e.getEmergencyContactName())
-                .emergencyContactRelationship(resolve(e.getEmergencyContactRelationshipId(), emergencyContactRelationshipRepository))
+                .emergencyContactRelationship(CatalogResolver.item(e.getEmergencyContactRelationshipId(), emergencyContactRelationshipRepository))
                 .emergencyContactPhone(e.getEmergencyContactPhone())
                 .emergencyContactPhone2(e.getEmergencyContactPhone2())
                 .streetName(e.getStreetName())
@@ -216,24 +215,24 @@ public class EmployeeMapper {
                 .department(e.getDepartment())
                 .village(e.getVillage())
                 .block(e.getBlock())
-                .region(resolve(e.getRegionId(), regionRepository))
-                .city(resolve(e.getCityId(), cityRepository))
-                .commune(resolve(e.getCommuneId(), communeRepository))
-                .expat(resolve(e.getExpatId(), expatRepository))
-                .nationality(resolve(e.getNationalityId(), nationalityRepository))
-                .familyAllowanceTier(resolve(e.getFamilyAllowanceTierId(), familyAllowanceTierRepository))
-                .retirementStatus(resolve(e.getRetirementStatusId(), retirementStatusRepository))
+                .region(CatalogResolver.item(e.getRegionId(), regionRepository))
+                .city(CatalogResolver.item(e.getCityId(), cityRepository))
+                .commune(CatalogResolver.item(e.getCommuneId(), communeRepository))
+                .expat(CatalogResolver.item(e.getExpatId(), expatRepository))
+                .nationality(CatalogResolver.item(e.getNationalityId(), nationalityRepository))
+                .familyAllowanceTier(CatalogResolver.item(e.getFamilyAllowanceTierId(), familyAllowanceTierRepository))
+                .retirementStatus(CatalogResolver.item(e.getRetirementStatusId(), retirementStatusRepository))
                 .isapreFun(e.getIsapreFun())
-                .pensionStatus(resolve(e.getPensionStatusId(), pensionStatusRepository))
-                .afp(resolve(e.getAfpId(), afpRepository))
-                .healthInsurance(resolve(e.getHealthInsuranceId(), healthInsuranceRepository))
-                .healthInsuranceTariff(resolve(e.getHealthInsuranceTariffId(), healthInsuranceTariffRepository))
+                .pensionStatus(CatalogResolver.item(e.getPensionStatusId(), pensionStatusRepository))
+                .afp(CatalogResolver.item(e.getAfpId(), afpRepository))
+                .healthInsurance(CatalogResolver.item(e.getHealthInsuranceId(), healthInsuranceRepository))
+                .healthInsuranceTariff(CatalogResolver.item(e.getHealthInsuranceTariffId(), healthInsuranceTariffRepository))
                 .healthInsuranceUF(e.getHealthInsuranceUF())
                 .healthInsurancePesos(e.getHealthInsurancePesos())
-                .paymentMethod(resolve(e.getPaymentMethodId(), paymentMethodRepository))
-                .bank(resolve(e.getBankId(), bankRepository))
+                .paymentMethod(CatalogResolver.item(e.getPaymentMethodId(), paymentMethodRepository))
+                .bank(CatalogResolver.item(e.getBankId(), bankRepository))
                 .bankAccount(e.getBankAccount())
-                .status(resolve(e.getStatusId(), employeeStatusRepository))
+                .status(CatalogResolver.item(e.getStatusId(), employeeStatusRepository))
                 .clothingSize(e.getClothingSize())
                 .shoeSize(e.getShoeSize())
                 .pantSize(e.getPantSize())
@@ -252,19 +251,5 @@ public class EmployeeMapper {
         builder.hasContract(e.getHasContract());
 
         return builder.build();
-    }
-
-    private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {
-        if (id == null) return null;
-        return repo.findById(id)
-                .map(e -> {
-                    try {
-                        var getName = e.getClass().getMethod("getName");
-                        return new CatalogItem(id, (String) getName.invoke(e));
-                    } catch (Exception ex) {
-                        return new CatalogItem(id, null);
-                    }
-                })
-                .orElse(null);
     }
 }

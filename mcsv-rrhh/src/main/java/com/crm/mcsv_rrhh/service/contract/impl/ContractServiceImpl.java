@@ -4,7 +4,6 @@ import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.client.UserClient;
-import com.crm.mcsv_rrhh.dto.CatalogItem;
 import com.crm.mcsv_rrhh.client.dto.UserDTO;
 import com.crm.mcsv_rrhh.dto.contract.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.contract.ContractResponse;
@@ -25,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,12 +54,6 @@ import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
 import com.crm.mcsv_rrhh.repository.jobtitle.JobTitleRepository;
-import com.crm.mcsv_rrhh.repository.laborunion.LaborUnionRepository;
-import com.crm.mcsv_rrhh.repository.mealtype.MealTypeRepository;
-import com.crm.mcsv_rrhh.repository.safetygroup.SafetyGroupRepository;
-import com.crm.mcsv_rrhh.repository.site.SiteRepository;
-import com.crm.mcsv_rrhh.repository.transporttype.TransportTypeRepository;
-import com.crm.mcsv_rrhh.repository.zone.ZoneRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -81,14 +73,8 @@ public class ContractServiceImpl implements ContractService {
     private final EmployeeStatusRepository employeeStatusRepository;
     private final ContractStatusRepository contractStatusRepository;
     private final ContractTypeRepository contractTypeRepository;
-    private final SafetyGroupRepository safetyGroupRepository;
     private final CompanyRepository companyRepository;
-    private final ZoneRepository zoneRepository;
     private final JobTitleRepository jobTitleRepository;
-    private final SiteRepository siteRepository;
-    private final LaborUnionRepository laborUnionRepository;
-    private final MealTypeRepository mealTypeRepository;
-    private final TransportTypeRepository transportTypeRepository;
     private final ProjectClient projectClient;
     private final UserClient userClient;
     private final ContractMapper contractMapper;
@@ -113,7 +99,7 @@ public class ContractServiceImpl implements ContractService {
         HRRequest req = hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
 
         List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
-        return toDetailResponse(saved, req.getId(), documents);
+        return contractMapper.toDetailResponse(saved, req.getId(), documents);
     }
 
     // ─── Detalle ──────────────────────────────────────────────────────────────
@@ -125,7 +111,7 @@ public class ContractServiceImpl implements ContractService {
         Long requestId = hrRequestRepository.findTopByContractIdOrderByCreatedAtDesc(id)
                 .map(HRRequest::getId).orElse(null);
         List<FileMetadataResponse> documents = fetchDocuments(id);
-        return toDetailResponse(contract, requestId, documents);
+        return contractMapper.toDetailResponse(contract, requestId, documents);
     }
 
     // ─── Editar ───────────────────────────────────────────────────────────────
@@ -154,7 +140,7 @@ public class ContractServiceImpl implements ContractService {
                 .map(HRRequest::getId).orElse(hrReq.getId());
 
         List<FileMetadataResponse> documents = fetchDocuments(id);
-        return toDetailResponse(contract, requestId, documents);
+        return contractMapper.toDetailResponse(contract, requestId, documents);
     }
 
     // ─── Listar ───────────────────────────────────────────────────────────────
@@ -175,7 +161,7 @@ public class ContractServiceImpl implements ContractService {
                 ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
                 : pageable;
         Specification<Contract> spec = ContractSpecification.withFilters(search, employeeId, statusId, contractStatusId, contractTypeId, costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, sortBy, sortDir);
-        return contractRepository.findAll(spec, effectivePageable).map(this::toResponse);
+        return contractRepository.findAll(spec, effectivePageable).map(contractMapper::toResponse);
     }
 
     @Override
@@ -304,32 +290,6 @@ public class ContractServiceImpl implements ContractService {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private ContractResponse toResponse(Contract c) {
-        var employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
-        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
-        String employeeIdentification = employee != null ? employee.getIdentification() : null;
-
-        return ContractResponse.builder()
-                .id(c.getId())
-                .employeeId(c.getEmployeeId())
-                .employeeName(employeeName)
-                .employeeIdentification(employeeIdentification)
-                .name(c.getName())
-                .contractNumber(c.getContractNumber())
-                .contractType(resolveName(c.getContractTypeId(), contractTypeRepository))
-                .contractStatus(resolveName(c.getContractStatusId(), contractStatusRepository))
-                .company(resolveName(c.getCompanyId(), companyRepository))
-                .jobTitle(resolveName(c.getJobTitleId(), jobTitleRepository))
-                .costCenter(c.getCostCenter())
-                .projectName(resolveProjectName(c.getCostCenter()))
-                .baseSalary(c.getBaseSalary())
-                .startDate(c.getStartDate())
-                .endDate(c.getEndDate())
-                .createdAt(c.getCreatedAt())
-                .updatedAt(c.getUpdatedAt())
-                .build();
-    }
-
     private List<FileMetadataResponse> fetchDocuments(Long contractId) {
         try {
             List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, contractId);
@@ -338,53 +298,6 @@ public class ContractServiceImpl implements ContractService {
             log.warn("No se pudieron obtener documentos del contrato {}: {}", contractId, e.getMessage());
             return Collections.emptyList();
         }
-    }
-
-    private ContractDetailResponse toDetailResponse(Contract c, Long requestId, List<FileMetadataResponse> documents) {
-        var employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
-        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
-        String employeeIdentification = employee != null ? employee.getIdentification() : null;
-
-        return ContractDetailResponse.builder()
-                .id(c.getId())
-                .employeeId(c.getEmployeeId())
-                .employeeName(employeeName)
-                .employeeIdentification(employeeIdentification)
-                .name(c.getName())
-                .contractNumber(c.getContractNumber())
-                .contractType(resolve(c.getContractTypeId(), contractTypeRepository))
-                .contractStatus(resolve(c.getContractStatusId(), contractStatusRepository))
-                .safetyGroup(resolve(c.getSafetyGroupId(), safetyGroupRepository))
-                .contractDetail(c.getContractDetail())
-                .baseSalary(c.getBaseSalary())
-                .agreedSalary(c.getAgreedSalary())
-                .company(resolve(c.getCompanyId(), companyRepository))
-                .zone(resolve(c.getZoneId(), zoneRepository))
-                .jobTitle(resolve(c.getJobTitleId(), jobTitleRepository))
-                .site(resolve(c.getSiteId(), siteRepository))
-                .laborUnion(resolve(c.getLaborUnionId(), laborUnionRepository))
-                .costCenter(c.getCostCenter())
-                .projectName(resolveProjectName(c.getCostCenter()))
-                .weeklyWorkHours(c.getWeeklyWorkHours())
-                .workDays(c.getWorkDays())
-                .startDate(c.getStartDate())
-                .endDate(c.getEndDate())
-                .mealType(resolve(c.getMealTypeId(), mealTypeRepository))
-                .transportType(resolve(c.getTransportTypeId(), transportTypeRepository))
-                .status(resolve(c.getStatusId(), employeeStatusRepository))
-                .createdAt(c.getCreatedAt())
-                .updatedAt(c.getUpdatedAt())
-                .requestId(requestId)
-                .documents(documents)
-                .build();
-    }
-
-    private <T> String resolveName(Long id, JpaRepository<T, Long> repo) {
-        if (id == null) return null;
-        return repo.findById(id).map(e -> {
-            try { return (String) e.getClass().getMethod("getName").invoke(e); }
-            catch (Exception ex) { return null; }
-        }).orElse(null);
     }
 
     /** Sin fecha de término, el contrato se considera "Indefinido"; si no, respeta el tipo pedido. */
@@ -408,31 +321,6 @@ public class ContractServiceImpl implements ContractService {
         if (project == null || project.getId() == null) {
             throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
         }
-    }
-
-    private String resolveProjectName(Integer costCenter) {
-        if (costCenter == null) return null;
-        try {
-            ProjectClient.ProjectNameDTO project = projectClient.getByCostCenter(costCenter);
-            return project != null ? project.getName() : null;
-        } catch (Exception e) {
-            log.warn("No se pudo resolver nombre de proyecto para costCenter={}: {}", costCenter, e.getMessage());
-            return null;
-        }
-    }
-
-    private <T> CatalogItem resolve(Long id, JpaRepository<T, Long> repo) {
-        if (id == null) return null;
-        return repo.findById(id)
-                .map(e -> {
-                    try {
-                        var getName = e.getClass().getMethod("getName");
-                        return new CatalogItem(id, (String) getName.invoke(e));
-                    } catch (Exception ex) {
-                        return new CatalogItem(id, null);
-                    }
-                })
-                .orElse(null);
     }
 
     // ─── Export CSV ───────────────────────────────────────────────────────────
