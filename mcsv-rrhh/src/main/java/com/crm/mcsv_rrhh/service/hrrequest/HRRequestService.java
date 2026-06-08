@@ -3,12 +3,10 @@ package com.crm.mcsv_rrhh.service.hrrequest;
 import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestDetailResponse;
 import com.crm.mcsv_rrhh.dto.hrrequest.HRRequestResponse;
 import com.crm.mcsv_rrhh.dto.hrrequest.RejectHRRequestRequest;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.Map;
 
 public interface HRRequestService {
 
@@ -26,10 +24,10 @@ public interface HRRequestService {
 
     HRRequest createForOvertime(Long overtimeId, Long employeeId, String action, String proposedData);
 
-    Page<HRRequestResponse> list(Long idModule, Long statusId,
-                                  LocalDate createdFrom, LocalDate createdTo,
-                                  LocalDate approvalFrom, LocalDate approvalTo,
-                                  Pageable pageable, String sortBy, String sortDir);
+    PagedResponse<HRRequestResponse> listRequests(Long idModule, Long statusId,
+                                                  LocalDate createdFrom, LocalDate createdTo,
+                                                  LocalDate approvalFrom, LocalDate approvalTo,
+                                                  int page, int size, String sortBy, String sortDir);
 
     HRRequestDetailResponse getById(Long id);
 
@@ -38,7 +36,5 @@ public interface HRRequestService {
     byte[] exportCsv();
 
     HRRequestResponse reject(Long id, RejectHRRequestRequest req);
-
-    Map<String, Long> getStats(Long idModule);
 
 }

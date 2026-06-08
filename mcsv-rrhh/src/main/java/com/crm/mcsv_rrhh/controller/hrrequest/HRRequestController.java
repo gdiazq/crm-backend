@@ -9,13 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import java.util.Set;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +24,6 @@ import org.springframework.web.bind.annotation.*;
 public class HRRequestController {
 
     private final HRRequestService hrRequestService;
-
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
-            "identification", "firstName", "paternalLastName",
-            "requestTypeId", "action", "statusId", "approverId", "approvalDate", "createdAt", "updatedAt"
-    );
 
     @GetMapping("/paged")
     @Operation(summary = "Listar solicitudes (paginado). idModule y statusId opcionales para filtrar.")
@@ -47,12 +38,8 @@ public class HRRequestController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
-        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        var result  = hrRequestService.list(idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, pageable, safeSortBy, sortDir);
-        var stats   = hrRequestService.getStats(idModule);
-        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
+        return ResponseEntity.ok(hrRequestService.listRequests(
+                idModule, statusId, createdFrom, createdTo, approvalFrom, approvalTo, page, size, sortBy, sortDir));
     }
 
     @GetMapping("/detail/{id}")

@@ -1,5 +1,6 @@
 package com.crm.mcsv_rrhh.service.hrrequest.impl;
 
+import com.crm.common.dto.PagedResponse;
 import com.crm.common.service.StorageService;
 import com.crm.common.util.CsvUtil;
 import com.crm.mcsv_rrhh.client.UserClient;
@@ -62,6 +63,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -178,8 +180,29 @@ public class HRRequestServiceImpl implements HRRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + initialStatusName));
     }
 
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "identification", "firstName", "paternalLastName",
+            "requestTypeId", "action", "statusId", "approverId", "approvalDate", "createdAt", "updatedAt"
+    );
+
     @Override
-    public Page<HRRequestResponse> list(Long idModule, Long statusId,
+    public PagedResponse<HRRequestResponse> listRequests(Long idModule, Long statusId,
+                                                         LocalDate createdFrom, LocalDate createdTo,
+                                                         LocalDate approvalFrom, LocalDate approvalTo,
+                                                         int page, int size, String sortBy, String sortDir) {
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(safeSortBy).ascending()
+                : Sort.by(safeSortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<HRRequestResponse> result = list(idModule, statusId, createdFrom, createdTo,
+                approvalFrom, approvalTo, pageable, safeSortBy, sortDir);
+        Map<String, Long> stats = getStats(idModule);
+        return PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending"));
+    }
+
+    private Page<HRRequestResponse> list(Long idModule, Long statusId,
                                          LocalDate createdFrom, LocalDate createdTo,
                                          LocalDate approvalFrom, LocalDate approvalTo,
                                          Pageable pageable, String sortBy, String sortDir) {
@@ -485,8 +508,7 @@ public class HRRequestServiceImpl implements HRRequestService {
         return toResponse(hr);
     }
 
-    @Override
-    public Map<String, Long> getStats(Long idModule) {
+    private Map<String, Long> getStats(Long idModule) {
         Map<String, Long> statusIdsByName = employeeStatusRepository
                 .findAllByNameIn(RequestStatus.ACTIVE_DISPLAY_NAMES)
                 .stream().collect(Collectors.toMap(EmployeeStatus::getName, EmployeeStatus::getId));
