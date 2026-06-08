@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -263,7 +264,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
                     // Retag archivos pendientes a CONTRACT
-                    retagPendingFiles(hr.getId(), contract.getId());
+                    retagPendingFiles("CONTRACT_PENDING", "CONTRACT", hr.getId(), contract.getId());
                 } else {
                     contract.setStatusId(approvedStatusId);
                     contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
@@ -316,7 +317,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
-                    retagPendingTransferFiles(hr.getId(), transfer.getId());
+                    retagPendingFiles("TRANSFER_PENDING", "TRANSFER", hr.getId(), transfer.getId());
                 } else {
                     Employee employee = employeeRepository.findById(transfer.getEmployeeId())
                             .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + transfer.getEmployeeId()));
@@ -346,7 +347,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                     } catch (Exception e) {
                         log.warn("No se pudo deserializar proposedData para HRRequest id {}: {}", hr.getId(), e.getMessage());
                     }
-                    retagPendingAnnexFiles(hr.getId(), annex.getId());
+                    retagPendingFiles("ANNEX_PENDING", "ANNEX", hr.getId(), annex.getId());
                 }
                 contractAnnexRepository.save(annex);
             }
@@ -365,7 +366,7 @@ public class HRRequestServiceImpl implements HRRequestService {
                     EmployeeLeave candidate = mergeLeaveCandidate(leave, proposed);
                     leaveValidator.validate(candidate, null, leave.getId(), hr.getId());
                     applyLeaveChanges(leave, candidate);
-                    retagPendingLeaveFiles(hr.getId(), leave.getId());
+                    retagPendingFiles("LEAVE_PENDING", "LEAVE", hr.getId(), leave.getId());
                 } else {
                     leaveValidator.validate(leave, null, leave.getId(), null);
                 }
@@ -456,10 +457,14 @@ public class HRRequestServiceImpl implements HRRequestService {
         // UPDATE rechazado → solo se limpian los archivos pendientes; la entidad no se toca.
         if ("UPDATE".equals(hr.getAction()) && type != null) {
             switch (type) {
-                case CONTRACT -> deletePendingFiles(hr.getId(), hr.getContractId());
-                case TRANSFER -> deletePendingTransferFiles(hr.getId(), hr.getTransferId());
-                case ANNEX    -> deletePendingAnnexFiles(hr.getId(), hr.getAnnexId());
-                case LEAVE    -> deletePendingLeaveFiles(hr.getId(), hr.getLeaveId());
+                case CONTRACT -> deleteFiles("CONTRACT_PENDING", hr.getId(),
+                        () -> contractRepository.findById(hr.getContractId()).map(Contract::getEmployeeId).orElse(null));
+                case TRANSFER -> deleteFiles("TRANSFER_PENDING", hr.getId(),
+                        () -> transferRepository.findById(hr.getTransferId()).map(Transfer::getEmployeeId).orElse(null));
+                case ANNEX    -> deleteFiles("ANNEX_PENDING", hr.getId(),
+                        () -> contractAnnexRepository.findById(hr.getAnnexId()).map(ContractAnnex::getEmployeeId).orElse(null));
+                case LEAVE    -> deleteFiles("LEAVE_PENDING", hr.getId(),
+                        () -> employeeLeaveRepository.findById(hr.getLeaveId()).map(EmployeeLeave::getEmployeeId).orElse(null));
                 default       -> { }
             }
         }
@@ -492,7 +497,8 @@ public class HRRequestServiceImpl implements HRRequestService {
                 }
                 case LEAVE -> {
                     if (hr.getLeaveId() != null) {
-                        deleteLeaveFiles(hr.getLeaveId());
+                        deleteFiles("LEAVE", hr.getLeaveId(),
+                                () -> employeeLeaveRepository.findById(hr.getLeaveId()).map(EmployeeLeave::getEmployeeId).orElse(null));
                         employeeLeaveRepository.deleteById(hr.getLeaveId());
                     }
                 }
@@ -588,93 +594,34 @@ public class HRRequestServiceImpl implements HRRequestService {
         return hrRequestMapper.toResponse(hr, typeName, statusName, employee, approverName, hhrrApproverName);
     }
 
-    private void retagPendingFiles(Long hrRequestId, Long contractId) {
+    private void retagPendingFiles(String pendingTag, String finalTag, Long hrRequestId, Long entityId) {
         try {
-            var response = storageService.listByEntity("CONTRACT_PENDING", hrRequestId);
+            var response = storageService.listByEntity(pendingTag, hrRequestId);
             if (response != null) {
                 for (FileMetadataResponse file : response) {
-                    storageService.retag(file.getId(), "CONTRACT", contractId);
+                    storageService.retag(file.getId(), finalTag, entityId);
                 }
             }
         } catch (Exception e) {
-            log.warn("Error retagging pending files for hrRequest {}: {}", hrRequestId, e.getMessage());
+            log.warn("Error retagging pending {} files for hrRequest {}: {}", finalTag, hrRequestId, e.getMessage());
         }
     }
 
-    private void deletePendingFiles(Long hrRequestId, Long contractId) {
+    /**
+     * Borra los archivos asociados a {@code entityId} bajo {@code tag}. El uploadedBy (employeeId del
+     * dueño) se resuelve de forma perezosa: solo se busca si hay archivos que borrar.
+     */
+    private void deleteFiles(String tag, Long entityId, Supplier<Long> uploadedByResolver) {
         try {
-            var response = storageService.listByEntity("CONTRACT_PENDING", hrRequestId);
-            if (response != null) {
-                Contract contract = contractRepository.findById(contractId).orElse(null);
-                Long uploadedBy = contract != null ? contract.getEmployeeId() : null;
-                if (uploadedBy != null) {
-                    for (FileMetadataResponse file : response) {
-                        storageService.delete(file.getId(), uploadedBy);
-                    }
-                }
+            var response = storageService.listByEntity(tag, entityId);
+            if (response == null) return;
+            Long uploadedBy = uploadedByResolver.get();
+            if (uploadedBy == null) return;
+            for (FileMetadataResponse file : response) {
+                storageService.delete(file.getId(), uploadedBy);
             }
         } catch (Exception e) {
-            log.warn("Error deleting pending files for hrRequest {}: {}", hrRequestId, e.getMessage());
-        }
-    }
-
-    private void retagPendingTransferFiles(Long hrRequestId, Long transferId) {
-        try {
-            var response = storageService.listByEntity("TRANSFER_PENDING", hrRequestId);
-            if (response != null) {
-                for (FileMetadataResponse file : response) {
-                    storageService.retag(file.getId(), "TRANSFER", transferId);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error retagging pending transfer files for hrRequest {}: {}", hrRequestId, e.getMessage());
-        }
-    }
-
-    private void deletePendingTransferFiles(Long hrRequestId, Long transferId) {
-        try {
-            var response = storageService.listByEntity("TRANSFER_PENDING", hrRequestId);
-            if (response != null) {
-                Transfer transfer = transferRepository.findById(transferId).orElse(null);
-                Long uploadedBy = transfer != null ? transfer.getEmployeeId() : null;
-                if (uploadedBy != null) {
-                    for (FileMetadataResponse file : response) {
-                        storageService.delete(file.getId(), uploadedBy);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error deleting pending transfer files for hrRequest {}: {}", hrRequestId, e.getMessage());
-        }
-    }
-
-    private void retagPendingAnnexFiles(Long hrRequestId, Long annexId) {
-        try {
-            var response = storageService.listByEntity("ANNEX_PENDING", hrRequestId);
-            if (response != null) {
-                for (FileMetadataResponse file : response) {
-                    storageService.retag(file.getId(), "ANNEX", annexId);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error retagging pending annex files for hrRequest {}: {}", hrRequestId, e.getMessage());
-        }
-    }
-
-    private void deletePendingAnnexFiles(Long hrRequestId, Long annexId) {
-        try {
-            var response = storageService.listByEntity("ANNEX_PENDING", hrRequestId);
-            if (response != null) {
-                ContractAnnex annex = contractAnnexRepository.findById(annexId).orElse(null);
-                Long uploadedBy = annex != null ? annex.getEmployeeId() : null;
-                if (uploadedBy != null) {
-                    for (FileMetadataResponse file : response) {
-                        storageService.delete(file.getId(), uploadedBy);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error deleting pending annex files for hrRequest {}: {}", hrRequestId, e.getMessage());
+            log.warn("Error deleting {} files for entity {}: {}", tag, entityId, e.getMessage());
         }
     }
 
@@ -726,53 +673,6 @@ public class HRRequestServiceImpl implements HRRequestService {
         target.setHalfDay(source.getHalfDay());
         target.setTotalDays(source.getTotalDays());
         target.setReason(source.getReason());
-    }
-
-    private void retagPendingLeaveFiles(Long hrRequestId, Long leaveId) {
-        try {
-            var response = storageService.listByEntity("LEAVE_PENDING", hrRequestId);
-            if (response != null) {
-                for (FileMetadataResponse file : response) {
-                    storageService.retag(file.getId(), "LEAVE", leaveId);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error retagging pending leave files for hrRequest {}: {}", hrRequestId, e.getMessage());
-        }
-    }
-
-    private void deletePendingLeaveFiles(Long hrRequestId, Long leaveId) {
-        try {
-            var response = storageService.listByEntity("LEAVE_PENDING", hrRequestId);
-            if (response != null) {
-                EmployeeLeave leave = employeeLeaveRepository.findById(leaveId).orElse(null);
-                Long uploadedBy = leave != null ? leave.getEmployeeId() : null;
-                if (uploadedBy != null) {
-                    for (FileMetadataResponse file : response) {
-                        storageService.delete(file.getId(), uploadedBy);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error deleting pending leave files for hrRequest {}: {}", hrRequestId, e.getMessage());
-        }
-    }
-
-    private void deleteLeaveFiles(Long leaveId) {
-        try {
-            var response = storageService.listByEntity("LEAVE", leaveId);
-            if (response != null) {
-                EmployeeLeave leave = employeeLeaveRepository.findById(leaveId).orElse(null);
-                Long uploadedBy = leave != null ? leave.getEmployeeId() : null;
-                if (uploadedBy != null) {
-                    for (FileMetadataResponse file : response) {
-                        storageService.delete(file.getId(), uploadedBy);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error deleting leave files for leave {}: {}", leaveId, e.getMessage());
-        }
     }
 
     private String fetchFullName(Long userId) {
