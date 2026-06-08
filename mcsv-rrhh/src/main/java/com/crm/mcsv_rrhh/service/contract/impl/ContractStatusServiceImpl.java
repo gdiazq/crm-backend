@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.service.contract.impl;
 
 import com.crm.mcsv_rrhh.dto.contract.ContractStatusResponse;
-import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.mapper.contract.ContractStatusMapper;
 import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
 import com.crm.mcsv_rrhh.service.contract.ContractStatusService;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +14,12 @@ import java.util.List;
 public class ContractStatusServiceImpl implements ContractStatusService {
 
     private final ContractStatusRepository repository;
+    private final ContractStatusMapper mapper;
 
     @Override
     public List<ContractStatusResponse> selectAll() {
         return repository.findAll().stream()
-                .map(e -> ContractStatusResponse.builder()
-                        .id(e.getId())
-                        .name(e.getName())
-                        .build())
+                .map(mapper::toResponse)
                 .toList();
     }
 }
