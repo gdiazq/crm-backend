@@ -13,13 +13,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ContractStatusServiceImpl implements ContractStatusService {
 
-    private final ContractStatusRepository repository;
-    private final ContractStatusMapper mapper;
+    private final ContractStatusRepository contractStatusRepository;
+    private final ContractStatusMapper contractStatusMapper;
 
     @Override
     public List<ContractStatusResponse> selectAll() {
-        return repository.findAll().stream()
-                .map(mapper::toResponse)
+        return contractStatusRepository.findAll().stream()
+                .map(contractStatusMapper::toResponse)
                 .toList();
     }
 }

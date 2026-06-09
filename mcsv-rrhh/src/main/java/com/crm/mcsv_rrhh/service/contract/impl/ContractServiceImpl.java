@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.contract.impl;
 
 import com.crm.common.service.StorageService;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.mcsv_rrhh.client.dto.UserDTO;
@@ -22,7 +23,9 @@ import com.crm.mcsv_rrhh.util.FileUploadHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -147,8 +150,35 @@ public class ContractServiceImpl implements ContractService {
 
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "identification", "firstName",
+            "name", "companyId", "contractTypeId", "contractStatusId", "statusId", "startDate", "endDate", "createdAt"
+    );
+
     @Override
-    public Page<ContractResponse> list(String search,
+    public PagedResponse<ContractResponse> listContracts(String search,
+                                                         Long employeeId, Long statusId,
+                                                         Long contractStatusId, Long contractTypeId,
+                                                         Integer costCenter,
+                                                         LocalDate createdFrom, LocalDate createdTo,
+                                                         LocalDate startDateFrom, LocalDate startDateTo,
+                                                         LocalDate endDateFrom, LocalDate endDateTo,
+                                                         LocalDate updatedFrom, LocalDate updatedTo,
+                                                         int page, int size, String sortBy, String sortDir) {
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(safeSortBy).ascending()
+                : Sort.by(safeSortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ContractResponse> result = list(search, employeeId, statusId, contractStatusId, contractTypeId,
+                costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo,
+                updatedFrom, updatedTo, pageable, safeSortBy, sortDir);
+        Map<String, Long> stats = getStats(employeeId);
+        return PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending"));
+    }
+
+    private Page<ContractResponse> list(String search,
                                        Long employeeId, Long statusId,
                                        Long contractStatusId, Long contractTypeId,
                                        Integer costCenter,
@@ -164,8 +194,7 @@ public class ContractServiceImpl implements ContractService {
         return contractRepository.findAll(spec, effectivePageable).map(contractMapper::toResponse);
     }
 
-    @Override
-    public Map<String, Long> getStats(Long employeeId) {
+    private Map<String, Long> getStats(Long employeeId) {
         Long pendingStatusId = employeeStatusRepository.findByName(RequestStatus.PENDING_REVIEW.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(-1L);
         Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
@@ -216,33 +245,6 @@ public class ContractServiceImpl implements ContractService {
     @Transactional(readOnly = true)
     public List<ContractService.EmployeeSelectItem> getCompanyRepresentatives() {
         return findEmployeesByRole(userClient::getCompanyRepresentatives, "representantes de empresa");
-    }
-
-    private List<ContractService.EmployeeSelectItem> findEmployeesByRole(Supplier<List<UserDTO>> userFetcher, String roleLabel) {
-        try {
-            List<Long> userIds = userFetcher.get().stream().map(UserDTO::getId).toList();
-            if (userIds.isEmpty()) return List.of();
-
-            Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
-                    .map(EmployeeStatus::getId).orElse(null);
-            Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
-                    .map(ContractStatus::getId).orElse(null);
-            if (approvedStatusId == null || activeContractStatusId == null) return List.of();
-
-            Set<Long> employeeIdsWithActiveContract = Set.copyOf(
-                    contractRepository.findEmployeeIdsByContractStatusId(activeContractStatusId));
-            if (employeeIdsWithActiveContract.isEmpty()) return List.of();
-
-            return employeeRepository.findByUserIdIn(userIds).stream()
-                    .filter(e -> Boolean.TRUE.equals(e.getActive()))
-                    .filter(e -> approvedStatusId.equals(e.getStatusId()))
-                    .filter(e -> employeeIdsWithActiveContract.contains(e.getId()))
-                    .map(contractMapper::toEmployeeSelectItem)
-                    .toList();
-        } catch (Exception ex) {
-            log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());
-            return List.of();
-        }
     }
 
     // ─── Export CSV ───────────────────────────────────────────────────────────
@@ -395,6 +397,33 @@ public class ContractServiceImpl implements ContractService {
     }
 
     // ─── Helpers service ──────────────────────────────────────────────────────────────
+
+    private List<ContractService.EmployeeSelectItem> findEmployeesByRole(Supplier<List<UserDTO>> userFetcher, String roleLabel) {
+        try {
+            List<Long> userIds = userFetcher.get().stream().map(UserDTO::getId).toList();
+            if (userIds.isEmpty()) return List.of();
+
+            Long approvedStatusId = employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
+                    .map(EmployeeStatus::getId).orElse(null);
+            Long activeContractStatusId = contractStatusRepository.findByName(ContractStatusName.ACTIVE.getDisplayName())
+                    .map(ContractStatus::getId).orElse(null);
+            if (approvedStatusId == null || activeContractStatusId == null) return List.of();
+
+            Set<Long> employeeIdsWithActiveContract = Set.copyOf(
+                    contractRepository.findEmployeeIdsByContractStatusId(activeContractStatusId));
+            if (employeeIdsWithActiveContract.isEmpty()) return List.of();
+
+            return employeeRepository.findByUserIdIn(userIds).stream()
+                    .filter(e -> Boolean.TRUE.equals(e.getActive()))
+                    .filter(e -> approvedStatusId.equals(e.getStatusId()))
+                    .filter(e -> employeeIdsWithActiveContract.contains(e.getId()))
+                    .map(contractMapper::toEmployeeSelectItem)
+                    .toList();
+        } catch (Exception ex) {
+            log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());
+            return List.of();
+        }
+    }
 
     private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) return;

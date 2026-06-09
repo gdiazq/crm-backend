@@ -11,10 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,8 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/contract")
@@ -34,11 +28,6 @@ import java.util.Set;
 public class ContractController {
 
     private final ContractService contractService;
-
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
-            "identification", "firstName",
-            "name", "companyId", "contractTypeId", "contractStatusId", "statusId", "startDate", "endDate", "createdAt"
-    );
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Crear contrato para un empleado (con documentos opcionales, máx. 5, 10MB c/u)")
@@ -84,13 +73,10 @@ public class ContractController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(safeSortBy).ascending() : Sort.by(safeSortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ContractResponse> result = contractService.list(search, employeeId, statusId, contractStatusId, contractTypeId, costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, pageable, safeSortBy, sortDir);
-        Map<String, Long> stats = contractService.getStats(employeeId);
-
-        return ResponseEntity.ok(PagedResponse.of(result, stats.get("total"), stats.get("active"), stats.get("pending")));
+        return ResponseEntity.ok(contractService.listContracts(
+                search, employeeId, statusId, contractStatusId, contractTypeId, costCenter,
+                createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo,
+                updatedFrom, updatedTo, page, size, sortBy, sortDir));
     }
 
     @GetMapping("/export/csv")
