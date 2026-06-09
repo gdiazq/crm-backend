@@ -182,29 +182,6 @@ public class ContractServiceImpl implements ContractService {
         return stats;
     }
 
-    // ─── Documentos ───────────────────────────────────────────────────────────
-
-    private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) return;
-        for (MultipartFile file : files) {
-            fileUploadHelper.validateFile(file);
-            storageService.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
-        }
-    }
-
-    private List<FileMetadataResponse> uploadFiles(Long contractId, Long uploadedBy, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) return Collections.emptyList();
-
-        List<FileMetadataResponse> existing = fetchDocuments(contractId);
-        if (existing.size() + files.size() > MAX_DOCUMENTS) {
-            throw new IllegalArgumentException(
-                    "El contrato ya tiene " + existing.size() + " documento(s). " +
-                    "Máximo permitido: " + MAX_DOCUMENTS + ".");
-        }
-
-        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, contractId);
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<ContractService.AttendanceEmployeeSelectItem> getEmployeesForAttendance() {
@@ -265,41 +242,6 @@ public class ContractServiceImpl implements ContractService {
         } catch (Exception ex) {
             log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());
             return List.of();
-        }
-    }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
-    private List<FileMetadataResponse> fetchDocuments(Long contractId) {
-        try {
-            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, contractId);
-            return response != null ? response : Collections.emptyList();
-        } catch (Exception e) {
-            log.warn("No se pudieron obtener documentos del contrato {}: {}", contractId, e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-    /** Sin fecha de término, el contrato se considera "Indefinido"; si no, respeta el tipo pedido. */
-    private Long resolveContractTypeId(Long requestedTypeId, LocalDate endDate) {
-        if (endDate != null) return requestedTypeId;
-        return contractTypeRepository.findByName("Indefinido")
-                .map(ContractType::getId)
-                .orElse(requestedTypeId);
-    }
-
-    private void validateCostCenter(Integer costCenter) {
-        if (costCenter == null || costCenter <= 0) {
-            throw new IllegalArgumentException("El centro de costo es obligatorio y debe ser mayor a 0");
-        }
-        ProjectClient.ProjectNameDTO project;
-        try {
-            project = projectClient.getByCostCenter(costCenter);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
-        }
-        if (project == null || project.getId() == null) {
-            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
         }
     }
 
@@ -421,18 +363,16 @@ public class ContractServiceImpl implements ContractService {
                     }
                     validateCostCenter(costCenter);
 
-                    Contract contract = Contract.builder()
-                            .employeeId(employee.getId())
-                            .name(CsvUtil.col(cols, iName))
-                            .contractNumber(CsvUtil.col(cols, iContractNumber).isEmpty() ? null : CsvUtil.col(cols, iContractNumber))
-                            .contractTypeId(contractTypeId)
-                            .contractStatusId(suspendedContractStatusId)
-                            .costCenter(costCenter)
-                            .baseSalary(CsvUtil.col(cols, iBaseSalary).isEmpty() ? null : CsvUtil.col(cols, iBaseSalary))
-                            .startDate(startDate)
-                            .endDate(endDate)
-                            .statusId(pendingStatusId)
-                            .build();
+                    CreateContractRequest rowRequest = new CreateContractRequest();
+                    rowRequest.setEmployeeId(employee.getId());
+                    rowRequest.setName(CsvUtil.col(cols, iName));
+                    rowRequest.setContractNumber(CsvUtil.col(cols, iContractNumber).isEmpty() ? null : CsvUtil.col(cols, iContractNumber));
+                    rowRequest.setCostCenter(costCenter);
+                    rowRequest.setBaseSalary(CsvUtil.col(cols, iBaseSalary).isEmpty() ? null : CsvUtil.col(cols, iBaseSalary));
+                    rowRequest.setStartDate(startDate);
+                    rowRequest.setEndDate(endDate);
+
+                    Contract contract = contractMapper.toEntity(rowRequest, contractTypeId, suspendedContractStatusId, pendingStatusId);
 
                     Contract saved = contractRepository.save(contract);
                     hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
@@ -452,6 +392,62 @@ public class ContractServiceImpl implements ContractService {
                 .failed(errors.size())
                 .errors(errors)
                 .build();
+    }
+
+    // ─── Helpers service ──────────────────────────────────────────────────────────────
+
+    private void uploadPendingFiles(Long hrRequestId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return;
+        for (MultipartFile file : files) {
+            fileUploadHelper.validateFile(file);
+            storageService.upload(file, uploadedBy, "CONTRACT_PENDING", hrRequestId, false);
+        }
+    }
+
+    private List<FileMetadataResponse> uploadFiles(Long contractId, Long uploadedBy, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return Collections.emptyList();
+
+        List<FileMetadataResponse> existing = fetchDocuments(contractId);
+        if (existing.size() + files.size() > MAX_DOCUMENTS) {
+            throw new IllegalArgumentException(
+                    "El contrato ya tiene " + existing.size() + " documento(s). " +
+                            "Máximo permitido: " + MAX_DOCUMENTS + ".");
+        }
+
+        return fileUploadHelper.uploadFiles(files, uploadedBy, ENTITY_TYPE, contractId);
+    }
+
+    private List<FileMetadataResponse> fetchDocuments(Long contractId) {
+        try {
+            List<FileMetadataResponse> response = storageService.listByEntity(ENTITY_TYPE, contractId);
+            return response != null ? response : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("No se pudieron obtener documentos del contrato {}: {}", contractId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /** Sin fecha de término, el contrato se considera "Indefinido"; si no, respeta el tipo pedido. */
+    private Long resolveContractTypeId(Long requestedTypeId, LocalDate endDate) {
+        if (endDate != null) return requestedTypeId;
+        return contractTypeRepository.findByName("Indefinido")
+                .map(ContractType::getId)
+                .orElse(requestedTypeId);
+    }
+
+    private void validateCostCenter(Integer costCenter) {
+        if (costCenter == null || costCenter <= 0) {
+            throw new IllegalArgumentException("El centro de costo es obligatorio y debe ser mayor a 0");
+        }
+        ProjectClient.ProjectNameDTO project;
+        try {
+            project = projectClient.getByCostCenter(costCenter);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
+        }
+        if (project == null || project.getId() == null) {
+            throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
+        }
     }
 
     private LocalDate parseDate(String value) {
