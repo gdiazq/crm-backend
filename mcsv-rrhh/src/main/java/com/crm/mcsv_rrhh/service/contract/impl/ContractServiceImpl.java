@@ -338,29 +338,27 @@ public class ContractServiceImpl implements ContractService {
         Map<Long, Employee> employeeMap = employeeRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(Employee::getId, e -> e));
 
-        StringBuilder csv = new StringBuilder();
-        csv.append("ID,RUT Trabajador,Nombre Trabajador,Nombre Contrato,Número Contrato,Tipo Contrato,Estado Contrato,Empresa,Cargo,Centro Costo,Salario Base,Fecha Inicio,Fecha Fin,Fecha Creación,Fecha Actualización\n");
+        String header = "ID,RUT Trabajador,Nombre Trabajador,Nombre Contrato,Número Contrato,Tipo Contrato,Estado Contrato,Empresa,Cargo,Centro Costo,Salario Base,Fecha Inicio,Fecha Fin,Fecha Creación,Fecha Actualización";
 
-        contractRepository.findAll().forEach(c -> {
+        return CsvUtil.build(header, contractRepository.findAll(), c -> {
             Employee emp = employeeMap.get(c.getEmployeeId());
-            csv.append(c.getId()).append(",")
-               .append(escape(emp != null ? emp.getIdentification() : "")).append(",")
-               .append(escape(emp != null ? emp.getFirstName() + " " + emp.getPaternalLastName() : "")).append(",")
-               .append(escape(c.getName())).append(",")
-               .append(escape(c.getContractNumber())).append(",")
-               .append(escape(contractTypeMap.get(c.getContractTypeId()))).append(",")
-               .append(escape(contractStatusMap.get(c.getContractStatusId()))).append(",")
-               .append(escape(companyMap.get(c.getCompanyId()))).append(",")
-               .append(escape(jobTitleMap.get(c.getJobTitleId()))).append(",")
-               .append(c.getCostCenter() != null ? c.getCostCenter() : "").append(",")
-               .append(escape(c.getBaseSalary())).append(",")
-               .append(formatDate(c.getStartDate())).append(",")
-               .append(formatDate(c.getEndDate())).append(",")
-               .append(formatDateTime(c.getCreatedAt())).append(",")
-               .append(formatDateTime(c.getUpdatedAt())).append("\n");
+            return String.join(",",
+                    String.valueOf(c.getId()),
+                    CsvUtil.escape(emp != null ? emp.getIdentification() : ""),
+                    CsvUtil.escape(emp != null ? emp.getFirstName() + " " + emp.getPaternalLastName() : ""),
+                    CsvUtil.escape(c.getName()),
+                    CsvUtil.escape(c.getContractNumber()),
+                    CsvUtil.escape(contractTypeMap.get(c.getContractTypeId())),
+                    CsvUtil.escape(contractStatusMap.get(c.getContractStatusId())),
+                    CsvUtil.escape(companyMap.get(c.getCompanyId())),
+                    CsvUtil.escape(jobTitleMap.get(c.getJobTitleId())),
+                    c.getCostCenter() != null ? String.valueOf(c.getCostCenter()) : "",
+                    CsvUtil.escape(c.getBaseSalary()),
+                    CsvUtil.formatDate(c.getStartDate()),
+                    CsvUtil.formatDate(c.getEndDate()),
+                    CsvUtil.formatDate(c.getCreatedAt()),
+                    CsvUtil.formatDate(c.getUpdatedAt()));
         });
-
-        return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     // ─── Import CSV ───────────────────────────────────────────────────────────
@@ -489,20 +487,4 @@ public class ContractServiceImpl implements ContractService {
         }
     }
 
-    private String formatDate(LocalDate date) {
-        if (date == null) return "";
-        return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-    }
-
-    private String formatDateTime(java.time.LocalDateTime dt) {
-        if (dt == null) return "";
-        return dt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-    }
-
-    private String escape(String value) {
-        if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n"))
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        return value;
-    }
 }
