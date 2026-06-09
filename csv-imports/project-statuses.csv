@@ -1,0 +1,8 @@
+nombre,descripcion
+Vigente,Proyecto en ejecución
+En Licitación,Proyecto en proceso de licitación
+Adjudicado,Proyecto adjudicado pendiente de inicio
+Suspendido,Proyecto temporalmente suspendido
+En Cierre,Proyecto en proceso de cierre administrativo
+Cerrado,Proyecto finalizado y cerrado
+Cancelado,Proyecto cancelado antes de su ejecución
