@@ -260,9 +260,7 @@ public class ContractServiceImpl implements ContractService {
                     .filter(e -> Boolean.TRUE.equals(e.getActive()))
                     .filter(e -> approvedStatusId.equals(e.getStatusId()))
                     .filter(e -> employeeIdsWithActiveContract.contains(e.getId()))
-                    .map(e -> new ContractService.EmployeeSelectItem(
-                            e.getId(),
-                            e.getFirstName() + " " + e.getPaternalLastName()))
+                    .map(contractMapper::toEmployeeSelectItem)
                     .toList();
         } catch (Exception ex) {
             log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());

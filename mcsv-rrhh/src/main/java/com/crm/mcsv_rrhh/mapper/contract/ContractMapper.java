@@ -182,6 +182,13 @@ public class ContractMapper {
         return new ContractService.AttendanceEmployeeSelectItem(e.getId(), EmployeeNames.full(e), c.getCostCenter());
     }
 
+    /** Item de selección simple: id del empleado + nombre (nombre + apellido paterno). */
+    public ContractService.EmployeeSelectItem toEmployeeSelectItem(Employee e) {
+        return new ContractService.EmployeeSelectItem(
+                e.getId(),
+                e.getFirstName() + " " + e.getPaternalLastName());
+    }
+
     private String resolveProjectName(Integer costCenter) {
         if (costCenter == null) return null;
         try {
