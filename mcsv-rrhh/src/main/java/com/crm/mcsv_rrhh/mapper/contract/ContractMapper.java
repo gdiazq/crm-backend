@@ -9,6 +9,8 @@ import com.crm.mcsv_rrhh.dto.contract.UpdateContractRequest;
 import com.crm.mcsv_rrhh.entity.contract.Contract;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
 import com.crm.mcsv_rrhh.mapper.shared.CatalogResolver;
+import com.crm.mcsv_rrhh.service.contract.ContractService;
+import com.crm.mcsv_rrhh.util.EmployeeNames;
 import com.crm.mcsv_rrhh.repository.company.CompanyRepository;
 import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.contract.ContractTypeRepository;
@@ -170,6 +172,14 @@ public class ContractMapper {
                 .requestId(requestId)
                 .documents(documents)
                 .build();
+    }
+
+    /* Helper mapper */
+
+    /** Item de selección para asistencia: empleado (nombre completo) + centro de costo del contrato. */
+    public ContractService.AttendanceEmployeeSelectItem toAttendanceSelectItem(Contract c) {
+        Employee e = c.getEmployee();
+        return new ContractService.AttendanceEmployeeSelectItem(e.getId(), EmployeeNames.full(e), c.getCostCenter());
     }
 
     private String resolveProjectName(Integer costCenter) {

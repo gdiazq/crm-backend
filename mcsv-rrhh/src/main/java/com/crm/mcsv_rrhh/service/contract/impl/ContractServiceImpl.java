@@ -219,13 +219,7 @@ public class ContractServiceImpl implements ContractService {
         return contractRepository
                 .findActiveContractsWithApprovedEmployees(activeContractStatusId, approvedEmployeeStatusId)
                 .stream()
-                .map(c -> {
-                    Employee e = c.getEmployee();
-                    return new ContractService.AttendanceEmployeeSelectItem(
-                            e.getId(),
-                            fullName(e),
-                            c.getCostCenter());
-                })
+                .map(contractMapper::toAttendanceSelectItem)
                 .toList();
     }
 
@@ -274,18 +268,6 @@ public class ContractServiceImpl implements ContractService {
             log.warn("No se pudieron obtener {}: {}", roleLabel, ex.getMessage());
             return List.of();
         }
-    }
-
-    private String fullName(Employee employee) {
-        if (employee == null) return null;
-        return String.join(" ",
-                safe(employee.getFirstName()),
-                safe(employee.getPaternalLastName()),
-                safe(employee.getMaternalLastName())).trim();
-    }
-
-    private String safe(String value) {
-        return value == null ? "" : value;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
