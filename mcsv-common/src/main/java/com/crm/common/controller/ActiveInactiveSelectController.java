@@ -1,7 +1,7 @@
 package com.crm.common.controller;
 
 import com.crm.common.dto.SelectItem;
-import com.crm.common.service.ActiveInactiveSelectService;
+import com.crm.common.service.activeinactiveselect.ActiveInactiveSelectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

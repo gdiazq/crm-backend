@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.controller.storage;
 
 import com.crm.common.dto.FileMetadataResponse;
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.crm.common.service;
+package com.crm.common.service.activeinactiveselect;
 
 import com.crm.common.dto.SelectItem;
 

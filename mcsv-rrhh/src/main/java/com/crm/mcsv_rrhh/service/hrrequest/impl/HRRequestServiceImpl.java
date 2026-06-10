@@ -1,7 +1,7 @@
 package com.crm.mcsv_rrhh.service.hrrequest.impl;
 
 import com.crm.common.dto.PagedResponse;
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import com.crm.common.util.CsvUtil;
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.FileMetadataResponse;

@@ -1,7 +1,7 @@
 package com.crm.common.controller;
 
 import com.crm.common.dto.SelectItem;
-import com.crm.common.service.YesNoSelectService;
+import com.crm.common.service.yesnoselect.YesNoSelectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

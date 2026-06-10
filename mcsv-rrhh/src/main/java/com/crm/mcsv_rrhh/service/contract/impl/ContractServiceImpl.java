@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.service.contract.impl;
 
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.client.ProjectClient;

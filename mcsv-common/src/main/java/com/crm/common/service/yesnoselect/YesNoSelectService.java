@@ -1,4 +1,4 @@
-package com.crm.common.service;
+package com.crm.common.service.yesnoselect;
 
 import com.crm.common.dto.SelectItem;
 

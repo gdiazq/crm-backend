@@ -1,6 +1,6 @@
 package com.crm.mcsv_rrhh.util.leave;
 
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import com.crm.mcsv_rrhh.entity.leave.EmployeeLeave;
 import com.crm.mcsv_rrhh.entity.leave.LeaveType;
 import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;

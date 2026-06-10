@@ -1,8 +1,9 @@
-package com.crm.common.service;
+package com.crm.common.service.yesnoselect.impl;
 
 import com.crm.common.dto.SelectItem;
-import com.crm.common.enums.ActiveInactiveOption;
+import com.crm.common.enums.YesNoOption;
 import com.crm.common.mapper.SelectItemMapper;
+import com.crm.common.service.yesnoselect.YesNoSelectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,13 +12,13 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ActiveInactiveSelectServiceImpl implements ActiveInactiveSelectService {
+public class YesNoSelectServiceImpl implements YesNoSelectService {
 
     private final SelectItemMapper selectItemMapper;
 
     @Override
     public List<SelectItem> getOptions() {
-        return Arrays.stream(ActiveInactiveOption.values())
+        return Arrays.stream(YesNoOption.values())
                 .map(selectItemMapper::toSelectItem)
                 .toList();
     }

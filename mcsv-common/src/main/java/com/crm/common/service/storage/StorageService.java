@@ -1,4 +1,4 @@
-package com.crm.common.service;
+package com.crm.common.service.storage;
 
 import com.crm.common.dto.FileMetadataResponse;
 import org.springframework.web.multipart.MultipartFile;

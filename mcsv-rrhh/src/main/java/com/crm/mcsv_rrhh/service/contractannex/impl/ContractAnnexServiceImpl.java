@@ -3,7 +3,7 @@ package com.crm.mcsv_rrhh.service.contractannex.impl;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexRequest;
 import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexResponse;
 import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;

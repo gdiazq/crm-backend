@@ -3,7 +3,7 @@ package com.crm.mcsv_rrhh.service.leave.impl;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.common.dto.PagedResponse;
 import com.crm.common.exception.ResourceNotFoundException;
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import com.crm.mcsv_rrhh.dto.leave.EmployeeLeaveRequest;
 import com.crm.mcsv_rrhh.dto.leave.EmployeeLeaveResponse;
 import com.crm.mcsv_rrhh.dto.leave.UpdateEmployeeLeaveRequest;

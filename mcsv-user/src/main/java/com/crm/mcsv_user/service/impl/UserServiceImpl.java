@@ -1,6 +1,6 @@
 package com.crm.mcsv_user.service.impl;
 
-import com.crm.common.service.StorageService;
+import com.crm.common.service.storage.StorageService;
 import com.crm.common.dto.BulkImportResult;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.common.dto.FileMetadataResponse;
@@ -9,7 +9,6 @@ import com.crm.mcsv_user.dto.UserDTO;
 import com.crm.mcsv_user.dto.UserResponse;
 import com.crm.mcsv_user.dto.select.UserEmailSelectItem;
 import com.crm.mcsv_user.dto.select.UserSelectItem;
-import com.crm.mcsv_user.entity.EmailVerificationCode;
 import com.crm.mcsv_user.entity.Role;
 import com.crm.mcsv_user.entity.User;
 import com.crm.common.exception.DuplicateResourceException;
