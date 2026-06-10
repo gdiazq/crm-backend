@@ -148,7 +148,7 @@ public class ContractServiceImpl implements ContractService {
     private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
-            "identification", "firstName",
+            "identification", "firstName", "paternalLastName",
             "name", "companyId", "contractTypeId", "contractStatusId", "statusId", "startDate", "endDate", "createdAt"
     );
 
@@ -163,10 +163,16 @@ public class ContractServiceImpl implements ContractService {
                                                          LocalDate updatedFrom, LocalDate updatedTo,
                                                          int page, int size, String sortBy, String sortDir) {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
-        Sort sort = sortDir.equalsIgnoreCase("asc")
-                ? Sort.by(safeSortBy).ascending()
-                : Sort.by(safeSortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        // Campos de empleado se ordenan en la specification (requieren join); el pageable va sin sort.
+        Pageable pageable;
+        if (EMPLOYEE_SORT_FIELDS.contains(safeSortBy)) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort sort = sortDir.equalsIgnoreCase("asc")
+                    ? Sort.by(safeSortBy).ascending()
+                    : Sort.by(safeSortBy).descending();
+            pageable = PageRequest.of(page, size, sort);
+        }
 
         Page<ContractResponse> result = list(search, employeeId, statusId, contractStatusId, contractTypeId,
                 costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo,
@@ -184,11 +190,8 @@ public class ContractServiceImpl implements ContractService {
                                        LocalDate endDateFrom, LocalDate endDateTo,
                                        LocalDate updatedFrom, LocalDate updatedTo,
                                        Pageable pageable, String sortBy, String sortDir) {
-        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
-                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
-                : pageable;
         Specification<Contract> spec = ContractSpecification.withFilters(search, employeeId, statusId, contractStatusId, contractTypeId, costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, sortBy, sortDir);
-        return contractRepository.findAll(spec, effectivePageable).map(contractMapper::toResponse);
+        return contractRepository.findAll(spec, pageable).map(contractMapper::toResponse);
     }
 
     private Map<String, Long> getStats(Long employeeId) {
