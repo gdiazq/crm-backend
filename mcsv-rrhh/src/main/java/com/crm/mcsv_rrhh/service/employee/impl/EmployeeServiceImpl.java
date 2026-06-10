@@ -135,6 +135,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public PagedResponse<EmployeeResponse> listEmployees(String search, Boolean active, Long statusId,
                                                          java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
+                                                         Boolean hasContract,
                                                          int page, int size, String sortBy, String sortDir) {
         String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
         Sort sort = sortDir.equalsIgnoreCase("asc")
@@ -142,17 +143,17 @@ public class EmployeeServiceImpl implements EmployeeService {
                 : Sort.by(safeSortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<EmployeeResponse> result = filterEmployees(search, active, statusId, createdFrom, createdTo, pageable);
+        Page<EmployeeResponse> result = filterEmployees(search, active, statusId, createdFrom, createdTo, hasContract, pageable);
         Map<String, Long> stats = getEmployeeStats();
         return PagedResponse.of(result, stats.get("total"), stats.get("active"));
     }
 
     private Page<EmployeeResponse> filterEmployees(String search, Boolean active, Long statusId,
                                                    java.time.LocalDate createdFrom, java.time.LocalDate createdTo,
-                                                   Pageable pageable) {
+                                                   Boolean hasContract, Pageable pageable) {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
-        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, createdFrom, createdTo);
+        Specification<Employee> spec = EmployeeSpecification.withFilters(search, active, rejectedStatusId, statusId, createdFrom, createdTo, hasContract);
         Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         EmployeeStatus::getId,
@@ -165,9 +166,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         Long rejectedStatusId = employeeStatusRepository.findByName(RequestStatus.REJECTED.getDisplayName())
                 .map(EmployeeStatus::getId).orElse(null);
         Specification<Employee> baseSpec = EmployeeSpecification.withFilters(
-                null, null, rejectedStatusId, null, null, null);
+                null, null, rejectedStatusId, null, null, null, null);
         Specification<Employee> activeSpec = EmployeeSpecification.withFilters(
-                null, true, rejectedStatusId, null, null, null);
+                null, true, rejectedStatusId, null, null, null, null);
         long total  = employeeRepository.count(baseSpec);
         long active = employeeRepository.count(activeSpec);
         return Map.of("total", total, "active", active);

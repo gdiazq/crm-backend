@@ -41,11 +41,12 @@ public class EmployeeController {
             @RequestParam(required = false) Long statusId,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate createdFrom,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate createdTo,
+            @RequestParam(required = false) Boolean hasContract,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
         return ResponseEntity.ok(employeeService.listEmployees(
-                search, active, statusId, createdFrom, createdTo, page, size, sortBy, sortDir));
+                search, active, statusId, createdFrom, createdTo, hasContract, page, size, sortBy, sortDir));
     }
 
     @GetMapping("/detail/{id}")

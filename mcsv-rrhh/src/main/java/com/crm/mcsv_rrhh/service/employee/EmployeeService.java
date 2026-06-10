@@ -23,7 +23,7 @@ public interface EmployeeService {
     EmployeeDetailResponse getEmployeeByUserId(Long userId);
 
     PagedResponse<EmployeeResponse> listEmployees(String search, Boolean active, Long statusId,
-                                                  LocalDate createdFrom, LocalDate createdTo,
+                                                  LocalDate createdFrom, LocalDate createdTo, Boolean hasContract,
                                                   int page, int size, String sortBy, String sortDir);
 
     byte[] exportCsv();
