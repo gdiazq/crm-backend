@@ -21,6 +21,7 @@ public class ContractResponse {
     private String contractNumber;
     private String contractType;
     private String contractStatus;
+    private String approvalStatus;
     private String company;
     private String jobTitle;
     private Integer costCenter;

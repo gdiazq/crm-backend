@@ -122,6 +122,7 @@ public class ContractMapper {
                 .contractNumber(c.getContractNumber())
                 .contractType(CatalogResolver.name(c.getContractTypeId(), contractTypeRepository))
                 .contractStatus(CatalogResolver.name(c.getContractStatusId(), contractStatusRepository))
+                .approvalStatus(CatalogResolver.name(c.getStatusId(), employeeStatusRepository))
                 .company(CatalogResolver.name(c.getCompanyId(), companyRepository))
                 .jobTitle(CatalogResolver.name(c.getJobTitleId(), jobTitleRepository))
                 .costCenter(c.getCostCenter())
