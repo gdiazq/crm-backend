@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +94,42 @@ public final class CsvUtil {
     public static String colOrEmpty(String[] cols, int index) {
         if (index < 0 || index >= cols.length) return "";
         return cols[index].trim();
+    }
+
+    /**
+     * Valor de la columna probando cada alias del header en orden (p.ej. con y sin tilde),
+     * o {@code null} si ninguna variante viene o está vacía.
+     */
+    public static String text(String[] cols, Map<String, Integer> idx, String... aliases) {
+        for (String alias : aliases) {
+            String value = colOrEmpty(cols, idx.getOrDefault(alias, -1));
+            if (!value.isEmpty()) return value;
+        }
+        return null;
+    }
+
+    /** Fecha en formato dd-MM-yyyy o yyyy-MM-dd, o {@code null} si viene vacía. */
+    public static LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalDate.parse(value.trim(), DEFAULT_DATE_FORMATTER);
+        } catch (DateTimeParseException e) {
+            try {
+                return LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (DateTimeParseException ex) {
+                throw new IllegalArgumentException("Fecha inválida: " + value + ". Use dd-MM-yyyy o yyyy-MM-dd");
+            }
+        }
+    }
+
+    /** Booleano escrito como en planilla (Si/No, también acepta true/false y 1/0), o {@code null} si viene vacío. */
+    public static Boolean parseBoolean(String value) {
+        if (value == null || value.isBlank()) return null;
+        return switch (value.trim().toLowerCase()) {
+            case "si", "sí", "true", "1" -> true;
+            case "no", "false", "0" -> false;
+            default -> throw new IllegalArgumentException("Valor booleano inválido: " + value + ". Use Si o No");
+        };
     }
 
     @FunctionalInterface

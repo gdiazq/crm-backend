@@ -47,6 +47,7 @@ import com.crm.mcsv_rrhh.repository.employee.EmployeeRepository;
 import com.crm.mcsv_rrhh.repository.employee.EmployeeSpecification;
 import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
+import com.crm.mcsv_rrhh.mapper.employee.EmployeeCsvMapper;
 import com.crm.mcsv_rrhh.mapper.employee.EmployeeMapper;
 
 @Service
@@ -63,6 +64,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final ObjectMapper objectMapper;
     private final ContractRepository contractRepository;
     private final EmployeeMapper mapper;
+    private final EmployeeCsvMapper employeeCsvMapper;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "firstName", "paternalLastName", "maternalLastName",
@@ -245,14 +247,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             String[] headers = CsvUtil.parseLine(headerLine);
             Map<String, Integer> idx = CsvUtil.headerIndex(headers);
 
-            int iRut      = idx.getOrDefault("rut", -1);
-            int iFirst    = idx.getOrDefault("nombre", -1);
-            int iPat      = idx.getOrDefault("apellido paterno", -1);
-            int iMat      = idx.getOrDefault("apellido materno", -1);
-            int iEmail    = idx.getOrDefault("email corporativo", -1);
-            int iPhone    = idx.getOrDefault("teléfono", idx.getOrDefault("telefono", -1));
-
-            if (iRut < 0 && iFirst < 0) {
+            if (!employeeCsvMapper.hasRecognizedColumns(idx)) {
                 errors.add(new BulkImportResult.RowError(1, "No se encontraron columnas reconocidas en el header"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
@@ -265,15 +260,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 total++;
                 try {
                     String[] cols = CsvUtil.parseLine(line);
-
-                    CreateEmployeeRequest request = new CreateEmployeeRequest();
-                    request.setIdentification(CsvUtil.colOrEmpty(cols, iRut).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iRut));
-                    request.setFirstName(CsvUtil.colOrEmpty(cols, iFirst).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iFirst));
-                    request.setPaternalLastName(CsvUtil.colOrEmpty(cols, iPat).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iPat));
-                    request.setMaternalLastName(CsvUtil.colOrEmpty(cols, iMat).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iMat));
-                    request.setCorporateEmail(CsvUtil.colOrEmpty(cols, iEmail).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iEmail));
-                    request.setPhone(CsvUtil.colOrEmpty(cols, iPhone).isEmpty() ? null : CsvUtil.colOrEmpty(cols, iPhone));
-
+                    CreateEmployeeRequest request = employeeCsvMapper.fromCsvRow(cols, idx);
                     createEmployee(request);
                     success++;
                 } catch (Exception e) {
