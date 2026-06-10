@@ -9,9 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,15 +19,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/annexes")
 @RequiredArgsConstructor
 @Tag(name = "ContractAnnex", description = "Gestión de anexos de contrato")
 public class ContractAnnexController {
-
-    private static final Set<String> EMPLOYEE_SORT_FIELDS = Set.of("identification", "firstName", "paternalLastName");
 
     private final ContractAnnexService service;
 
@@ -52,14 +46,8 @@ public class ContractAnnexController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        String effectiveSortBy = "status".equals(sortBy) ? "currentStatusName" : sortBy;
-        Sort sort = EMPLOYEE_SORT_FIELDS.contains(sortBy)
-                ? Sort.unsorted()
-                : (sortDir.equalsIgnoreCase("asc") ? Sort.by(effectiveSortBy).ascending() : Sort.by(effectiveSortBy).descending());
-        Pageable pageable = PageRequest.of(page, size, sort);
-
         return ResponseEntity.ok(service.list(search, status, annexTypeId, contractId,
-                dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, pageable, sortBy, sortDir));
+                dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, page, size, sortBy, sortDir));
     }
 
     @GetMapping("/{id}")

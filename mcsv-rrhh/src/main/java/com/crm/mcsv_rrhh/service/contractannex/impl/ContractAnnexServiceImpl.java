@@ -12,6 +12,7 @@ import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnex;
 import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnexType;
 import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
 import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
@@ -22,7 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,19 +75,26 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
                                                       LocalDate dateFrom, LocalDate dateTo,
                                                       LocalDate createdFrom, LocalDate createdTo,
                                                       LocalDate updatedFrom, LocalDate updatedTo,
-                                                      Pageable pageable, String sortBy, String sortDir) {
+                                                      int pageNumber, int size, String sortBy, String sortDir) {
         Long statusId = status != null && !status.isBlank()
-                ? employeeStatusRepository.findByName(status).map(s -> s.getId()).orElse(null)
+                ? employeeStatusRepository.findByName(status).map(EmployeeStatus::getId).orElse(null)
                 : null;
 
-        Pageable effectivePageable = (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy))
-                ? org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
-                : pageable;
+        Pageable pageable;
+        if (sortBy != null && EMPLOYEE_SORT_FIELDS.contains(sortBy)) {
+            pageable = PageRequest.of(pageNumber, size);
+        } else {
+            String effectiveSortBy = "status".equals(sortBy) ? "currentStatusName" : sortBy;
+            Sort sort = "asc".equalsIgnoreCase(sortDir)
+                    ? Sort.by(effectiveSortBy).ascending()
+                    : Sort.by(effectiveSortBy).descending();
+            pageable = PageRequest.of(pageNumber, size, sort);
+        }
 
         Page<ContractAnnex> page = repository.findAll(
                 ContractAnnexSpecification.withFilters(search, statusId, annexTypeId, contractId,
                         dateFrom, dateTo, createdFrom, createdTo, updatedFrom, updatedTo, sortBy, sortDir),
-                effectivePageable);
+                pageable);
 
         long total = page.getTotalElements();
         long approved = resolveApprovedCount();
@@ -96,6 +106,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
             return toResponse(e, Collections.emptyList(), reqId, statusName);
         }), total, approved);
     }
+
 
     @Override
     @Transactional(readOnly = true)

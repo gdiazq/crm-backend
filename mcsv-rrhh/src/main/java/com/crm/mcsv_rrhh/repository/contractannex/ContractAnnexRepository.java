@@ -8,7 +8,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ContractAnnexRepository extends JpaRepository<ContractAnnex, Long>, JpaSpecificationExecutor<ContractAnnex> {
+
     List<ContractAnnex> findByEmployeeId(Long employeeId);
+
     List<ContractAnnex> findByContractId(Long contractId);
+
     List<ContractAnnex> findByDateBetween(LocalDate from, LocalDate to);
+
 }
