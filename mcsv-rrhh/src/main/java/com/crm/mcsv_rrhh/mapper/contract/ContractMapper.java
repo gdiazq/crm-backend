@@ -10,7 +10,7 @@ import com.crm.mcsv_rrhh.entity.contract.Contract;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
 import com.crm.mcsv_rrhh.mapper.shared.CatalogResolver;
 import com.crm.mcsv_rrhh.service.contract.ContractService;
-import com.crm.mcsv_rrhh.util.EmployeeNames;
+import com.crm.mcsv_rrhh.util.employee.EmployeeNames;
 import com.crm.mcsv_rrhh.repository.company.CompanyRepository;
 import com.crm.mcsv_rrhh.repository.contract.ContractStatusRepository;
 import com.crm.mcsv_rrhh.repository.contract.ContractTypeRepository;

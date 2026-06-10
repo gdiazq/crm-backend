@@ -17,7 +17,7 @@ import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
 import com.crm.mcsv_rrhh.service.contractannex.ContractAnnexService;
 import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
-import com.crm.mcsv_rrhh.util.FileUploadHelper;
+import com.crm.mcsv_rrhh.util.shared.FileUploadHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -24,7 +24,7 @@ import com.crm.mcsv_rrhh.repository.employee.EmployeeStatusRepository;
 import com.crm.mcsv_rrhh.repository.hrrequest.HRRequestRepository;
 import com.crm.mcsv_rrhh.service.leave.EmployeeLeaveService;
 import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
-import com.crm.mcsv_rrhh.util.FileUploadHelper;
+import com.crm.mcsv_rrhh.util.shared.FileUploadHelper;
 import com.crm.mcsv_rrhh.util.leave.LeaveCalculator;
 import com.crm.mcsv_rrhh.util.leave.LeaveValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
