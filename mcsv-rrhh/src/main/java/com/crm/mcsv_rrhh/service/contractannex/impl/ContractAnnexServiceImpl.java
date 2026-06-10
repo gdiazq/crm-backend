@@ -9,15 +9,16 @@ import com.crm.mcsv_rrhh.dto.contractannex.ContractAnnexResponse;
 import com.crm.mcsv_rrhh.dto.contractannex.UpdateContractAnnexRequest;
 import com.crm.mcsv_rrhh.entity.contract.Contract;
 import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnex;
-import com.crm.mcsv_rrhh.entity.contractannex.ContractAnnexType;
 import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
 import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
 import com.crm.mcsv_rrhh.entity.hrrequest.HRRequest;
 import com.crm.mcsv_rrhh.enums.contract.ContractStatusName;
 import com.crm.mcsv_rrhh.enums.hrrequest.RequestStatus;
+import com.crm.mcsv_rrhh.mapper.contractannex.ContractAnnexMapper;
 import com.crm.mcsv_rrhh.service.contractannex.ContractAnnexService;
 import com.crm.mcsv_rrhh.service.hrrequest.HRRequestService;
+import com.crm.mcsv_rrhh.util.employee.EmployeeNames;
 import com.crm.mcsv_rrhh.util.shared.FileUploadHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +37,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexRepository;
 import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexSpecification;
 import com.crm.mcsv_rrhh.repository.contractannex.ContractAnnexTypeRepository;
@@ -67,6 +70,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
     private final StorageService storageService;
     private final FileUploadHelper fileUploadHelper;
     private final ObjectMapper objectMapper;
+    private final ContractAnnexMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -77,7 +81,8 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
                                                       LocalDate updatedFrom, LocalDate updatedTo,
                                                       int pageNumber, int size, String sortBy, String sortDir) {
         Long statusId = status != null && !status.isBlank()
-                ? employeeStatusRepository.findByName(status).map(EmployeeStatus::getId).orElse(null)
+                ? employeeStatusRepository.findByName(status).map(EmployeeStatus::getId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado: " + status))
                 : null;
 
         Pageable pageable;
@@ -99,11 +104,19 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
         long total = page.getTotalElements();
         long approved = resolveApprovedCount();
 
+        // Una query para las solicitudes de toda la página y el catálogo de estados una vez (evita N+1).
+        List<Long> annexIds = page.getContent().stream().map(ContractAnnex::getId).toList();
+        Map<Long, HRRequest> latestRequestByAnnex = annexIds.isEmpty() ? Map.of()
+                : hrRequestRepository.findByAnnexIdInOrderByCreatedAtDesc(annexIds).stream()
+                        .collect(Collectors.toMap(HRRequest::getAnnexId, r -> r, (latest, older) -> latest));
+        Map<Long, String> statusMap = employeeStatusRepository.findAll().stream()
+                .collect(Collectors.toMap(EmployeeStatus::getId, EmployeeStatus::getName));
+
         return PagedResponse.of(page.map(e -> {
-            Optional<HRRequest> hrReq = hrRequestRepository.findTopByAnnexIdOrderByCreatedAtDesc(e.getId());
-            Long reqId = hrReq.map(HRRequest::getId).orElse(null);
-            String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
-            return toResponse(e, Collections.emptyList(), reqId, statusName);
+            HRRequest hrReq = latestRequestByAnnex.get(e.getId());
+            Long reqId = hrReq != null ? hrReq.getId() : null;
+            String statusName = hrReq != null ? statusMap.get(hrReq.getStatusId()) : null;
+            return mapper.toResponse(e, Collections.emptyList(), reqId, statusName);
         }), total, approved);
     }
 
@@ -115,7 +128,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
         Optional<HRRequest> hrReq = hrRequestRepository.findTopByAnnexIdOrderByCreatedAtDesc(id);
         Long requestId = hrReq.map(HRRequest::getId).orElse(null);
         String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
-        return toResponse(entity, fetchDocuments(id), requestId, statusName);
+        return mapper.toResponse(entity, fetchDocuments(id), requestId, statusName);
     }
 
     @Override
@@ -138,7 +151,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
 
         List<FileMetadataResponse> documents = uploadFiles(saved.getId(), saved.getEmployeeId(), files);
         String statusName = resolveStatusName(hrReq.getStatusId());
-        return toResponse(saved, documents, hrReq.getId(), statusName);
+        return mapper.toResponse(saved, documents, hrReq.getId(), statusName);
     }
 
     @Override
@@ -162,7 +175,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
 
         List<FileMetadataResponse> documents = fetchDocuments(entity.getId());
         String statusName = resolveStatusName(hrReq.getStatusId());
-        return toResponse(entity, documents, requestId, statusName);
+        return mapper.toResponse(entity, documents, requestId, statusName);
     }
 
     @Override
@@ -177,7 +190,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
             String annexTypeName = e.getAnnexType() != null ? e.getAnnexType().getName() : "";
 
             csv.append(e.getId()).append(",")
-               .append(escape(fullName(e.getEmployee()))).append(",")
+               .append(escape(EmployeeNames.full(e.getEmployee()))).append(",")
                .append(e.getEmployee() != null ? e.getEmployee().getIdentification() : "").append(",")
                .append(e.getContractId()).append(",")
                .append(escape(annexTypeName)).append(",")
@@ -198,7 +211,7 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
                     Optional<HRRequest> hrReq = hrRequestRepository.findTopByAnnexIdOrderByCreatedAtDesc(e.getId());
                     Long reqId = hrReq.map(HRRequest::getId).orElse(null);
                     String statusName = hrReq.map(r -> resolveStatusName(r.getStatusId())).orElse(null);
-                    return toResponse(e, Collections.emptyList(), reqId, statusName);
+                    return mapper.toResponse(e, Collections.emptyList(), reqId, statusName);
                 })
                 .toList();
     }
@@ -260,29 +273,6 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
         return activeContracts.getFirst().getId();
     }
 
-    private ContractAnnexResponse toResponse(ContractAnnex e, List<FileMetadataResponse> documents,
-                                              Long requestId, String statusName) {
-        Employee emp = e.getEmployee();
-        ContractAnnexType annexType = e.getAnnexType();
-        return ContractAnnexResponse.builder()
-                .id(e.getId())
-                .status(statusName)
-                .employeeId(e.getEmployeeId())
-                .employeeFullName(fullName(emp))
-                .employeeIdentification(emp != null ? emp.getIdentification() : null)
-                .contractId(e.getContractId())
-                .annexTypeId(e.getAnnexTypeId())
-                .annexTypeName(annexType != null ? annexType.getName() : null)
-                .requireApproval(annexType != null ? annexType.getRequireApproval() : null)
-                .date(e.getDate())
-                .description(e.getDescription())
-                .documents(documents)
-                .hrRequestId(requestId)
-                .createdAt(e.getCreatedAt())
-                .updatedAt(e.getUpdatedAt())
-                .build();
-    }
-
     private String resolveStatusName(Long statusId) {
         if (statusId == null) return null;
         return employeeStatusRepository.findById(statusId).map(s -> s.getName()).orElse(null);
@@ -290,19 +280,8 @@ public class ContractAnnexServiceImpl implements ContractAnnexService {
 
     private long resolveApprovedCount() {
         return employeeStatusRepository.findByName(RequestStatus.APPROVED.getDisplayName())
-                .map(s -> hrRequestRepository.findAll().stream()
-                        .filter(r -> r.getAnnexId() != null && s.getId().equals(r.getStatusId()))
-                        .map(HRRequest::getAnnexId)
-                        .distinct()
-                        .count())
+                .map(s -> hrRequestRepository.countAnnexesWithLatestStatusId(s.getId()))
                 .orElse(0L);
-    }
-
-    private String fullName(Employee emp) {
-        if (emp == null) return null;
-        return String.join(" ", emp.getFirstName(),
-                emp.getPaternalLastName() != null ? emp.getPaternalLastName() : "",
-                emp.getMaternalLastName() != null ? emp.getMaternalLastName() : "").trim();
     }
 
     private String escape(String value) {

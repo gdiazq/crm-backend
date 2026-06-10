@@ -24,6 +24,8 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
 
     Optional<HRRequest> findTopByAnnexIdOrderByCreatedAtDesc(Long annexId);
 
+    List<HRRequest> findByAnnexIdInOrderByCreatedAtDesc(Collection<Long> annexIds);
+
     Optional<HRRequest> findTopByLeaveIdOrderByCreatedAtDesc(Long leaveId);
 
     Optional<HRRequest> findTopByOvertimeIdOrderByCreatedAtDesc(Long overtimeId);
@@ -37,6 +39,11 @@ public interface HRRequestRepository extends JpaRepository<HRRequest, Long>, Jpa
            "WHERE h.leaveId IS NOT NULL AND h.statusId = :statusId " +
            "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.leaveId = h.leaveId)")
     long countLeavesWithLatestStatusId(@Param("statusId") Long statusId);
+
+    @Query("SELECT COUNT(DISTINCT h.annexId) FROM HRRequest h " +
+           "WHERE h.annexId IS NOT NULL AND h.statusId = :statusId " +
+           "AND h.createdAt = (SELECT MAX(h2.createdAt) FROM HRRequest h2 WHERE h2.annexId = h.annexId)")
+    long countAnnexesWithLatestStatusId(@Param("statusId") Long statusId);
 
     @Query("SELECT COUNT(DISTINCT h.overtimeId) FROM HRRequest h " +
            "WHERE h.overtimeId IS NOT NULL AND h.statusId = :statusId " +
