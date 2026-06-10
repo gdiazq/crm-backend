@@ -35,8 +35,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import com.crm.common.util.CsvUtil;
 import java.util.*;
 import java.util.function.Supplier;
@@ -343,8 +341,8 @@ public class ContractServiceImpl implements ContractService {
                                 .orElseThrow(() -> new IllegalArgumentException("Tipo de contrato no encontrado: " + contractTypeName));
                     }
 
-                    LocalDate startDate = parseDate(CsvUtil.col(cols, iStartDate));
-                    LocalDate endDate   = parseDate(CsvUtil.col(cols, iEndDate));
+                    LocalDate startDate = CsvUtil.parseDate(CsvUtil.col(cols, iStartDate));
+                    LocalDate endDate   = CsvUtil.parseDate(CsvUtil.col(cols, iEndDate));
 
                     if (contractTypeId == null) {
                         contractTypeId = endDate == null
@@ -475,19 +473,6 @@ public class ContractServiceImpl implements ContractService {
         }
         if (project == null || project.getId() == null) {
             throw new IllegalArgumentException("Centro de costo inválido o servicio de proyectos no disponible: " + costCenter);
-        }
-    }
-
-    private LocalDate parseDate(String value) {
-        if (value == null || value.isBlank()) return null;
-        try {
-            return LocalDate.parse(value.trim(), DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        } catch (DateTimeParseException e) {
-            try {
-                return LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
-            } catch (DateTimeParseException ex) {
-                throw new IllegalArgumentException("Fecha inválida: " + value + ". Use dd-MM-yyyy o yyyy-MM-dd");
-            }
         }
     }
 
