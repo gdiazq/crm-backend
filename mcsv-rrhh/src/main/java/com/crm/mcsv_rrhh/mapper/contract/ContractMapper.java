@@ -6,8 +6,13 @@ import com.crm.mcsv_rrhh.dto.contract.ContractDetailResponse;
 import com.crm.mcsv_rrhh.dto.contract.ContractResponse;
 import com.crm.mcsv_rrhh.dto.contract.CreateContractRequest;
 import com.crm.mcsv_rrhh.dto.contract.UpdateContractRequest;
+import com.crm.mcsv_rrhh.entity.company.Company;
 import com.crm.mcsv_rrhh.entity.contract.Contract;
+import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
+import com.crm.mcsv_rrhh.entity.contract.ContractType;
 import com.crm.mcsv_rrhh.entity.employee.Employee;
+import com.crm.mcsv_rrhh.entity.employee.EmployeeStatus;
+import com.crm.mcsv_rrhh.entity.jobtitle.JobTitle;
 import com.crm.mcsv_rrhh.mapper.shared.CatalogResolver;
 import com.crm.mcsv_rrhh.service.contract.ContractService;
 import com.crm.mcsv_rrhh.util.employee.EmployeeNames;
@@ -27,7 +32,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Mapea entidades Contract a sus DTOs. Concentra aquí la resolución de catálogos por id y el nombre
@@ -107,32 +116,53 @@ public class ContractMapper {
         contract.setTransportTypeId(proposed.getTransportTypeId());
     }
 
-    /** Resumen de contrato para el listado. */
-    public ContractResponse toResponse(Contract c) {
-        Employee employee = employeeRepository.findById(c.getEmployeeId()).orElse(null);
-        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null;
-        String employeeIdentification = employee != null ? employee.getIdentification() : null;
+    /**
+     * Resumen de contratos para el listado. Resuelve empleados, catálogos y nombres de proyecto
+     * una sola vez para toda la página (evita una query/llamada Feign por fila).
+     */
+    public List<ContractResponse> toResponses(List<Contract> contracts) {
+        if (contracts.isEmpty()) return List.of();
 
-        return ContractResponse.builder()
-                .id(c.getId())
-                .employeeId(c.getEmployeeId())
-                .employeeName(employeeName)
-                .employeeIdentification(employeeIdentification)
-                .name(c.getName())
-                .contractNumber(c.getContractNumber())
-                .contractType(CatalogResolver.name(c.getContractTypeId(), contractTypeRepository))
-                .contractStatus(CatalogResolver.name(c.getContractStatusId(), contractStatusRepository))
-                .approvalStatus(CatalogResolver.name(c.getStatusId(), employeeStatusRepository))
-                .company(CatalogResolver.name(c.getCompanyId(), companyRepository))
-                .jobTitle(CatalogResolver.name(c.getJobTitleId(), jobTitleRepository))
-                .costCenter(c.getCostCenter())
-                .projectName(resolveProjectName(c.getCostCenter()))
-                .baseSalary(c.getBaseSalary())
-                .startDate(c.getStartDate())
-                .endDate(c.getEndDate())
-                .createdAt(c.getCreatedAt())
-                .updatedAt(c.getUpdatedAt())
-                .build();
+        Map<Long, Employee> employeeMap = employeeRepository.findAllById(
+                        contracts.stream().map(Contract::getEmployeeId).filter(Objects::nonNull).distinct().toList())
+                .stream().collect(Collectors.toMap(Employee::getId, e -> e));
+        Map<Long, String> contractTypeMap = contractTypeRepository.findAll().stream()
+                .collect(Collectors.toMap(ContractType::getId, ContractType::getName));
+        Map<Long, String> contractStatusMap = contractStatusRepository.findAll().stream()
+                .collect(Collectors.toMap(ContractStatus::getId, ContractStatus::getName));
+        Map<Long, String> approvalStatusMap = employeeStatusRepository.findAll().stream()
+                .collect(Collectors.toMap(EmployeeStatus::getId, EmployeeStatus::getName));
+        Map<Long, String> companyMap = companyRepository.findAll().stream()
+                .collect(Collectors.toMap(Company::getId, Company::getName));
+        Map<Long, String> jobTitleMap = jobTitleRepository.findAll().stream()
+                .collect(Collectors.toMap(JobTitle::getId, JobTitle::getName));
+        Map<Integer, String> projectNameMap = new HashMap<>();
+        contracts.stream().map(Contract::getCostCenter).filter(Objects::nonNull).distinct()
+                .forEach(cc -> projectNameMap.put(cc, resolveProjectName(cc)));
+
+        return contracts.stream().map(c -> {
+            Employee employee = employeeMap.get(c.getEmployeeId());
+            return ContractResponse.builder()
+                    .id(c.getId())
+                    .employeeId(c.getEmployeeId())
+                    .employeeName(employee != null ? employee.getFirstName() + " " + employee.getPaternalLastName() : null)
+                    .employeeIdentification(employee != null ? employee.getIdentification() : null)
+                    .name(c.getName())
+                    .contractNumber(c.getContractNumber())
+                    .contractType(contractTypeMap.get(c.getContractTypeId()))
+                    .contractStatus(contractStatusMap.get(c.getContractStatusId()))
+                    .approvalStatus(approvalStatusMap.get(c.getStatusId()))
+                    .company(companyMap.get(c.getCompanyId()))
+                    .jobTitle(jobTitleMap.get(c.getJobTitleId()))
+                    .costCenter(c.getCostCenter())
+                    .projectName(projectNameMap.get(c.getCostCenter()))
+                    .baseSalary(c.getBaseSalary())
+                    .startDate(c.getStartDate())
+                    .endDate(c.getEndDate())
+                    .createdAt(c.getCreatedAt())
+                    .updatedAt(c.getUpdatedAt())
+                    .build();
+        }).toList();
     }
 
     /** Detalle de contrato (incluye request asociada y documentos resueltos por el service). */

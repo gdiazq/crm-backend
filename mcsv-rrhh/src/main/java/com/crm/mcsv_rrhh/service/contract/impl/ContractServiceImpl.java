@@ -23,6 +23,7 @@ import com.crm.mcsv_rrhh.util.shared.FileUploadHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -191,7 +192,8 @@ public class ContractServiceImpl implements ContractService {
                                        LocalDate updatedFrom, LocalDate updatedTo,
                                        Pageable pageable, String sortBy, String sortDir) {
         Specification<Contract> spec = ContractSpecification.withFilters(search, employeeId, statusId, contractStatusId, contractTypeId, costCenter, createdFrom, createdTo, startDateFrom, startDateTo, endDateFrom, endDateTo, updatedFrom, updatedTo, sortBy, sortDir);
-        return contractRepository.findAll(spec, pageable).map(contractMapper::toResponse);
+        Page<Contract> contracts = contractRepository.findAll(spec, pageable);
+        return new PageImpl<>(contractMapper.toResponses(contracts.getContent()), pageable, contracts.getTotalElements());
     }
 
     private Map<String, Long> getStats(Long employeeId) {
