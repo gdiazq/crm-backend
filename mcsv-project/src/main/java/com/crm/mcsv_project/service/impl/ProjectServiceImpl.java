@@ -5,6 +5,7 @@ import com.crm.mcsv_project.client.PersonSelectItem;
 import com.crm.mcsv_project.client.RrhhClient;
 import com.crm.mcsv_project.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.RowError;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_project.dto.ProjectRequest;
 import com.crm.mcsv_project.dto.ProjectResponse;
@@ -200,7 +201,7 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
 
     @Override
     public BulkImportResult importFromCsv(MultipartFile file) {
-        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        List<RowError> errors = new ArrayList<>();
         int total = 0;
         int success = 0;
 
@@ -228,7 +229,7 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
             int iEndDate     = idx.getOrDefault("fecha fin", -1);
 
             if (iCostCenter < 0 || iName < 0) {
-                errors.add(new BulkImportResult.RowError(1, "Faltan columnas obligatorias: 'centro de costo' y/o 'nombre'"));
+                errors.add(new RowError(1, "Faltan columnas obligatorias: 'centro de costo' y/o 'nombre'"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
 
@@ -264,12 +265,12 @@ public class ProjectServiceImpl implements com.crm.mcsv_project.service.ProjectS
                     create(request);
                     success++;
                 } catch (Exception e) {
-                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                    errors.add(new RowError(row, e.getMessage()));
                 }
             }
         } catch (Exception e) {
             log.error("Error leyendo CSV de proyectos", e);
-            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+            errors.add(new RowError(0, "Error leyendo el archivo: " + e.getMessage()));
         }
 
         return BulkImportResult.builder()

@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.contract.impl;
 
 import com.crm.common.service.storage.StorageService;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.RowError;
 import com.crm.common.dto.PagedResponse;
 import com.crm.mcsv_rrhh.client.ProjectClient;
 import com.crm.mcsv_rrhh.client.UserClient;
@@ -292,7 +293,7 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     public BulkImportResult importFromCsv(MultipartFile file) {
-        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        List<RowError> errors = new ArrayList<>();
         int total = 0;
         int success = 0;
 
@@ -321,7 +322,7 @@ public class ContractServiceImpl implements ContractService {
             int iCostCenter     = idx.getOrDefault("centro costo", idx.getOrDefault("centro de costo", -1));
 
             if (iRut < 0 || iName < 0 || iCostCenter < 0) {
-                errors.add(new BulkImportResult.RowError(1, "Faltan columnas requeridas: 'RUT Trabajador', 'Nombre Contrato' y 'Centro Costo'"));
+                errors.add(new RowError(1, "Faltan columnas requeridas: 'RUT Trabajador', 'Nombre Contrato' y 'Centro Costo'"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
 
@@ -382,12 +383,12 @@ public class ContractServiceImpl implements ContractService {
                     hrRequestService.createForContract(saved.getId(), saved.getEmployeeId(), "CREATE", null);
                     success++;
                 } catch (Exception e) {
-                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                    errors.add(new RowError(row, e.getMessage()));
                 }
             }
         } catch (Exception e) {
             log.error("Error reading CSV file for contracts", e);
-            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+            errors.add(new RowError(0, "Error leyendo el archivo: " + e.getMessage()));
         }
 
         return BulkImportResult.builder()

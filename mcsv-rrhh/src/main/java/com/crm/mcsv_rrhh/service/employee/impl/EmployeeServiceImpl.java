@@ -2,6 +2,7 @@ package com.crm.mcsv_rrhh.service.employee.impl;
 
 import com.crm.mcsv_rrhh.client.UserClient;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.RowError;
 import com.crm.common.util.CsvUtil;
 import com.crm.mcsv_rrhh.entity.contract.Contract;
 import com.crm.mcsv_rrhh.entity.contract.ContractStatus;
@@ -235,7 +236,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public BulkImportResult importFromCsv(MultipartFile file) {
-        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        List<RowError> errors = new ArrayList<>();
         int total = 0;
         int success = 0;
 
@@ -249,7 +250,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             Map<String, Integer> idx = CsvUtil.headerIndex(headers);
 
             if (!employeeCsvMapper.hasRecognizedColumns(idx)) {
-                errors.add(new BulkImportResult.RowError(1, "No se encontraron columnas reconocidas en el header"));
+                errors.add(new RowError(1, "No se encontraron columnas reconocidas en el header"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
 
@@ -265,12 +266,12 @@ public class EmployeeServiceImpl implements EmployeeService {
                     createEmployee(request);
                     success++;
                 } catch (Exception e) {
-                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                    errors.add(new RowError(row, e.getMessage()));
                 }
             }
         } catch (Exception e) {
             log.error("Error reading CSV file for employees", e);
-            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+            errors.add(new RowError(0, "Error leyendo el archivo: " + e.getMessage()));
         }
 
         return BulkImportResult.builder()

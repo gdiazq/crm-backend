@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 public class SelectItemMapper {
 
     public SelectItem toSelectItem(SelectableOption option) {
-        return new SelectItem(option.getId(), option.getValue(), option.getDisplayName());
+        return new SelectItem(
+                option.getId(),
+                option.getValue(),
+                option.getDisplayName()
+        );
     }
 }

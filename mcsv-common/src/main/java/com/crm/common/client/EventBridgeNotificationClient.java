@@ -26,10 +26,8 @@ public class EventBridgeNotificationClient {
     private final ObjectMapper objectMapper;
     private final String eventBusName;
 
-    public EventBridgeNotificationClient(
-            EventBridgeClient eventBridgeClient,
-            ObjectMapper objectMapper,
-            @Value("${aws.eventbridge.bus-name:crm-events}") String eventBusName) {
+    public EventBridgeNotificationClient(EventBridgeClient eventBridgeClient, ObjectMapper objectMapper, @Value("${aws.eventbridge.bus-name:crm-events}") String eventBusName) {
+
         this.eventBridgeClient = eventBridgeClient;
         this.objectMapper = objectMapper;
         this.eventBusName = eventBusName;
@@ -41,7 +39,6 @@ public class EventBridgeNotificationClient {
             eventBridgeClient.putEvents(PutEventsRequest.builder()
                     .entries(toEntry(request))
                     .build());
-
             log.info("Notification event published to EventBridge for userId: {}", request.getUserId());
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize SendNotificationRequest for userId {}", request.getUserId(), e);
@@ -81,7 +78,8 @@ public class EventBridgeNotificationClient {
     }
 
     private PutEventsRequestEntry toEntry(SendNotificationRequest request) throws JsonProcessingException {
-        return PutEventsRequestEntry.builder()
+        return PutEventsRequestEntry
+                .builder()
                 .eventBusName(eventBusName)
                 .source("crm.notification")
                 .detailType("SendNotification")

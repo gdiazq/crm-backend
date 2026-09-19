@@ -2,6 +2,7 @@ package com.crm.mcsv_user.service.impl;
 
 import com.crm.common.service.storage.StorageService;
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.RowError;
 import com.crm.mcsv_user.dto.CreateUserRequest;
 import com.crm.common.dto.FileMetadataResponse;
 import com.crm.mcsv_user.dto.UpdateUserRequest;
@@ -382,7 +383,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public BulkImportResult importUsersFromCsv(MultipartFile file) {
-        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        List<RowError> errors = new ArrayList<>();
         int total = 0;
         int success = 0;
 
@@ -403,7 +404,7 @@ public class UserServiceImpl implements UserService {
             int iRole      = idx.getOrDefault("rol", -1);
 
             if (iUsername < 0 || iEmail < 0) {
-                errors.add(new BulkImportResult.RowError(1, "Faltan columnas obligatorias: Username, Email"));
+                errors.add(new RowError(1, "Faltan columnas obligatorias: Username, Email"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
 
@@ -439,12 +440,12 @@ public class UserServiceImpl implements UserService {
                     userProvisioningService.sendVerificationCode(created.getId(), created.getEmail(), created.getUsername());
                     success++;
                 } catch (Exception e) {
-                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                    errors.add(new RowError(row, e.getMessage()));
                 }
             }
         } catch (Exception e) {
             log.error("Error reading CSV file for users", e);
-            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+            errors.add(new RowError(0, "Error leyendo el archivo: " + e.getMessage()));
         }
 
         return BulkImportResult.builder()

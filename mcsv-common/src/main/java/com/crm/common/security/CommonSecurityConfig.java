@@ -21,13 +21,9 @@ public class CommonSecurityConfig {
      */
     @Bean
     @ConditionalOnProperty(name = "app.security.jwt.enabled", havingValue = "true")
-    public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilter(
-            @Value("${jwt.secret}") String secret,
-            JwtSecurityProperties properties,
-            ObjectMapper objectMapper) {
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilter(@Value("${jwt.secret}") String secret, JwtSecurityProperties properties, ObjectMapper objectMapper) {
 
-        FilterRegistrationBean<JwtAuthenticationFilter> registration =
-                new FilterRegistrationBean<>(new JwtAuthenticationFilter(secret, properties, objectMapper));
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(new JwtAuthenticationFilter(secret, properties, objectMapper));
         registration.addUrlPatterns("/*");
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
         return registration;

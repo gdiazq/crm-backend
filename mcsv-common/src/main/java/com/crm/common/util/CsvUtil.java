@@ -1,6 +1,7 @@
 package com.crm.common.util;
 
 import com.crm.common.dto.BulkImportResult;
+import com.crm.common.dto.RowError;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -138,7 +139,7 @@ public final class CsvUtil {
     }
 
     public static BulkImportResult importNameDesc(MultipartFile file, NameDescProcessor processor) {
-        List<BulkImportResult.RowError> errors = new ArrayList<>();
+        List<RowError> errors = new ArrayList<>();
         int total = 0, success = 0;
 
         try (BufferedReader reader = new BufferedReader(
@@ -152,7 +153,7 @@ public final class CsvUtil {
             int iDesc = idx.getOrDefault("descripción", idx.getOrDefault("descripcion", -1));
 
             if (iName < 0) {
-                errors.add(new BulkImportResult.RowError(1, "No se encontró la columna 'nombre' en el header"));
+                errors.add(new RowError(1, "No se encontró la columna 'nombre' en el header"));
                 return BulkImportResult.builder().total(0).success(0).failed(1).errors(errors).build();
             }
 
@@ -171,12 +172,12 @@ public final class CsvUtil {
                     success++;
                 } catch (Exception e) {
                     log.debug("Error en fila {}: {}", row, e.getMessage(), e);
-                    errors.add(new BulkImportResult.RowError(row, e.getMessage()));
+                    errors.add(new RowError(row, e.getMessage()));
                 }
             }
         } catch (Exception e) {
             log.error("Error leyendo archivo CSV", e);
-            errors.add(new BulkImportResult.RowError(0, "Error leyendo el archivo: " + e.getMessage()));
+            errors.add(new RowError(0, "Error leyendo el archivo: " + e.getMessage()));
         }
 
         return BulkImportResult.builder().total(total).success(success).failed(errors.size()).errors(errors).build();

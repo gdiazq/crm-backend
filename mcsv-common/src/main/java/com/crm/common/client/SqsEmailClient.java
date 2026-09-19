@@ -19,10 +19,8 @@ public class SqsEmailClient {
     private final ObjectMapper objectMapper;
     private final String queueUrl;
 
-    public SqsEmailClient(
-            SqsClient sqsClient,
-            ObjectMapper objectMapper,
-            @Value("${aws.sqs.email-queue-url}") String queueUrl) {
+    public SqsEmailClient(SqsClient sqsClient, ObjectMapper objectMapper, @Value("${aws.sqs.email-queue-url}") String queueUrl) {
+
         this.sqsClient = sqsClient;
         this.objectMapper = objectMapper;
         this.queueUrl = queueUrl;
@@ -31,12 +29,11 @@ public class SqsEmailClient {
     public void sendEmail(EmailRequest request) {
         try {
             String messageBody = objectMapper.writeValueAsString(request);
-
-            sqsClient.sendMessage(SendMessageRequest.builder()
+            sqsClient.sendMessage(SendMessageRequest
+                    .builder()
                     .queueUrl(queueUrl)
                     .messageBody(messageBody)
                     .build());
-
             log.info("Email queued to SQS for: {}", request.getTo());
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize EmailRequest", e);
